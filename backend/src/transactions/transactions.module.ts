@@ -33,3 +33,5 @@ import { OasisWalletService } from '../services/oasis-wallet.service';
 export class TransactionsModule {}
 
 
+
+

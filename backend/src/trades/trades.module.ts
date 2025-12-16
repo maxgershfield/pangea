@@ -13,3 +13,5 @@ import { Trade } from './entities/trade.entity';
 export class TradesModule {}
 
 
+
+
