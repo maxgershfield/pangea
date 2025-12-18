@@ -265,9 +265,9 @@ export class OasisAuthService {
    */
   private extractAvatarFromResponse(data: OASISAvatarResponse): OASISAvatar {
     // Handle nested structures
-    const result = data.result || data;
+    const result: any = data.result || data;
     const avatar =
-      result.Result || result.result || result || data;
+      (result as any).Result || result.result || result || data;
 
     // Extract avatar ID (can be avatarId, id, or AvatarId)
     const avatarId =

@@ -4,8 +4,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Order } from '../entities/order.entity';
 import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
 import { CreateOrderDto, UpdateOrderDto } from '../dto';

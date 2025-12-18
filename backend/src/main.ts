@@ -25,9 +25,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  // Bind to 0.0.0.0 to accept connections from Railway/external hosts
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Pangea Markets Backend is running on: http://localhost:${port}/api`);
+  console.log(`🚀 Pangea Markets Backend is running on: http://0.0.0.0:${port}/api`);
 }
 
 bootstrap();

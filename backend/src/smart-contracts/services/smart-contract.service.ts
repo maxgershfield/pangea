@@ -456,7 +456,7 @@ export class SmartContractService {
       });
     } else {
       // Global FormData (Node.js 18+)
-      const compiledBlob_obj = new Blob([compiledBlob], { type: 'application/octet-stream' });
+      const compiledBlob_obj = new Blob([compiledBlob.buffer || compiledBlob], { type: 'application/octet-stream' });
       formData.append('Language', language);
       formData.append('CompiledContractFile', compiledBlob_obj, filename);
 

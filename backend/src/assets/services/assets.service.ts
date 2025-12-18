@@ -128,6 +128,7 @@ export class AssetsService {
     const asset = this.assetRepository.create({
       ...dto,
       assetId,
+      totalSupply: BigInt(dto.totalSupply || 0),
       issuer: { id: issuerId } as any,
       issuerId,
       network: dto.network || 'devnet',
@@ -138,7 +139,7 @@ export class AssetsService {
     // Deploy smart contract if requested
     if (dto.deployContract) {
       try {
-        const contractAddress = await this.smartContractService.generateRwaToken({
+        const deployResult = await this.smartContractService.generateRwaToken({
           name: dto.name,
           symbol: dto.symbol,
           totalSupply: dto.totalSupply,
@@ -147,8 +148,8 @@ export class AssetsService {
           decimals: dto.decimals,
         });
 
-        asset.contractAddress = contractAddress;
-        asset.mintAddress = contractAddress; // For Solana, mint address is the contract address
+        asset.contractAddress = deployResult.contractAddress;
+        asset.mintAddress = deployResult.contractAddress; // For Solana, mint address is the contract address
       } catch (error) {
         this.logger.error(`Failed to deploy contract: ${error.message}`, error.stack);
         throw new BadRequestException(

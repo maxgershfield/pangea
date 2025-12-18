@@ -29,7 +29,13 @@ export class TransactionsController {
     @Request() req,
     @Query() filters: TransactionFiltersDto,
   ) {
-    return this.transactionsService.findByUser(req.user.id, filters);
+    // Convert DTO to service interface (convert string dates to Date objects)
+    const serviceFilters = {
+      ...filters,
+      startDate: filters.startDate ? new Date(filters.startDate) : undefined,
+      endDate: filters.endDate ? new Date(filters.endDate) : undefined,
+    };
+    return this.transactionsService.findByUser(req.user.id, serviceFilters);
   }
 
   /**

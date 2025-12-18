@@ -1,5 +1,6 @@
-export * from './connect-wallet.dto';
-export * from './verify-wallet.dto';
+export { ConnectWalletDto } from './connect-wallet.dto';
+export { VerifyWalletDto } from './verify-wallet.dto';
+export { BlockchainType } from './connect-wallet.dto'; // Export enum only once to avoid duplicate
 
 
 
