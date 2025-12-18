@@ -11,7 +11,6 @@ import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
 import { CreateOrderDto, UpdateOrderDto } from '../dto';
 import { BalanceService } from './balance.service';
 import { OrderMatchingService } from './order-matching.service';
-import { DataSource } from 'typeorm';
 
 @Injectable()
 export class OrdersService {

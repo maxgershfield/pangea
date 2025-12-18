@@ -370,7 +370,10 @@ export class SmartContractService {
       formData.append('Language', language);
     } else {
       // Global FormData (Node.js 18+)
-      const blob = new Blob([sourceBlob], { type: 'application/zip' });
+      const blobArray = Buffer.isBuffer(sourceBlob)
+        ? new Uint8Array(sourceBlob)
+        : sourceBlob;
+      const blob = new Blob([blobArray], { type: 'application/zip' });
       formData.append('Source', blob, 'contract.zip');
       formData.append('Language', language);
     }
@@ -456,7 +459,10 @@ export class SmartContractService {
       });
     } else {
       // Global FormData (Node.js 18+)
-      const compiledBlob_obj = new Blob([compiledBlob.buffer || compiledBlob], { type: 'application/octet-stream' });
+      const bufferArray = Buffer.isBuffer(compiledBlob) 
+        ? new Uint8Array(compiledBlob)
+        : compiledBlob;
+      const compiledBlob_obj = new Blob([bufferArray], { type: 'application/octet-stream' });
       formData.append('Language', language);
       formData.append('CompiledContractFile', compiledBlob_obj, filename);
 
