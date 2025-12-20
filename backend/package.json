@@ -6,7 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run compile:migrations",
+    "compile:migrations": "tsc migrations/*.ts --outDir dist/migrations --module commonjs --target ES2021 --esModuleInterop --skipLibCheck --experimentalDecorators --emitDecoratorMetadata --resolveJsonModule || true",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -100,6 +101,10 @@
     "testEnvironment": "node"
   }
 }
+
+
+
+
 
 
 

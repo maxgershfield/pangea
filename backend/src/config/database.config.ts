@@ -8,6 +8,13 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
     const databaseUrl = this.configService.get<string>('DATABASE_URL');
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    
+    // In production, migrations are compiled to dist/migrations (relative to dist/config)
+    // In development, use source migrations from project root
+    const migrationsPath = isProduction
+      ? __dirname + '/../migrations/*.js'
+      : __dirname + '/../../migrations/*{.ts,.js}';
 
     // If DATABASE_URL is provided, use it directly
     if (databaseUrl) {
@@ -15,9 +22,9 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         type: 'postgres',
         url: databaseUrl,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        migrations: [__dirname + '/../../migrations/*{.ts,.js}'],
-        synchronize: this.configService.get<string>('NODE_ENV') === 'development',
-        logging: this.configService.get<string>('NODE_ENV') === 'development',
+        migrations: [migrationsPath],
+        synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
+        logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
       };
     }
 
@@ -30,12 +37,16 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.get<string>('DB_PASSWORD', 'password'),
       database: this.configService.get<string>('DB_DATABASE', 'pangea'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/../../migrations/*{.ts,.js}'],
-      synchronize: this.configService.get<string>('NODE_ENV') === 'development',
-      logging: this.configService.get<string>('NODE_ENV') === 'development',
+      migrations: [migrationsPath],
+      synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
+      logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
     };
   }
 }
+
+
+
+
 
 
 
