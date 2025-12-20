@@ -1,6 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { OasisTokenManagerService } from './oasis-token-manager.service';
 
 export interface GenerateWalletRequest {
   avatarId: string;
@@ -49,21 +50,40 @@ export interface Transaction {
 export class OasisWalletService {
   private readonly logger = new Logger(OasisWalletService.name);
   private readonly baseUrl: string;
-  private readonly apiKey: string;
   private readonly axiosInstance: AxiosInstance;
 
-  constructor(private configService: ConfigService) {
-    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'https://api.oasisweb4.com';
-    this.apiKey = this.configService.get<string>('OASIS_API_KEY') || '';
+  constructor(
+    private configService: ConfigService,
+    private tokenManager: OasisTokenManagerService,
+  ) {
+    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'http://api.oasisweb4.com';
 
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
       timeout: 30000,
     });
+
+    // Add request interceptor to inject token dynamically
+    this.axiosInstance.interceptors.request.use(
+      async (config: InternalAxiosRequestConfig) => {
+        try {
+          const token = await this.tokenManager.getToken();
+          if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+        } catch (error) {
+          this.logger.error(`Failed to get token for request: ${error.message}`);
+          // Continue without token - request will fail with 401 if auth is required
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      },
+    );
 
     // Add response interceptor for error handling
     this.axiosInstance.interceptors.response.use(

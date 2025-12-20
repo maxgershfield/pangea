@@ -11,7 +11,6 @@ import { OrdersModule } from '../orders/orders.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 import { AssetsModule } from '../assets/assets.module';
 import { SmartContractsModule } from '../smart-contracts/smart-contracts.module';
-import { OasisWalletService } from '../services/oasis-wallet.service';
 
 @Module({
   imports: [
@@ -26,7 +25,7 @@ import { OasisWalletService } from '../services/oasis-wallet.service';
     TransactionsService,
     VaultService,
     DepositMonitoringJob,
-    OasisWalletService, // For wallet address lookup
+    // OasisWalletService is provided by OasisModule (global)
   ],
   exports: [TransactionsService, VaultService],
 })

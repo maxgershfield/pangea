@@ -12,6 +12,7 @@ import { AssetsModule } from './assets/assets.module';
 import { SmartContractsModule } from './smart-contracts/smart-contracts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
+import { OasisModule } from './services/oasis.module';
 
 @Module({
   imports: [
@@ -31,6 +32,9 @@ import { AdminModule } from './admin/admin.module';
 
     // Schedule module for cron jobs
     ScheduleModule.forRoot(),
+
+    // OASIS services module (global)
+    OasisModule,
 
     // Feature modules
     TradesModule,

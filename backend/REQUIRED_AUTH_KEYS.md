@@ -30,21 +30,21 @@ JWT_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
 
 ---
 
-### 2. **OASIS_API_KEY** (May be Required)
+### 2. **OASIS_API_KEY** (Optional - Auto-refreshed)
 
 **Purpose**: API key for authenticating with OASIS platform APIs (wallet operations, etc.)
 
-**Where to get it:**
-- Contact OASIS platform administrator
-- Check OASIS platform documentation
-- May be available in OASIS dashboard/settings
+**Status**: ✅ **Automatic Token Refresh Enabled**
 
-**Example:**
-```
-OASIS_API_KEY=your-oasis-platform-api-key-here
+The backend now automatically authenticates with OASIS using admin credentials and refreshes the token every 10 minutes before expiration. You can still provide an initial token, but it's not required.
+
+**Optional Admin Credentials** (for automatic token refresh):
+```env
+OASIS_ADMIN_USERNAME=OASIS_ADMIN
+OASIS_ADMIN_PASSWORD=Uppermall1!
 ```
 
-**Note**: Check if this is actually required - some OASIS endpoints might not require it depending on your setup.
+**Note**: If you don't provide these, the service will use the default admin credentials. The token is automatically refreshed every 10 minutes to prevent expiration.
 
 ---
 
@@ -189,8 +189,10 @@ For your team, you need to determine:
 
 **Minimum Required:**
 - ✅ `JWT_SECRET` - Generate using `openssl rand -hex 32`
-- ✅ `OASIS_API_URL` - `https://api.oasisweb4.com`
-- ⚠️ `OASIS_API_KEY` - Check if required for your OASIS setup
+- ✅ `OASIS_API_URL` - `http://api.oasisweb4.com` (note: HTTP, not HTTPS)
+- ✅ `OASIS_ADMIN_USERNAME` - Default: `OASIS_ADMIN` (for auto token refresh)
+- ✅ `OASIS_ADMIN_PASSWORD` - Default: `Uppermall1!` (for auto token refresh)
+- ⚠️ `OASIS_API_KEY` - Optional (token is auto-refreshed every 10 minutes)
 
 **Recommended:**
 - `JWT_EXPIRES_IN=7d` - Token expiration time
