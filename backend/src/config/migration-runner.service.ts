@@ -18,33 +18,18 @@ export class MigrationRunnerService implements OnModuleInit {
     // Run migrations in background, don't block startup
     setImmediate(async () => {
       try {
-        this.logger.log('Checking for pending database migrations...');
+        this.logger.log('Running database migrations...');
         
-        // Check if migrations table exists
-        const migrationsTableExists = await this.dataSource.query(`
-          SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = 'migrations'
-          );
-        `);
-
-        if (!migrationsTableExists[0]?.exists) {
-          this.logger.log('Migrations table does not exist. Running migrations...');
-          await this.dataSource.runMigrations();
-          this.logger.log('✅ Database migrations completed successfully');
-          return;
-        }
-
-        // Check for pending migrations
-        const pendingMigrations = await this.dataSource.showMigrations();
+        // TypeORM will automatically skip migrations that have already been run
+        const executedMigrations = await this.dataSource.runMigrations();
         
-        if (pendingMigrations && pendingMigrations.length > 0) {
-          this.logger.log(`Found ${pendingMigrations.length} pending migration(s). Running migrations...`);
-          await this.dataSource.runMigrations();
-          this.logger.log('✅ Database migrations completed successfully');
+        if (executedMigrations && executedMigrations.length > 0) {
+          this.logger.log(`✅ Executed ${executedMigrations.length} migration(s):`);
+          executedMigrations.forEach((migration) => {
+            this.logger.log(`   - ${migration.name}`);
+          });
         } else {
-          this.logger.log('No pending migrations. Database is up to date.');
+          this.logger.log('✅ No pending migrations. Database is up to date.');
         }
       } catch (error) {
         this.logger.error(
