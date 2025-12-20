@@ -105,7 +105,7 @@ JWT_SECRET=your-super-secret-jwt-key-min-32-chars-change-in-production
 JWT_EXPIRES_IN=7d
 
 # OASIS API
-OASIS_API_URL=https://api.oasisplatform.world
+OASIS_API_URL=https://api.oasisweb4.com
 OASIS_API_KEY=your-oasis-api-key
 
 # CORS (allow your frontend domain)
@@ -326,3 +326,7 @@ If Railway doesn't meet your needs, consider:
 5. ✅ Set up staging environment
 6. ✅ Test all endpoints
 7. ✅ Update frontend to use production backend URL
+
+
+
+

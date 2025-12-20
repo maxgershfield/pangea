@@ -53,7 +53,7 @@ export class OasisWalletService {
   private readonly axiosInstance: AxiosInstance;
 
   constructor(private configService: ConfigService) {
-    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'https://api.oasisplatform.world';
+    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'https://api.oasisweb4.com';
     this.apiKey = this.configService.get<string>('OASIS_API_KEY') || '';
 
     this.axiosInstance = axios.create({
@@ -319,6 +319,10 @@ export class OasisWalletService {
     };
   }
 }
+
+
+
+
 
 
 

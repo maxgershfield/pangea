@@ -70,7 +70,7 @@ export class OasisAuthService {
   constructor(private configService: ConfigService) {
     this.baseUrl =
       this.configService.get<string>('OASIS_API_URL') ||
-      'https://api.oasisplatform.world';
+      'https://api.oasisweb4.com';
 
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
@@ -294,6 +294,10 @@ export class OasisAuthService {
     };
   }
 }
+
+
+
+
 
 
 

@@ -212,3 +212,7 @@ You could implement an API key guard for internal routes, but this is optional a
 2. Document which routes should be called from client vs Next.js API routes
 3. Consider adding request logging/monitoring for rate limit violations
 4. Test rate limiting in staging before production deployment
+
+
+
+

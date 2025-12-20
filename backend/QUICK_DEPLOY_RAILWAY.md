@@ -41,7 +41,7 @@ REDIS_URL=${{Redis.REDIS_URL}}
 # Add these manually:
 JWT_SECRET=change-this-to-a-random-32-char-string
 JWT_EXPIRES_IN=7d
-OASIS_API_URL=https://api.oasisplatform.world
+OASIS_API_URL=https://api.oasisweb4.com
 OASIS_API_KEY=your-oasis-api-key
 CORS_ORIGIN=https://your-frontend.vercel.app
 ```
@@ -110,3 +110,7 @@ Update your frontend to use the Railway URL:
 4. ✅ Set up staging environment
 
 For detailed instructions, see `DEPLOYMENT_GUIDE.md`.
+
+
+
+
