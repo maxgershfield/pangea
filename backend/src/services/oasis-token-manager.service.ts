@@ -49,25 +49,29 @@ export class OasisTokenManagerService implements OnModuleInit {
 
   /**
    * Initialize token on module start
+   * Non-blocking - app will start even if this fails
    */
   async onModuleInit() {
-    try {
-      // Try to get existing token from cache
-      const cachedToken = await this.getCachedToken();
-      if (cachedToken && !this.isTokenExpiring(cachedToken)) {
-        this.logger.log('Using cached OASIS API token');
-        return;
-      }
+    // Run initialization in background, don't block app startup
+    setImmediate(async () => {
+      try {
+        // Try to get existing token from cache
+        const cachedToken = await this.getCachedToken();
+        if (cachedToken && !this.isTokenExpiring(cachedToken)) {
+          this.logger.log('Using cached OASIS API token');
+          return;
+        }
 
-      // Fetch new token if cache is empty or expired
-      this.logger.log('Fetching new OASIS API token...');
-      await this.refreshToken();
-    } catch (error) {
-      this.logger.error(
-        `Failed to initialize OASIS token: ${error.message}`,
-        error.stack,
-      );
-    }
+        // Fetch new token if cache is empty or expired
+        this.logger.log('Fetching new OASIS API token...');
+        await this.refreshToken();
+      } catch (error) {
+        this.logger.warn(
+          `Failed to initialize OASIS token on startup: ${error.message}. Token will be fetched on first use.`,
+        );
+        // Don't throw - allow app to start, token will be fetched when needed
+      }
+    });
   }
 
   /**
