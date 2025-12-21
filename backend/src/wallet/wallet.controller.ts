@@ -14,17 +14,10 @@ import { OasisWalletService } from '../services/oasis-wallet.service';
 import { BalanceSyncService } from '../services/balance-sync.service';
 import { ConnectWalletDto } from './dto/connect-wallet.dto';
 import { VerifyWalletDto } from './dto/verify-wallet.dto';
-// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Will be available after Task 03
-
-// TODO: Replace with actual JWT guard from Task 03
-const JwtAuthGuard = class {
-  canActivate() {
-    return true;
-  }
-};
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('wallet')
-@UseGuards(JwtAuthGuard as any)
+@UseGuards(JwtAuthGuard)
 export class WalletController {
   constructor(
     private readonly walletConnectionService: WalletConnectionService,
@@ -309,6 +302,8 @@ export class WalletController {
     }
   }
 }
+
+
 
 
 

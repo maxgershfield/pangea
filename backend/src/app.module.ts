@@ -13,6 +13,7 @@ import { AssetsModule } from './assets/assets.module';
 import { SmartContractsModule } from './smart-contracts/smart-contracts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
+import { WalletModule } from './wallet/wallet.module';
 import { OasisModule } from './services/oasis.module';
 
 @Module({
@@ -44,11 +45,14 @@ import { OasisModule } from './services/oasis.module';
     SmartContractsModule,
     TransactionsModule,
     AdminModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService, MigrationRunnerService],
 })
 export class AppModule {}
+
+
 
 
 

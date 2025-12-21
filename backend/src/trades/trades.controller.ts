@@ -12,7 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { TradeResponseDto, TradeListResponseDto, TradeStatisticsDto } from './dto';
 
-@Controller('api/trades')
+@Controller('trades')
 @UseGuards(JwtAuthGuard)
 export class TradesController {
   constructor(private readonly tradesService: TradesService) {}
@@ -97,6 +97,8 @@ export class TradesController {
     };
   }
 }
+
+
 
 
 
