@@ -1,6 +1,6 @@
 # Frontend Developer Guide - Pangea Backend API
 
-**Last Updated:** January 23, 2025  
+**Last Updated:** December 21, 2025  
 **Base URL:** `https://pangea-production-128d.up.railway.app/api`
 
 ---
