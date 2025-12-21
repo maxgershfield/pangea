@@ -113,6 +113,32 @@ const profile = await response.json();
 ### Using JWT Token
 Include in header: `Authorization: Bearer <token>`
 
+### 📋 How Registration Works (Important!)
+
+When a user registers via `POST /api/auth/register`, the backend performs a **3-step process**:
+
+1. **OASIS Avatar Creation**: The backend calls the OASIS API to create an "Avatar" (user account) in OASIS
+   - OASIS assigns a unique `avatarId` to the user
+   - OASIS sends a verification email (if email service is configured)
+   - User receives an `avatarId` which links them to OASIS
+
+2. **Local Database Sync**: The backend creates/updates a user record in Pangea's local database
+   - Links the local user to OASIS via `avatarId`
+   - Stores user profile data locally for fast access
+   - Sets default role as `'user'`
+
+3. **Pangea JWT Token**: The backend immediately generates a Pangea JWT token
+   - User can start using Pangea API immediately
+   - Token expires in 7 days (configurable)
+   - Token contains user ID, email, username, `avatarId`, and role
+
+**Key Points:**
+- ✅ User gets **both** an OASIS Avatar account AND a Pangea account
+- ✅ User receives JWT token immediately (can use API right away)
+- ⚠️ OASIS may send a verification email - users should check their inbox
+- 🔗 `avatarId` in the response links the user to their OASIS Avatar
+- 📝 All subsequent authentication uses the Pangea JWT token (not OASIS token)
+
 ---
 
 ## ✅ Working Endpoints
@@ -131,10 +157,19 @@ GET /api/assets
 
 ### Orders
 ```typescript
-GET /api/orders          // All orders
+GET /api/orders          // All orders (paginated)
 GET /api/orders/open     // Open orders
 GET /api/orders/history  // Order history
 // All require: Authorization: Bearer <token>
+
+// Response format for GET /api/orders:
+{
+  items: Order[],
+  total: number,
+  page: number,
+  limit: number,
+  totalPages: number
+}
 ```
 
 ### Trades
@@ -211,8 +246,8 @@ class PangeaApi {
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+      throw new Error(Array.isArray(error.message) ? error.message.join(', ') : error.message || `HTTP ${response.status}`);
     }
     
     return response.json();
@@ -276,6 +311,75 @@ class PangeaApi {
 const api = new PangeaApi();
 await api.register({ email: '...', password: '...', username: '...' });
 const orders = await api.getOrders();
+```
+
+---
+
+## 🔴 Error Handling
+
+### Error Response Format
+
+**Validation Errors (400):**
+```typescript
+{
+  message: string[] | string,  // Array of validation messages or single message
+  error: "Bad Request",
+  statusCode: 400
+}
+```
+
+**Authentication Errors (401):**
+```typescript
+{
+  message: "Invalid or expired token" | "Invalid email or password",
+  error: "Unauthorized",
+  statusCode: 401
+}
+```
+
+**Forbidden (403):**
+```typescript
+{
+  message: "Forbidden resource",
+  error: "Forbidden",
+  statusCode: 403
+}
+```
+
+**Server Errors (500):**
+```typescript
+{
+  message: string,
+  error: "Internal Server Error",
+  statusCode: 500
+}
+```
+
+### Error Handling Example
+
+```typescript
+try {
+  const response = await fetch(`${baseUrl}/api/user/profile`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    // Handle validation errors (array of messages)
+    if (Array.isArray(error.message)) {
+      console.error('Validation errors:', error.message.join(', '));
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw new Error(error.message);
+  }
+  
+  const data = await response.json();
+  return data;
+} catch (error) {
+  console.error('Request failed:', error);
+  throw error;
+}
 ```
 
 ---
