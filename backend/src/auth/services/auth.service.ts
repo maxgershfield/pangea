@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { OasisAuthService } from './oasis-auth.service';
@@ -30,6 +30,8 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     try {
+      this.logger.log(`Starting registration for email: ${registerDto.email}, username: ${registerDto.username}`);
+      
       // 1. Register with OASIS
       const oasisAvatar = await this.oasisAuthService.register({
         email: registerDto.email,
@@ -39,8 +41,12 @@ export class AuthService {
         lastName: registerDto.lastName,
       });
 
+      this.logger.log(`OASIS registration successful, avatarId: ${oasisAvatar.avatarId}`);
+
       // 2. Sync to local database
       const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
+
+      this.logger.log(`User synced to local DB, userId: ${user.id}`);
 
       // 3. Generate Pangea JWT token
       const token = this.generateJwtToken(user);
@@ -60,7 +66,15 @@ export class AuthService {
       };
     } catch (error: any) {
       this.logger.error(`Registration failed: ${error.message}`);
-      throw error;
+      this.logger.error(`Error stack: ${error.stack}`);
+      // Re-throw with proper HTTP exception if it's not already one
+      if (error instanceof HttpException || error.status) {
+        throw error;
+      }
+      throw new HttpException(
+        error.message || 'Registration failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -207,6 +221,8 @@ export class AuthService {
     return now;
   }
 }
+
+
 
 
 

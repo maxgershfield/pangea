@@ -23,6 +23,16 @@ export class UserSyncService {
    */
   async syncOasisUserToLocal(oasisAvatar: OASISAvatar): Promise<User> {
     try {
+      // Validate required fields
+      if (!oasisAvatar.avatarId) {
+        throw new Error('OASIS avatar missing avatarId');
+      }
+      if (!oasisAvatar.email) {
+        throw new Error('OASIS avatar missing email');
+      }
+
+      this.logger.log(`Syncing OASIS avatar to local DB: ${oasisAvatar.avatarId}, email: ${oasisAvatar.email}`);
+
       // Try to find existing user by avatarId
       let user = await this.userRepository.findOne({
         where: { avatarId: oasisAvatar.avatarId },
@@ -47,17 +57,19 @@ export class UserSyncService {
       } else {
         // Create new user
         this.logger.log(`Creating new user for avatar: ${oasisAvatar.avatarId}`);
-        user = this.userRepository.create({
+        const userData = {
           email: oasisAvatar.email,
-          username: oasisAvatar.username,
-          firstName: oasisAvatar.firstName,
-          lastName: oasisAvatar.lastName,
+          username: oasisAvatar.username || null,
+          firstName: oasisAvatar.firstName || null,
+          lastName: oasisAvatar.lastName || null,
           avatarId: oasisAvatar.avatarId,
           role: 'user',
           kycStatus: 'pending',
           isActive: true,
           lastLogin: new Date(),
-        });
+        };
+        this.logger.debug(`User data to create: ${JSON.stringify(userData, null, 2)}`);
+        user = this.userRepository.create(userData);
       }
 
       const savedUser = await this.userRepository.save(user);
@@ -65,6 +77,13 @@ export class UserSyncService {
       return savedUser;
     } catch (error: any) {
       this.logger.error(`Failed to sync user: ${error.message}`);
+      this.logger.error(`Error stack: ${error.stack}`);
+      if (error.code) {
+        this.logger.error(`Database error code: ${error.code}`);
+      }
+      if (error.detail) {
+        this.logger.error(`Database error detail: ${error.detail}`);
+      }
       throw new Error(`Failed to sync user to local database: ${error.message}`);
     }
   }
@@ -105,6 +124,8 @@ export class UserSyncService {
     });
   }
 }
+
+
 
 
 

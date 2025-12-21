@@ -113,17 +113,21 @@ export class OasisAuthService {
         },
       );
 
+      this.logger.debug(`OASIS registration response: ${JSON.stringify(response.data, null, 2)}`);
       return this.extractAvatarFromResponse(response.data);
     } catch (error: any) {
       this.logger.error(`OASIS registration failed: ${error.message}`);
+      this.logger.error(`Error stack: ${error.stack}`);
       if (error.response?.data) {
+        this.logger.error(`OASIS API error response: ${JSON.stringify(error.response.data, null, 2)}`);
         throw new Error(
           error.response.data.message ||
             error.response.data.Message ||
+            JSON.stringify(error.response.data) ||
             'Registration failed',
         );
       }
-      throw new Error('Failed to register with OASIS API');
+      throw new Error(`Failed to register with OASIS API: ${error.message}`);
     }
   }
 
@@ -264,36 +268,55 @@ export class OasisAuthService {
    * Handles nested response structures (Result.result, result.Result, etc.)
    */
   private extractAvatarFromResponse(data: OASISAvatarResponse): OASISAvatar {
-    // Handle nested structures
-    const result: any = data.result || data;
-    const avatar =
-      (result as any).Result || result.result || result || data;
+    try {
+      // Handle nested structures - registration response has result.result structure
+      const result: any = data.result || data;
+      const avatar =
+        (result as any).Result || result.result || result || data;
 
-    // Extract avatar ID (can be avatarId, id, or AvatarId)
-    const avatarId =
-      avatar.avatarId ||
-      avatar.AvatarId ||
-      avatar.id ||
-      avatar.Id ||
-      result.avatarId ||
-      result.id;
+      // Extract avatar ID (can be avatarId, id, or AvatarId)
+      const avatarId =
+        avatar?.avatarId ||
+        avatar?.AvatarId ||
+        avatar?.id ||
+        avatar?.Id ||
+        result?.avatarId ||
+        result?.id;
 
-    if (!avatarId) {
-      this.logger.error('Response structure:', JSON.stringify(data, null, 2));
-      throw new Error('Invalid response structure from OASIS API');
+      if (!avatarId) {
+        this.logger.error('Invalid response structure - missing avatarId');
+        this.logger.error('Full response:', JSON.stringify(data, null, 2));
+        this.logger.error('Result object:', JSON.stringify(result, null, 2));
+        this.logger.error('Avatar object:', JSON.stringify(avatar, null, 2));
+        throw new Error('Invalid response structure from OASIS API: missing avatarId');
+      }
+
+      const extracted: OASISAvatar = {
+        avatarId: avatarId.toString(),
+        id: avatarId.toString(),
+        username: avatar?.username || avatar?.Username || '',
+        email: avatar?.email || avatar?.Email || '',
+        firstName: avatar?.firstName || avatar?.FirstName,
+        lastName: avatar?.lastName || avatar?.LastName,
+        jwtToken: avatar?.jwtToken || avatar?.JwtToken,
+      };
+
+      // Validate required fields
+      if (!extracted.email) {
+        this.logger.error('Missing email in extracted avatar:', JSON.stringify(extracted, null, 2));
+        throw new Error('Invalid response structure from OASIS API: missing email');
+      }
+
+      this.logger.debug(`Extracted avatar: ${JSON.stringify(extracted, null, 2)}`);
+      return extracted;
+    } catch (error: any) {
+      this.logger.error(`Failed to extract avatar from response: ${error.message}`);
+      throw error;
     }
-
-    return {
-      avatarId: avatarId.toString(),
-      id: avatarId.toString(),
-      username: avatar.username || avatar.Username || '',
-      email: avatar.email || avatar.Email || '',
-      firstName: avatar.firstName || avatar.FirstName,
-      lastName: avatar.lastName || avatar.LastName,
-      jwtToken: avatar.jwtToken || avatar.JwtToken,
-    };
   }
 }
+
+
 
 
 
