@@ -139,6 +139,8 @@ export class OasisWalletService {
 
       // Step 2: Link private key (this creates the wallet and returns wallet ID)
       this.logger.log(`Step 2: Linking private key to avatar ${avatarId}`);
+      this.logger.debug(`Link private key request: AvatarID=${avatarId}, ProviderType=${providerType}, PrivateKey length=${privateKey?.length || 0}`);
+      
       const linkPrivateKeyResponse = await this.axiosInstance.post(
         '/api/keys/link_provider_private_key_to_avatar_by_id',
         {
@@ -149,11 +151,16 @@ export class OasisWalletService {
         },
       );
 
+      this.logger.debug(`Link private key response status: ${linkPrivateKeyResponse.status}`);
+      this.logger.debug(`Link private key response data: ${JSON.stringify(linkPrivateKeyResponse.data, null, 2).substring(0, 500)}`);
+
       const linkPrivateKeyData = linkPrivateKeyResponse.data?.result || linkPrivateKeyResponse.data;
       const walletId = linkPrivateKeyData?.walletId || linkPrivateKeyData?.id || linkPrivateKeyData?.WalletId;
 
       if (!walletId) {
-        this.logger.error('Failed to get wallet ID from private key linking response', JSON.stringify(linkPrivateKeyData, null, 2));
+        this.logger.error('Failed to get wallet ID from private key linking response');
+        this.logger.error('Full response data:', JSON.stringify(linkPrivateKeyResponse.data, null, 2));
+        this.logger.error('Extracted linkPrivateKeyData:', JSON.stringify(linkPrivateKeyData, null, 2));
         throw new Error('Failed to create wallet: No wallet ID returned from private key linking');
       }
 
