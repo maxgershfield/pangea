@@ -89,9 +89,15 @@ export class OasisWalletService {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        this.logger.error(`OASIS API Error: ${error.message}`, error.response?.data);
+        const errorData = error.response?.data;
+        const errorMessage = errorData?.message || errorData?.result?.message || error.message || 'OASIS Wallet API error';
+        const errorDetails = errorData ? JSON.stringify(errorData, null, 2) : error.stack;
+        
+        this.logger.error(`OASIS API Error: ${errorMessage}`);
+        this.logger.error(`Error details: ${errorDetails}`);
+        
         throw new HttpException(
-          error.response?.data?.message || 'OASIS Wallet API error',
+          errorMessage,
           error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
         );
       },
