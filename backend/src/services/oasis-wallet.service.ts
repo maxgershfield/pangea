@@ -266,15 +266,15 @@ export class OasisWalletService {
 
   /**
    * Set default wallet for an avatar
+   * POST /api/wallet/avatar/{avatarId}/default-wallet/{walletId}?providerType={providerType}
    */
-  async setDefaultWallet(avatarId: string, walletId: string): Promise<void> {
+  async setDefaultWallet(avatarId: string, walletId: string, providerType: string): Promise<void> {
     try {
-      await this.axiosInstance.post('/api/wallet/set_default_wallet', {
-        avatarId,
-        walletId,
-      });
+      await this.axiosInstance.post(
+        `/api/wallet/avatar/${avatarId}/default-wallet/${walletId}?providerType=${providerType}`,
+      );
 
-      this.logger.log(`Set default wallet ${walletId} for avatar ${avatarId}`);
+      this.logger.log(`Set default wallet ${walletId} for avatar ${avatarId}, provider: ${providerType}`);
     } catch (error) {
       this.logger.error(`Failed to set default wallet: ${error.message}`, error.stack);
       throw error;
