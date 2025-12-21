@@ -99,34 +99,120 @@ export class OasisWalletService {
   }
 
   /**
-   * Generate a new wallet for an avatar
+   * Generate a new wallet for an avatar using OASIS Keys API
+   * Flow: Generate keypair -> Link private key (creates wallet) -> Link public key (completes wallet)
    */
   async generateWallet(avatarId: string, providerType: 'SolanaOASIS' | 'EthereumOASIS', setAsDefault: boolean = true): Promise<Wallet> {
     try {
       this.logger.log(`Generating wallet for avatar ${avatarId}, provider: ${providerType}`);
 
-      const response = await this.axiosInstance.post(
-        `/api/wallet/avatar/${avatarId}/generate`,
+      // Step 1: Generate keypair using Keys API
+      this.logger.log(`Step 1: Generating keypair for ${providerType}`);
+      const keypairResponse = await this.axiosInstance.post(
+        `/api/keys/generate_keypair_for_provider/${providerType}`,
+      );
+
+      // Handle nested OASIS response structure
+      const keypairResponseData = keypairResponse.data?.result || keypairResponse.data;
+      const keypairResult = keypairResponseData?.result || keypairResponseData;
+      
+      // Check for error in response
+      if (keypairResult?.isError === true || keypairResponseData?.isError === true) {
+        const errorMsg = keypairResult?.message || keypairResponseData?.message || 'Unknown error';
+        throw new Error(`Failed to generate keypair: ${errorMsg}`);
+      }
+
+      const keypairData = keypairResult || keypairResponseData;
+      if (!keypairData?.privateKey || !keypairData?.publicKey) {
+        this.logger.error('Invalid keypair response:', JSON.stringify(keypairResponse.data, null, 2));
+        throw new Error('Failed to generate keypair: Invalid response from Keys API - missing privateKey or publicKey');
+      }
+
+      const { privateKey, publicKey, walletAddress: generatedWalletAddress } = keypairData;
+      this.logger.log(`Keypair generated successfully. Public key: ${publicKey.substring(0, 20)}...`);
+
+      // Step 2: Link private key (this creates the wallet and returns wallet ID)
+      this.logger.log(`Step 2: Linking private key to avatar ${avatarId}`);
+      const linkPrivateKeyResponse = await this.axiosInstance.post(
+        '/api/keys/link_provider_private_key_to_avatar_by_id',
         {
-          providerType,
-          setAsDefault,
+          AvatarID: avatarId,
+          ProviderType: providerType,
+          ProviderKey: privateKey,
+          // WalletId is omitted - this will create a new wallet
         },
       );
 
-      const result = response.data?.result || response.data;
+      const linkPrivateKeyData = linkPrivateKeyResponse.data?.result || linkPrivateKeyResponse.data;
+      const walletId = linkPrivateKeyData?.walletId || linkPrivateKeyData?.id || linkPrivateKeyData?.WalletId;
+
+      if (!walletId) {
+        this.logger.error('Failed to get wallet ID from private key linking response', JSON.stringify(linkPrivateKeyData, null, 2));
+        throw new Error('Failed to create wallet: No wallet ID returned from private key linking');
+      }
+
+      this.logger.log(`Wallet created successfully. Wallet ID: ${walletId}`);
+
+      // Step 3: Link public key (completes the wallet setup)
+      this.logger.log(`Step 3: Linking public key to wallet ${walletId}`);
+      const linkPublicKeyResponse = await this.axiosInstance.post(
+        '/api/keys/link_provider_public_key_to_avatar_by_id',
+        {
+          WalletId: walletId,
+          AvatarID: avatarId,
+          ProviderType: providerType,
+          ProviderKey: publicKey,
+          WalletAddress: generatedWalletAddress || publicKey, // Use generated address or fallback to public key
+        },
+      );
+
+      // Handle nested OASIS response structure and check for errors
+      const linkPublicKeyResponseData = linkPublicKeyResponse.data?.result || linkPublicKeyResponse.data;
+      const linkPublicKeyResult = linkPublicKeyResponseData?.result || linkPublicKeyResponseData;
       
+      if (linkPublicKeyResult?.isError === true || linkPublicKeyResponseData?.isError === true) {
+        const errorMsg = linkPublicKeyResult?.message || linkPublicKeyResponseData?.message || 'Unknown error';
+        this.logger.warn(`Failed to link public key: ${errorMsg}. Wallet was created but public key linking failed.`);
+        // Continue anyway - wallet was created in step 2
+      } else {
+        this.logger.log(`Public key linked successfully. Wallet setup complete.`);
+      }
+
+      // Step 4: Optionally set as default wallet
+      if (setAsDefault) {
+        try {
+          await this.setDefaultWallet(avatarId, walletId, providerType);
+          this.logger.log(`Wallet ${walletId} set as default for avatar ${avatarId}`);
+        } catch (error) {
+          this.logger.warn(`Failed to set wallet as default: ${error.message}. Wallet was still created successfully.`);
+          // Don't fail the whole operation if setting default fails
+        }
+      }
+
+      // Step 5: Get wallet details to return complete information
+      const wallets = await this.getWallets(avatarId, providerType);
+      const wallet = wallets.find((w) => w.walletId === walletId);
+
+      if (wallet) {
+        return wallet;
+      }
+
+      // If we can't fetch full details, return what we know
       return {
-        walletId: result.walletId || result.id,
-        avatarId: result.avatarId || avatarId,
-        publicKey: result.publicKey,
-        walletAddress: result.walletAddress || result.address,
-        providerType: result.providerType || providerType,
-        isDefaultWallet: result.isDefaultWallet ?? setAsDefault,
-        balance: result.balance,
-        createdAt: result.createdAt || new Date().toISOString(),
+        walletId: walletId,
+        avatarId: avatarId,
+        publicKey: publicKey,
+        walletAddress: generatedWalletAddress || publicKey,
+        providerType: providerType,
+        isDefaultWallet: setAsDefault,
+        balance: 0,
+        createdAt: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to generate wallet: ${error.message}`, error.stack);
+      if (error.response?.data) {
+        this.logger.error(`OASIS API error response: ${JSON.stringify(error.response.data, null, 2)}`);
+      }
       throw error;
     }
   }
