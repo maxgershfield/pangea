@@ -12,28 +12,40 @@
 import { DataSource } from 'typeorm';
 import { User } from '../src/users/entities/user.entity';
 import { config } from 'dotenv';
+import * as path from 'path';
 
 // Load environment variables
-config();
+config({ path: path.resolve(__dirname, '../.env') });
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 if (!ADMIN_EMAIL) {
   console.error('❌ Error: ADMIN_EMAIL environment variable is required');
   console.log('\nUsage:');
   console.log('  ADMIN_EMAIL=user@example.com npx ts-node scripts/create-admin-account.ts');
+  console.log('\nOr set DATABASE_URL if running from different directory:');
+  console.log('  DATABASE_URL=postgresql://... ADMIN_EMAIL=user@example.com npx ts-node scripts/create-admin-account.ts');
   process.exit(1);
 }
 
 async function createAdminAccount() {
   console.log('🔐 Creating admin account...\n');
+  console.log(`Target email: ${ADMIN_EMAIL}\n`);
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.error('❌ Error: DATABASE_URL environment variable is required');
+    console.log('\nGet it from Railway dashboard → PostgreSQL service → Variables → DATABASE_URL');
+    process.exit(1);
+  }
 
   // Create DataSource
   const dataSource = new DataSource({
     type: 'postgres',
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
     entities: [User],
+    synchronize: false,
+    logging: false,
   });
 
   try {
@@ -55,6 +67,7 @@ async function createAdminAccount() {
     }
 
     // Check if already admin
+    const previousRole = user.role;
     if (user.role === 'admin') {
       console.log(`✅ User "${ADMIN_EMAIL}" is already an admin`);
       console.log(`   User ID: ${user.id}`);
@@ -69,7 +82,7 @@ async function createAdminAccount() {
     console.log(`✅ Successfully promoted user to admin!`);
     console.log(`   Email: ${user.email}`);
     console.log(`   User ID: ${user.id}`);
-    console.log(`   Role: ${user.role} (was: ${user.role === 'admin' ? 'user' : user.role})`);
+    console.log(`   Role: ${previousRole} → ${user.role}`);
     console.log('\n📝 Next steps:');
     console.log('   1. Re-login to get a new JWT token with admin role');
     console.log('   2. Test admin access: GET /api/admin/users');
