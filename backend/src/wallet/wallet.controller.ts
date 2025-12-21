@@ -14,6 +14,7 @@ import { OasisWalletService } from '../services/oasis-wallet.service';
 import { BalanceSyncService } from '../services/balance-sync.service';
 import { ConnectWalletDto } from './dto/connect-wallet.dto';
 import { VerifyWalletDto } from './dto/verify-wallet.dto';
+import { GenerateWalletDto } from './dto/generate-wallet.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('wallet')
@@ -42,6 +43,16 @@ export class WalletController {
     try {
       // Get all wallets from OASIS
       const wallets = await this.oasisWalletService.getWallets(avatarId);
+      
+      // If no wallets exist, return helpful message
+      if (!wallets || wallets.length === 0) {
+        return {
+          success: true,
+          balances: [],
+          message: 'No wallets found. Generate a wallet first using POST /api/wallet/generate',
+          hasWallets: false,
+        };
+      }
       
       // Get balances for each wallet
       const balances = await Promise.all(
@@ -73,8 +84,18 @@ export class WalletController {
       return {
         success: true,
         balances,
+        hasWallets: true,
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Provide helpful error message
+      if (error.response?.status === 404 || error.message?.includes('not found')) {
+        return {
+          success: true,
+          balances: [],
+          message: 'No wallets found. Generate a wallet first using POST /api/wallet/generate',
+          hasWallets: false,
+        };
+      }
       throw new HttpException(
         `Failed to get balances: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -119,6 +140,52 @@ export class WalletController {
     } catch (error) {
       throw new HttpException(
         `Failed to get asset balance: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Generate a new wallet for the authenticated user's avatar
+   * POST /api/wallet/generate
+   * 
+   * Note: Avatar must exist first (created during registration/login).
+   * This endpoint creates a new wallet and assigns it to the avatar.
+   */
+  @Post('generate')
+  async generateWallet(@Request() req: any, @Body() dto: GenerateWalletDto) {
+    const userId = req.user?.id || req.user?.userId;
+    const avatarId = req.user?.avatarId || req.user?.id;
+
+    if (!avatarId) {
+      throw new HttpException('User not authenticated. Avatar ID is required.', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const wallet = await this.oasisWalletService.generateWallet(
+        avatarId,
+        dto.providerType,
+        dto.setAsDefault ?? true,
+      );
+
+      return {
+        success: true,
+        message: `Wallet generated successfully for ${dto.providerType}`,
+        wallet: {
+          walletId: wallet.walletId,
+          walletAddress: wallet.walletAddress,
+          providerType: wallet.providerType,
+          isDefaultWallet: wallet.isDefaultWallet,
+          balance: wallet.balance || 0,
+        },
+      };
+    } catch (error: any) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: `Failed to generate wallet: ${error.message}. Make sure your avatar exists (register/login first).`,
+          error: 'Wallet generation failed',
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
