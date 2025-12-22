@@ -233,15 +233,23 @@ export class OasisWalletService {
         }
       }
 
-      // Step 5: Get wallet details to return complete information
-      const wallets = await this.getWallets(avatarId, providerType);
-      const wallet = wallets.find((w) => w.walletId === walletId);
+      // Step 5: Try to get wallet details to return complete information
+      // If this fails, we'll return what we already know (wallet was successfully created in steps 1-4)
+      try {
+        const wallets = await this.getWallets(avatarId, providerType);
+        const wallet = wallets.find((w) => w.walletId === walletId);
 
-      if (wallet) {
-        return wallet;
+        if (wallet) {
+          this.logger.log(`Successfully fetched complete wallet details for ${walletId}`);
+          return wallet;
+        }
+      } catch (error: any) {
+        this.logger.warn(`Failed to fetch wallet details after creation (wallet was still created successfully): ${error.message}`);
+        // Continue to return fallback data - wallet was successfully created in steps 1-4
       }
 
-      // If we can't fetch full details, return what we know
+      // Return what we know - wallet was successfully created even if we can't fetch full details
+      this.logger.log(`Returning wallet details from creation response (walletId: ${walletId})`);
       return {
         walletId: walletId,
         avatarId: avatarId,
@@ -263,20 +271,35 @@ export class OasisWalletService {
 
   /**
    * Get all wallets for an avatar
+   * OASIS API endpoint: GET /api/wallet/avatar/{id}/wallets/{showOnlyDefault}/{decryptPrivateKeys}
    */
   async getWallets(avatarId: string, providerType?: string): Promise<Wallet[]> {
     try {
-      let url = `/api/wallet/avatar/${avatarId}/wallets`;
-      if (providerType) {
-        url += `?providerType=${providerType}`;
+      // OASIS API requires path parameters: showOnlyDefault (false) and decryptPrivateKeys (false)
+      const url = `/api/wallet/avatar/${avatarId}/wallets/false/false`;
+      // Note: providerType is passed as a query parameter in the OASIS API method signature,
+      // but the route doesn't include it. We'll include it as a query param anyway.
+      const params = providerType ? `?providerType=${providerType}` : '';
+      
+      const response = await this.axiosInstance.get(`${url}${params}`);
+      const result = response.data?.result || response.data || {};
+      
+      // OASIS returns a dictionary: { SolanaOASIS: [wallets...], EthereumOASIS: [wallets...] }
+      // We need to flatten it into an array
+      let wallets: any[] = [];
+      
+      if (typeof result === 'object' && !Array.isArray(result)) {
+        // It's a dictionary, flatten it
+        Object.values(result).forEach((walletArray: any) => {
+          if (Array.isArray(walletArray)) {
+            wallets = wallets.concat(walletArray);
+          }
+        });
+      } else if (Array.isArray(result)) {
+        wallets = result;
       }
 
-      const response = await this.axiosInstance.get(url);
-      const wallets = response.data?.result || response.data || [];
-
-      return Array.isArray(wallets)
-        ? wallets.map((w: any) => this.mapWalletResponse(w, avatarId))
-        : [this.mapWalletResponse(wallets, avatarId)];
+      return wallets.map((w: any) => this.mapWalletResponse(w, avatarId));
     } catch (error) {
       this.logger.error(`Failed to get wallets: ${error.message}`, error.stack);
       throw error;
