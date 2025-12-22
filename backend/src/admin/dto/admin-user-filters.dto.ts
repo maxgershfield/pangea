@@ -1,16 +1,11 @@
 import { IsOptional, IsString, IsEnum, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UserRole } from './update-user.dto';
 
 export enum KycStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
-}
-
-export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  MODERATOR = 'moderator',
 }
 
 export class AdminUserFiltersDto {
@@ -38,6 +33,8 @@ export class AdminUserFiltersDto {
   @Min(1)
   limit?: number = 20;
 }
+
+
 
 
 
