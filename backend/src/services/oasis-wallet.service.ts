@@ -73,9 +73,14 @@ export class OasisWalletService {
           const token = await this.tokenManager.getToken();
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
+            this.logger.debug(`Token injected into request: ${config.method?.toUpperCase()} ${config.url}`);
+            this.logger.debug(`Token length: ${token.length}, prefix: ${token.substring(0, 30)}...`);
+          } else {
+            this.logger.warn(`No token available for request: ${config.method?.toUpperCase()} ${config.url}`);
           }
-        } catch (error) {
-          this.logger.error(`Failed to get token for request: ${error.message}`);
+        } catch (error: any) {
+          this.logger.error(`Failed to get token for request ${config.method?.toUpperCase()} ${config.url}: ${error.message}`);
+          this.logger.error(`Error stack: ${error.stack}`);
           // Continue without token - request will fail with 401 if auth is required
         }
         return config;
@@ -90,15 +95,36 @@ export class OasisWalletService {
       (response) => response,
       (error) => {
         const errorData = error.response?.data;
-        const errorMessage = errorData?.message || errorData?.result?.message || error.message || 'OASIS Wallet API error';
+        const statusCode = error.response?.status;
+        const requestUrl = error.config?.url;
+        const requestMethod = error.config?.method?.toUpperCase();
+        
+        // Extract error message from various possible locations
+        const errorMessage = 
+          errorData?.message || 
+          errorData?.result?.message || 
+          errorData?.Message ||
+          errorData?.result?.Message ||
+          error.message || 
+          'OASIS Wallet API error';
+        
         const errorDetails = errorData ? JSON.stringify(errorData, null, 2) : error.stack;
         
-        this.logger.error(`OASIS API Error: ${errorMessage}`);
+        this.logger.error(`OASIS API Error on ${requestMethod} ${requestUrl}: ${errorMessage}`);
+        this.logger.error(`Status Code: ${statusCode}`);
         this.logger.error(`Error details: ${errorDetails}`);
+        
+        // For 405 errors, provide more specific message
+        if (statusCode === 405) {
+          throw new HttpException(
+            `Method not allowed (405) - This usually indicates an authentication issue. Please check OASIS API token is valid. Original error: ${errorMessage}`,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
         
         throw new HttpException(
           errorMessage,
-          error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+          statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
         );
       },
     );
@@ -114,9 +140,14 @@ export class OasisWalletService {
 
       // Step 1: Generate keypair using Keys API
       this.logger.log(`Step 1: Generating keypair for ${providerType}`);
+      this.logger.debug(`Request URL: ${this.baseUrl}/api/keys/generate_keypair_for_provider/${providerType}`);
+      
       const keypairResponse = await this.axiosInstance.post(
         `/api/keys/generate_keypair_for_provider/${providerType}`,
       );
+      
+      this.logger.debug(`Step 1 response status: ${keypairResponse.status}`);
+      this.logger.debug(`Step 1 response data (first 500 chars): ${JSON.stringify(keypairResponse.data, null, 2).substring(0, 500)}`);
 
       // Handle nested OASIS response structure
       const keypairResponseData = keypairResponse.data?.result || keypairResponse.data;

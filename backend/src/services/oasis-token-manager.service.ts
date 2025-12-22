@@ -114,31 +114,45 @@ export class OasisTokenManagerService implements OnModuleInit {
       });
 
       // Extract token from nested response structure
+      // OASIS API returns: { result: { result: { jwtToken: "..." } } }
       const data = response.data;
-      const result: any = data.result || data;
-      const avatar =
-        result.Result || result.result || result || data;
-
+      this.logger.debug('OASIS authenticate response structure:', JSON.stringify(data, null, 2).substring(0, 500));
+      
+      // Try multiple paths to extract token
       const token =
-        avatar.jwtToken ||
-        avatar.JwtToken ||
-        result.jwtToken ||
-        data.jwtToken ||
-        data.token;
+        data?.result?.result?.jwtToken ||           // Most common: .result.result.jwtToken
+        data?.result?.Result?.jwtToken ||           // Alternate casing
+        data?.result?.jwtToken ||                   // Direct result.jwtToken
+        data?.jwtToken ||                           // Direct data.jwtToken
+        data?.token ||                              // Direct data.token
+        data?.result?.result?.JwtToken ||           // Alternate casing
+        data?.result?.token;                        // result.token
 
       if (!token) {
-        this.logger.error('No token in response:', JSON.stringify(data, null, 2));
+        this.logger.error('No token found in OASIS API response');
+        this.logger.error('Response structure:', JSON.stringify(data, null, 2));
+        this.logger.error('Attempted paths: result.result.jwtToken, result.jwtToken, jwtToken, token');
         throw new Error('No token received from OASIS API');
       }
+
+      this.logger.debug(`Token extracted successfully. Length: ${token.length}, Prefix: ${token.substring(0, 20)}...`);
 
       // Decode JWT to get expiration
       const payload = this.decodeJwtPayload(token);
       const expiresAt = payload.exp * 1000; // Convert to milliseconds
 
+      // Extract avatarId from JWT payload or response data
+      const avatarId = 
+        payload.id || 
+        data?.result?.result?.id || 
+        data?.result?.result?.avatarId ||
+        data?.result?.id ||
+        data?.avatarId;
+
       const tokenInfo: TokenInfo = {
         token,
         expiresAt,
-        avatarId: payload.id || avatar.avatarId || avatar.id,
+        avatarId: avatarId,
       };
 
       // Cache the token
@@ -244,3 +258,5 @@ export class OasisTokenManagerService implements OnModuleInit {
     return this.refreshToken();
   }
 }
+
+
