@@ -30,10 +30,31 @@ export class BetterAuthController {
       const requestPath = req.originalUrl || req.url;
       const fullUrl = `${protocol}://${host}${requestPath}`;
       
-      // Get request body
+      // Get request body - need to read raw body since body parser is disabled
       let requestBody: string | undefined;
-      if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-        requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      let parsedBody: any = undefined;
+      
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        // Try to get body from Express (might be undefined if body parser disabled)
+        if (req.body) {
+          parsedBody = req.body;
+          requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        } else {
+          // Read raw body stream
+          const chunks: Buffer[] = [];
+          for await (const chunk of req) {
+            chunks.push(chunk);
+          }
+          const rawBody = Buffer.concat(chunks).toString('utf-8');
+          if (rawBody) {
+            requestBody = rawBody;
+            try {
+              parsedBody = JSON.parse(rawBody);
+            } catch {
+              parsedBody = rawBody;
+            }
+          }
+        }
       }
       
       // Create Web API Request and call Better-Auth handler
@@ -63,13 +84,13 @@ export class BetterAuthController {
         // Handle sign-up
         if (path.startsWith('sign-up/') && req.method === 'POST') {
           const provider = path.replace('sign-up/', '');
-          if (provider === 'email' && req.body) {
+          if (provider === 'email' && parsedBody) {
             try {
               const result = await auth.api.signUpEmail({
                 body: {
-                  email: req.body.email,
-                  password: req.body.password,
-                  name: req.body.name,
+                  email: parsedBody.email,
+                  password: parsedBody.password,
+                  name: parsedBody.name,
                 },
                 headers: req.headers,
               });
@@ -83,12 +104,12 @@ export class BetterAuthController {
         // Handle sign-in
         if (path.startsWith('sign-in/') && req.method === 'POST') {
           const provider = path.replace('sign-in/', '');
-          if (provider === 'email' && req.body) {
+          if (provider === 'email' && parsedBody) {
             try {
               const result = await auth.api.signInEmail({
                 body: {
-                  email: req.body.email,
-                  password: req.body.password,
+                  email: parsedBody.email,
+                  password: parsedBody.password,
                 },
                 headers: req.headers,
               });
