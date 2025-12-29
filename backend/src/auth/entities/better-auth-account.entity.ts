@@ -9,14 +9,14 @@ export class BetterAuthAccount {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid', name: 'user_id' })
-  user_id: string;
+  @Column({ type: 'uuid', name: 'user_id', nullable: true })
+  user_id: string | null;
 
-  @Column({ type: 'varchar', length: 255 })
-  account_id: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  account_id: string | null;
 
-  @Column({ type: 'varchar', length: 50 })
-  provider: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  provider: string | null;
 
   @Column({ type: 'text', nullable: true, name: 'access_token' })
   access_token: string | null;

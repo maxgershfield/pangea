@@ -39,14 +39,14 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "account" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-        "user_id" uuid NOT NULL,
-        "account_id" VARCHAR(255) NOT NULL,
-        "provider" VARCHAR(50) NOT NULL,
+        "user_id" uuid,
+        "account_id" VARCHAR(255),
+        "provider" VARCHAR(50),
         "access_token" TEXT,
         "refresh_token" TEXT,
         "expires_at" TIMESTAMP,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "UQ_account_provider_account_id" UNIQUE ("provider", "account_id"),
+        CONSTRAINT "UQ_account_provider_account_id" UNIQUE ("provider", "account_id") WHERE "provider" IS NOT NULL AND "account_id" IS NOT NULL,
         CONSTRAINT "PK_account" PRIMARY KEY ("id"),
         CONSTRAINT "FK_account_user" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE
       )
