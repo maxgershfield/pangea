@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Logger } from '@nestjs/common';
@@ -14,6 +14,54 @@ export class MigrationController {
   constructor(
     @InjectDataSource() private dataSource: DataSource,
   ) {}
+
+  @Get('status')
+  async getMigrationStatus() {
+    try {
+      const pendingMigrations = await this.dataSource.showMigrations();
+      const executedMigrations = await this.dataSource.runMigrations({ dryRun: true });
+      
+      // Check if Better-Auth tables exist
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      
+      const betterAuthTables = ['user', 'session', 'account', 'verification', 'user_oasis_mapping'];
+      const tableChecks = await Promise.all(
+        betterAuthTables.map(async (tableName) => {
+          try {
+            const result = await queryRunner.query(
+              `SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = $1
+              )`,
+              [tableName]
+            );
+            return { table: tableName, exists: result[0].exists };
+          } catch (error) {
+            return { table: tableName, exists: false, error: error.message };
+          }
+        })
+      );
+      
+      await queryRunner.release();
+      
+      return {
+        success: true,
+        pendingMigrations,
+        executedMigrations: executedMigrations?.length || 0,
+        betterAuthTables: tableChecks,
+        allTablesExist: tableChecks.every(t => t.exists),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to check migration status: ${error.message}`, error.stack);
+      return {
+        success: false,
+        message: `Status check failed: ${error.message}`,
+        error: error.message,
+      };
+    }
+  }
 
   @Post('run')
   @HttpCode(HttpStatus.OK)
@@ -51,4 +99,3 @@ export class MigrationController {
     }
   }
 }
-
