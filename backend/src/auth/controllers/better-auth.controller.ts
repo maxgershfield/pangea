@@ -68,20 +68,21 @@ export class BetterAuthController {
       
       this.logger.log('Creating Web API Request object...');
       
-      // Better-Auth expects the request URL to match its basePath configuration
-      // Since basePath is '/api/auth', the full URL should include it
-      // But Better-Auth might need the path to be exactly as configured
+      // Better-Auth handler expects a Request object with the full URL
+      // The basePath is '/api/auth', so the URL should be: https://host/api/auth/session
+      // Better-Auth will internally strip the basePath and match '/session'
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
         body: requestBody,
       });
       
-      this.logger.log(`Web API Request created with URL: ${webRequest.url}`);
+      this.logger.log(`Web API Request URL: ${webRequest.url}`);
       this.logger.log(`Web API Request method: ${webRequest.method}`);
+      this.logger.log(`Web API Request headers: ${JSON.stringify(Object.fromEntries(webRequest.headers.entries()))}`);
       
       this.logger.log('Calling Better-Auth handler...');
-      // Call Better-Auth handler
+      // Call Better-Auth handler - it should match routes relative to basePath
       const webResponse = await handler(webRequest);
       this.logger.log(`Better-Auth handler returned status: ${webResponse.status}`);
       
@@ -91,6 +92,14 @@ export class BetterAuthController {
         responseHeaders[key] = value;
       });
       this.logger.log(`Response headers: ${JSON.stringify(responseHeaders)}`);
+      
+      // If 404, log more details about what Better-Auth might be expecting
+      if (webResponse.status === 404) {
+        this.logger.warn(`Better-Auth returned 404 for path: ${req.path}`);
+        this.logger.warn(`Better-Auth basePath is: /api/auth`);
+        this.logger.warn(`Request URL was: ${fullUrl}`);
+        this.logger.warn(`Better-Auth might be expecting path relative to basePath: ${req.path.replace('/api/auth', '')}`);
+      }
       
       // Convert Web API Response to Express response
       // Copy status
