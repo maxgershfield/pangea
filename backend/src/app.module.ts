@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { DatabaseConfig } from './config/database.config';
 import { RedisModule } from './config/redis.module';
 import { MigrationRunnerService } from './config/migration-runner.service';
+import { MigrationController } from './config/migration.controller';
 import { TradesModule } from './trades/trades.module';
 import { OrdersModule } from './orders/orders.module';
 import { AssetsModule } from './assets/assets.module';
@@ -47,7 +48,7 @@ import { OasisModule } from './services/oasis.module';
     AdminModule,
     WalletModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, MigrationController],
   providers: [AppService, MigrationRunnerService],
 })
 export class AppModule {}
