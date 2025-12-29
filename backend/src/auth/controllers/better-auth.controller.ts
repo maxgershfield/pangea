@@ -8,36 +8,19 @@ export class BetterAuthController {
 
   constructor(private betterAuthService: BetterAuthService) {}
 
-  // Better-Auth routes - catch all routes that don't match the old auth controller
-  // Routes like /session, /sign-up/email, /sign-in/email, etc.
-  @All('session')
-  async handleSession(@Req() req: Request, @Res() res: Response) {
-    return this.handleAuth(req, res);
-  }
-
-  @All('sign-up/:provider')
-  async handleSignUp(@Req() req: Request, @Res() res: Response) {
-    return this.handleAuth(req, res);
-  }
-
-  @All('sign-in/:provider')
-  async handleSignIn(@Req() req: Request, @Res() res: Response) {
-    return this.handleAuth(req, res);
-  }
-
-  @All('sign-out')
-  async handleSignOut(@Req() req: Request, @Res() res: Response) {
-    return this.handleAuth(req, res);
-  }
-
-  @All('user')
-  async handleUser(@Req() req: Request, @Res() res: Response) {
-    return this.handleAuth(req, res);
-  }
-
-  // Catch-all for other Better-Auth routes
+  // Better-Auth routes - use a single catch-all that handles all Better-Auth paths
+  // Better-Auth uses paths like: /session, /sign-up/email, /sign-in/email, etc.
+  // We need to catch all routes that don't match the old auth controller
   @All('*')
   async handleAuth(@Req() req: Request, @Res() res: Response) {
+    // Skip if this is an old auth route (register, login, forgot-password, reset-password)
+    const oldAuthRoutes = ['register', 'login', 'forgot-password', 'reset-password'];
+    const path = req.url.split('?')[0].replace('/api/auth/', '');
+    
+    if (oldAuthRoutes.includes(path)) {
+      // Let the old auth controller handle it
+      return res.status(404).json({ error: 'Route not found' });
+    }
     try {
       const handler = this.betterAuthService.getHandler();
       

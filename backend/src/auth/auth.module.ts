@@ -31,6 +31,7 @@ import { OasisModule } from '../services/oasis.module';
     }),
     OasisModule, // For OASIS wallet services
   ],
+  // Register BetterAuthController LAST so it catches routes not handled by AuthController
   controllers: [AuthController, UserController, BetterAuthController],
   providers: [
     AuthService,
