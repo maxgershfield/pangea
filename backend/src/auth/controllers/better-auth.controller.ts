@@ -21,21 +21,21 @@ export class BetterAuthController {
       const fullUrl = `${protocol}://${host}${req.originalUrl || req.url}`;
       
       // Get request body if present
-      let body: string | undefined;
+      let requestBody: string | undefined;
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         if (req.body) {
-          body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+          requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
         } else if (req.readable) {
           // For stream-based bodies, we'd need to read them differently
           // But Better-Auth should handle this via the request object
-          body = undefined;
+          requestBody = undefined;
         }
       }
       
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
-        body: body,
+        body: requestBody,
       });
       
       // Call Better-Auth handler
@@ -51,14 +51,14 @@ export class BetterAuthController {
       });
       
       // Get response body and send it
-      const body = await webResponse.text();
+      const responseBody = await webResponse.text();
       
       // Try to parse as JSON, otherwise send as text
       try {
-        const jsonBody = JSON.parse(body);
+        const jsonBody = JSON.parse(responseBody);
         return res.json(jsonBody);
       } catch {
-        return res.send(body);
+        return res.send(responseBody);
       }
     } catch (error) {
       this.logger.error(`Better-Auth handler error: ${error.message}`, error.stack);
