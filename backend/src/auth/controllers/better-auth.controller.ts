@@ -15,10 +15,27 @@ export class BetterAuthController {
       
       // Better-Auth handler expects a Web API Request and returns a Web API Response
       // Convert Express request to Web API Request
-      const webRequest = new Request(req.url, {
+      // Construct full URL from Express request
+      const protocol = req.protocol || 'https';
+      const host = req.get('host') || 'pangea-production-128d.up.railway.app';
+      const fullUrl = `${protocol}://${host}${req.originalUrl || req.url}`;
+      
+      // Get request body if present
+      let body: string | undefined;
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        if (req.body) {
+          body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+        } else if (req.readable) {
+          // For stream-based bodies, we'd need to read them differently
+          // But Better-Auth should handle this via the request object
+          body = undefined;
+        }
+      }
+      
+      const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
-        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+        body: body,
       });
       
       // Call Better-Auth handler
