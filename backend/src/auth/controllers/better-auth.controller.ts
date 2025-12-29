@@ -67,16 +67,30 @@ export class BetterAuthController {
       }
       
       this.logger.log('Creating Web API Request object...');
+      
+      // Better-Auth expects the request URL to match its basePath configuration
+      // Since basePath is '/api/auth', the full URL should include it
+      // But Better-Auth might need the path to be exactly as configured
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
         body: requestBody,
       });
       
+      this.logger.log(`Web API Request created with URL: ${webRequest.url}`);
+      this.logger.log(`Web API Request method: ${webRequest.method}`);
+      
       this.logger.log('Calling Better-Auth handler...');
       // Call Better-Auth handler
       const webResponse = await handler(webRequest);
       this.logger.log(`Better-Auth handler returned status: ${webResponse.status}`);
+      
+      // Log response headers for debugging
+      const responseHeaders: Record<string, string> = {};
+      webResponse.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+      this.logger.log(`Response headers: ${JSON.stringify(responseHeaders)}`);
       
       // Convert Web API Response to Express response
       // Copy status
