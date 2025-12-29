@@ -29,7 +29,9 @@ export class BetterAuthController {
     
     this.logger.log(`Processing Better-Auth route: ${path}`);
     try {
+      this.logger.log('Getting Better-Auth handler...');
       const handler = this.betterAuthService.getHandler();
+      this.logger.log('Handler obtained, creating Web API Request...');
       
       // Better-Auth handler expects a Web API Request and returns a Web API Response
       // Convert Express request to Web API Request
@@ -38,11 +40,14 @@ export class BetterAuthController {
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
       const fullUrl = `${protocol}://${host}${req.originalUrl || req.url}`;
       
+      this.logger.log(`Full URL: ${fullUrl}`);
+      
       // Get request body if present
       let requestBody: string | undefined;
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         if (req.body) {
           requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+          this.logger.log(`Request body: ${requestBody.substring(0, 100)}...`);
         } else if (req.readable) {
           // For stream-based bodies, we'd need to read them differently
           // But Better-Auth should handle this via the request object
@@ -50,14 +55,17 @@ export class BetterAuthController {
         }
       }
       
+      this.logger.log('Creating Web API Request object...');
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
         body: requestBody,
       });
       
+      this.logger.log('Calling Better-Auth handler...');
       // Call Better-Auth handler
       const webResponse = await handler(webRequest);
+      this.logger.log(`Better-Auth handler returned status: ${webResponse.status}`);
       
       // Convert Web API Response to Express response
       // Copy status
@@ -68,14 +76,18 @@ export class BetterAuthController {
         res.setHeader(key, value);
       });
       
+      this.logger.log('Reading response body...');
       // Get response body and send it
       const responseBody = await webResponse.text();
+      this.logger.log(`Response body length: ${responseBody.length}`);
       
       // Try to parse as JSON, otherwise send as text
       try {
         const jsonBody = JSON.parse(responseBody);
+        this.logger.log('Sending JSON response');
         return res.json(jsonBody);
       } catch {
+        this.logger.log('Sending text response');
         return res.send(responseBody);
       }
     } catch (error) {
