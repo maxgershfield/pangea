@@ -14,10 +14,20 @@ import { BetterAuthService } from './services/better-auth.service';
 import { BetterAuthController } from './controllers/better-auth.controller';
 import { OasisLinkService } from './services/oasis-link.service';
 import { OasisModule } from '../services/oasis.module';
+import { BetterAuthUser } from './entities/better-auth-user.entity';
+import { BetterAuthSession } from './entities/better-auth-session.entity';
+import { BetterAuthAccount } from './entities/better-auth-account.entity';
+import { BetterAuthVerification } from './entities/better-auth-verification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([
+      User,
+      BetterAuthUser,
+      BetterAuthSession,
+      BetterAuthAccount,
+      BetterAuthVerification,
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
