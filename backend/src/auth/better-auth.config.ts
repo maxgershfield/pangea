@@ -2,9 +2,14 @@ import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 
 export async function createBetterAuth(dataSource: DataSource, configService: ConfigService) {
-  // Dynamic import for ES module
-  const { betterAuth } = await import('better-auth');
-  const { typeormAdapter } = await import('@hedystia/better-auth-typeorm');
+  // Dynamic import for ES module - use eval to prevent TypeScript from transforming to require()
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const betterAuthModule = await (new Function('return import("better-auth")'))();
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const adapterModule = await (new Function('return import("@hedystia/better-auth-typeorm")'))();
+  
+  const { betterAuth } = betterAuthModule;
+  const { typeormAdapter } = adapterModule;
   
   return betterAuth({
     database: typeormAdapter(dataSource),
