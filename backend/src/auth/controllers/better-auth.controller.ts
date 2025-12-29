@@ -45,11 +45,13 @@ export class BetterAuthController {
       
       const webResponse = await handler(webRequest);
       
-      // Handle 404 - Better-Auth route not matched
+      // Handle 404 - Better-Auth handler route not matched
+      // Use Better-Auth API methods directly as fallback
       if (webResponse.status === 404) {
-        // Try using Better-Auth API directly as fallback
-        if (path === 'session') {
-          const auth = this.betterAuthService.getAuth();
+        const auth = this.betterAuthService.getAuth();
+        
+        // Handle specific Better-Auth endpoints using API methods
+        if (path === 'session' && req.method === 'GET') {
           try {
             const session = await auth.api.getSession({ headers: req.headers });
             return res.json({ session });
@@ -57,6 +59,70 @@ export class BetterAuthController {
             return res.status(401).json({ session: null });
           }
         }
+        
+        // Handle sign-up
+        if (path.startsWith('sign-up/') && req.method === 'POST') {
+          const provider = path.replace('sign-up/', '');
+          if (provider === 'email' && req.body) {
+            try {
+              const result = await auth.api.signUpEmail({
+                body: {
+                  email: req.body.email,
+                  password: req.body.password,
+                  name: req.body.name,
+                },
+                headers: req.headers,
+              });
+              return res.status(201).json(result);
+            } catch (error: any) {
+              return res.status(400).json({ error: error.message });
+            }
+          }
+        }
+        
+        // Handle sign-in
+        if (path.startsWith('sign-in/') && req.method === 'POST') {
+          const provider = path.replace('sign-in/', '');
+          if (provider === 'email' && req.body) {
+            try {
+              const result = await auth.api.signInEmail({
+                body: {
+                  email: req.body.email,
+                  password: req.body.password,
+                },
+                headers: req.headers,
+              });
+              return res.json(result);
+            } catch (error: any) {
+              return res.status(401).json({ error: error.message });
+            }
+          }
+        }
+        
+        // Handle sign-out
+        if (path === 'sign-out' && req.method === 'POST') {
+          try {
+            await auth.api.signOut({ headers: req.headers });
+            return res.json({ success: true });
+          } catch (error: any) {
+            return res.status(400).json({ error: error.message });
+          }
+        }
+        
+        // Handle user endpoint
+        if (path === 'user' && req.method === 'GET') {
+          try {
+            const session = await auth.api.getSession({ headers: req.headers });
+            if (!session?.user) {
+              return res.status(401).json({ error: 'Not authenticated' });
+            }
+            return res.json({ user: session.user });
+          } catch (error: any) {
+            return res.status(401).json({ error: error.message });
+          }
+        }
+        
+        // Unknown route
         return res.status(404).json({ error: 'Route not found' });
       }
       
