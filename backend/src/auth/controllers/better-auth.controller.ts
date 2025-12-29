@@ -30,31 +30,12 @@ export class BetterAuthController {
       const requestPath = req.originalUrl || req.url;
       const fullUrl = `${protocol}://${host}${requestPath}`;
       
-      // Get request body - need to read raw body since body parser is disabled
+      // Get request body - Express body parser should have parsed it
       let requestBody: string | undefined;
-      let parsedBody: any = undefined;
+      let parsedBody: any = req.body;
       
-      if (req.method !== 'GET' && req.method !== 'HEAD') {
-        // Try to get body from Express (might be undefined if body parser disabled)
-        if (req.body) {
-          parsedBody = req.body;
-          requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-        } else {
-          // Read raw body stream
-          const chunks: Buffer[] = [];
-          for await (const chunk of req) {
-            chunks.push(chunk);
-          }
-          const rawBody = Buffer.concat(chunks).toString('utf-8');
-          if (rawBody) {
-            requestBody = rawBody;
-            try {
-              parsedBody = JSON.parse(rawBody);
-            } catch {
-              parsedBody = rawBody;
-            }
-          }
-        }
+      if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+        requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       }
       
       // Create Web API Request and call Better-Auth handler
