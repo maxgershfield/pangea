@@ -13,59 +13,51 @@ export class BetterAuthController {
   // We need to catch all routes that don't match the old auth controller
   @All('*')
   async handleAuth(@Req() req: Request, @Res() res: Response) {
-    this.logger.log(`Better-Auth handler called for: ${req.method} ${req.url}`);
-    
-    // Skip if this is an old auth route (register, login, forgot-password, reset-password)
+    // Skip if this is an old auth route
     const oldAuthRoutes = ['register', 'login', 'forgot-password', 'reset-password'];
     const path = req.url.split('?')[0].replace('/api/auth/', '');
     
-    this.logger.log(`Path after processing: ${path}`);
-    
     if (oldAuthRoutes.includes(path)) {
-      // Let the old auth controller handle it
-      this.logger.log(`Skipping old auth route: ${path}`);
       return res.status(404).json({ error: 'Route not found' });
     }
     
-    this.logger.log(`Processing Better-Auth route: ${path}`);
     try {
-      this.logger.log('Getting Better-Auth handler...');
       const handler = this.betterAuthService.getHandler();
-      this.logger.log('Handler obtained, creating Web API Request...');
       
-      // Better-Auth handler expects a Web API Request
-      // Construct the full URL - Better-Auth needs the complete URL including basePath
-      const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+      // Construct full URL for Better-Auth handler
+      const protocol = req.get('x-forwarded-proto') === 'https' || req.secure ? 'https' : 'http';
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
       const requestPath = req.originalUrl || req.url;
       const fullUrl = `${protocol}://${host}${requestPath}`;
       
-      // Get request body if present
+      // Get request body
       let requestBody: string | undefined;
-      if (req.method !== 'GET' && req.method !== 'HEAD') {
-        if (req.body) {
-          requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-        }
+      if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+        requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       }
       
-      // Create Web API Request - Better-Auth will match routes based on the URL path
+      // Create Web API Request and call Better-Auth handler
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
         body: requestBody,
       });
       
-      // Call Better-Auth handler
       const webResponse = await handler(webRequest);
       
-      // If 404, Better-Auth isn't matching the route
-      // This could mean the basePath configuration isn't working
+      // Handle 404 - Better-Auth route not matched
       if (webResponse.status === 404) {
-        this.logger.error(`Better-Auth 404: Could not match route ${requestPath}`);
-        return res.status(404).json({
-          error: 'Route not found',
-          message: `Better-Auth could not match: ${requestPath}`,
-        });
+        // Try using Better-Auth API directly as fallback
+        if (path === 'session') {
+          const auth = this.betterAuthService.getAuth();
+          try {
+            const session = await auth.api.getSession({ headers: req.headers });
+            return res.json({ session });
+          } catch (error) {
+            return res.status(401).json({ session: null });
+          }
+        }
+        return res.status(404).json({ error: 'Route not found' });
       }
       
       // Convert Web API Response to Express response
