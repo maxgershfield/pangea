@@ -35,16 +35,22 @@ export class BetterAuthController {
       
       // Better-Auth handler expects a Web API Request and returns a Web API Response
       // Convert Express request to Web API Request
-      // Construct full URL from Express request
-      const protocol = req.protocol || 'https';
+      // Better-Auth is configured with basePath: '/api/auth'
+      // So we need to construct the URL with the full path
+      const protocol = req.protocol || (req.secure ? 'https' : 'http') || 'https';
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
-      // Better-Auth expects the full path including basePath
-      const fullUrl = `${protocol}://${host}${req.originalUrl || req.url}`;
+      
+      // Get the path - Better-Auth expects the full path including basePath
+      const requestPath = req.originalUrl || req.url;
+      const fullUrl = `${protocol}://${host}${requestPath}`;
       
       this.logger.log(`Full URL: ${fullUrl}`);
       this.logger.log(`Request path: ${req.path}`);
       this.logger.log(`Request originalUrl: ${req.originalUrl}`);
       this.logger.log(`Request url: ${req.url}`);
+      
+      // Better-Auth might need the URL to match exactly what it expects
+      // Try with the basePath included in the URL
       
       // Get request body if present
       let requestBody: string | undefined;
