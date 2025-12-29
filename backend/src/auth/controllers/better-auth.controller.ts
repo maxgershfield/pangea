@@ -13,14 +13,21 @@ export class BetterAuthController {
   // We need to catch all routes that don't match the old auth controller
   @All('*')
   async handleAuth(@Req() req: Request, @Res() res: Response) {
+    this.logger.log(`Better-Auth handler called for: ${req.method} ${req.url}`);
+    
     // Skip if this is an old auth route (register, login, forgot-password, reset-password)
     const oldAuthRoutes = ['register', 'login', 'forgot-password', 'reset-password'];
     const path = req.url.split('?')[0].replace('/api/auth/', '');
     
+    this.logger.log(`Path after processing: ${path}`);
+    
     if (oldAuthRoutes.includes(path)) {
       // Let the old auth controller handle it
+      this.logger.log(`Skipping old auth route: ${path}`);
       return res.status(404).json({ error: 'Route not found' });
     }
+    
+    this.logger.log(`Processing Better-Auth route: ${path}`);
     try {
       const handler = this.betterAuthService.getHandler();
       
