@@ -13,21 +13,36 @@ export class BetterAuthController {
     try {
       const handler = this.betterAuthService.getHandler();
       
-      // Better-Auth handler expects a request and returns a Response
-      // We need to pass the request and let Better-Auth handle the response
-      const response = await handler(req as any);
+      // Better-Auth handler expects a Web API Request and returns a Web API Response
+      // Convert Express request to Web API Request
+      const webRequest = new Request(req.url, {
+        method: req.method,
+        headers: req.headers as HeadersInit,
+        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+      });
       
-      // If Better-Auth returns a Response object, we need to handle it
-      if (response instanceof Response || (response && typeof response.status === 'function')) {
-        return response;
+      // Call Better-Auth handler
+      const webResponse = await handler(webRequest);
+      
+      // Convert Web API Response to Express response
+      // Copy status
+      res.status(webResponse.status);
+      
+      // Copy headers
+      webResponse.headers.forEach((value, key) => {
+        res.setHeader(key, value);
+      });
+      
+      // Get response body and send it
+      const body = await webResponse.text();
+      
+      // Try to parse as JSON, otherwise send as text
+      try {
+        const jsonBody = JSON.parse(body);
+        return res.json(jsonBody);
+      } catch {
+        return res.send(body);
       }
-      
-      // Otherwise, send the response directly
-      if (response) {
-        return res.status(response.status || 200).json(response);
-      }
-      
-      return res.status(200).json({ success: true });
     } catch (error) {
       this.logger.error(`Better-Auth handler error: ${error.message}`, error.stack);
       
