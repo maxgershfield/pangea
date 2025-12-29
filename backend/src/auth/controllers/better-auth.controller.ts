@@ -38,9 +38,13 @@ export class BetterAuthController {
       // Construct full URL from Express request
       const protocol = req.protocol || 'https';
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
+      // Better-Auth expects the full path including basePath
       const fullUrl = `${protocol}://${host}${req.originalUrl || req.url}`;
       
       this.logger.log(`Full URL: ${fullUrl}`);
+      this.logger.log(`Request path: ${req.path}`);
+      this.logger.log(`Request originalUrl: ${req.originalUrl}`);
+      this.logger.log(`Request url: ${req.url}`);
       
       // Get request body if present
       let requestBody: string | undefined;
