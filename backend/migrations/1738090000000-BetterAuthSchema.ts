@@ -29,7 +29,7 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
         "ip_address" VARCHAR(45),
         "user_agent" TEXT,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "UQ_session_token" UNIQUE ("token"),
+        CONSTRAINT "UQ_session_token" UNIQUE ("token") WHERE "token" IS NOT NULL,
         CONSTRAINT "PK_session" PRIMARY KEY ("id"),
         CONSTRAINT "FK_session_user" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE
       )
