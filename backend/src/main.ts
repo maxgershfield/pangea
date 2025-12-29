@@ -3,7 +3,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable body parser for Better-Auth compatibility
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false, // Better-Auth needs to handle raw request bodies
+  });
 
   // Enable CORS
   const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'];
