@@ -22,7 +22,10 @@ export async function createBetterAuth(dataSource: DataSource, configService: Co
   const { typeormAdapter } = adapterModule;
   
   return betterAuth({
-    database: typeormAdapter(dataSource),
+    database: typeormAdapter(dataSource, {
+      // Configure adapter to generate IDs for sessions
+      generateId: true,
+    }),
     
     emailAndPassword: {
       enabled: true,
