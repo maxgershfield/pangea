@@ -1,5 +1,15 @@
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { webcrypto } from 'node:crypto';
+
+// Ensure Web Crypto API is available for Better-Auth
+// Better-Auth (ES module) expects crypto to be available globally
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = webcrypto as any;
+}
+if (typeof (global as any).crypto === 'undefined') {
+  (global as any).crypto = webcrypto;
+}
 
 export async function createBetterAuth(dataSource: DataSource, configService: ConfigService) {
   // Dynamic import for ES module - use eval to prevent TypeScript from transforming to require()

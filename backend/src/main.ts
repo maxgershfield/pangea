@@ -1,6 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { webcrypto } from 'node:crypto';
+
+// Polyfill Web Crypto API for Better-Auth (ES module compatibility)
+// Better-Auth expects `crypto` to be available globally
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = webcrypto as any;
+}
+// Also make it available as a global variable for ES modules
+if (typeof (global as any).crypto === 'undefined') {
+  (global as any).crypto = webcrypto;
+}
 
 async function bootstrap() {
   // Create app with JSON body parser enabled
