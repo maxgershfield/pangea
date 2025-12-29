@@ -1,12 +1,18 @@
 import { Controller, All, Req, Res, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { BetterAuthService } from '../services/better-auth.service';
 
 @Controller('auth')
 export class BetterAuthController {
   private readonly logger = new Logger(BetterAuthController.name);
 
-  constructor(private betterAuthService: BetterAuthService) {}
+  constructor(
+    private betterAuthService: BetterAuthService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
 
   // Better-Auth routes - use a single catch-all that handles all Better-Auth paths
   // Better-Auth uses paths like: /session, /sign-up/email, /sign-in/email, etc.
@@ -75,6 +81,25 @@ export class BetterAuthController {
                 },
                 headers: req.headers,
               });
+              
+              // Generate JWT token for response (as per Rishav's requirement)
+              if (result.user) {
+                const jwtToken = this.generateJwtToken(result.user);
+                return res.status(201).json({
+                  user: {
+                    id: result.user.id,
+                    email: result.user.email,
+                    username: result.user.email.split('@')[0], // Use email prefix as username
+                    name: result.user.name || undefined,
+                    avatarId: '', // Will be set when OASIS avatar is created
+                    role: 'user',
+                  },
+                  token: jwtToken,
+                  accessToken: jwtToken, // Also include as accessToken for compatibility
+                  expiresAt: this.getTokenExpiration(),
+                });
+              }
+              
               return res.status(201).json(result);
             } catch (error: any) {
               return res.status(400).json({ error: error.message });
@@ -94,6 +119,25 @@ export class BetterAuthController {
                 },
                 headers: req.headers,
               });
+              
+              // Generate JWT token for response (as per Rishav's requirement)
+              if (result.user) {
+                const jwtToken = this.generateJwtToken(result.user);
+                return res.json({
+                  user: {
+                    id: result.user.id,
+                    email: result.user.email,
+                    username: result.user.email.split('@')[0], // Use email prefix as username
+                    name: result.user.name || undefined,
+                    avatarId: '', // Will be set when OASIS avatar is created
+                    role: 'user',
+                  },
+                  token: jwtToken,
+                  accessToken: jwtToken, // Also include as accessToken for compatibility
+                  expiresAt: this.getTokenExpiration(),
+                });
+              }
+              
               return res.json(result);
             } catch (error: any) {
               return res.status(401).json({ error: error.message });
@@ -169,6 +213,43 @@ export class BetterAuthController {
         stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       });
     }
+  }
+
+  /**
+   * Generate JWT token for Better-Auth user (as per Rishav's requirement)
+   */
+  private generateJwtToken(user: { id: string; email: string; name?: string | null }): string {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      username: user.email.split('@')[0],
+      name: user.name || undefined,
+      role: 'user',
+    };
+
+    return this.jwtService.sign(payload);
+  }
+
+  /**
+   * Get token expiration date
+   */
+  private getTokenExpiration(): Date {
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '7d';
+    const now = new Date();
+    if (expiresIn.endsWith('d')) {
+      const days = parseInt(expiresIn);
+      now.setDate(now.getDate() + days);
+    } else if (expiresIn.endsWith('h')) {
+      const hours = parseInt(expiresIn);
+      now.setHours(now.getHours() + hours);
+    } else if (expiresIn.endsWith('m')) {
+      const minutes = parseInt(expiresIn);
+      now.setMinutes(now.getMinutes() + minutes);
+    } else {
+      // Default to 7 days
+      now.setDate(now.getDate() + 7);
+    }
+    return now;
   }
 }
 
