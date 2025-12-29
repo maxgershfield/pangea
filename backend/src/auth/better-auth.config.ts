@@ -43,8 +43,12 @@ export async function createBetterAuth(dataSource: DataSource, configService: Co
     
     // Base URL for callbacks - should be the full URL without the path
     baseURL: configService.get<string>('BASE_URL') || 'https://pangea-production-128d.up.railway.app',
+    // basePath should match where the handler is mounted
+    // Since we're mounting at /api/auth, basePath should be /api/auth
     basePath: '/api/auth',
     secret: configService.get<string>('BETTER_AUTH_SECRET') || 'change-me-in-production',
+    // Trust proxy for Railway (behind reverse proxy)
+    trustProxy: true,
   });
 }
 
