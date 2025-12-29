@@ -23,9 +23,9 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "session" (
         "id" VARCHAR(255) NOT NULL,
-        "user_id" uuid NOT NULL,
-        "expires_at" TIMESTAMP NOT NULL,
-        "token" VARCHAR(255) NOT NULL,
+        "user_id" uuid,
+        "expires_at" TIMESTAMP,
+        "token" VARCHAR(255),
         "ip_address" VARCHAR(45),
         "user_agent" TEXT,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),

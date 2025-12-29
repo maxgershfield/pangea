@@ -6,17 +6,17 @@ import { BetterAuthUser } from './better-auth-user.entity';
  */
 @Entity('session')
 export class BetterAuthSession {
-  @PrimaryColumn({ type: 'varchar', length: 255 })
+  @PrimaryColumn({ type: 'varchar', length: 255, nullable: false })
   id: string;
 
-  @Column({ type: 'uuid', name: 'user_id' })
-  user_id: string;
+  @Column({ type: 'uuid', name: 'user_id', nullable: true })
+  user_id: string | null;
 
-  @Column({ type: 'timestamp', name: 'expires_at' })
-  expires_at: Date;
+  @Column({ type: 'timestamp', name: 'expires_at', nullable: true })
+  expires_at: Date | null;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  token: string;
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  token: string | null;
 
   @Column({ type: 'varchar', length: 45, nullable: true, name: 'ip_address' })
   ip_address: string | null;
