@@ -8,6 +8,34 @@ export class BetterAuthController {
 
   constructor(private betterAuthService: BetterAuthService) {}
 
+  // Better-Auth routes - catch all routes that don't match the old auth controller
+  // Routes like /session, /sign-up/email, /sign-in/email, etc.
+  @All('session')
+  async handleSession(@Req() req: Request, @Res() res: Response) {
+    return this.handleAuth(req, res);
+  }
+
+  @All('sign-up/:provider')
+  async handleSignUp(@Req() req: Request, @Res() res: Response) {
+    return this.handleAuth(req, res);
+  }
+
+  @All('sign-in/:provider')
+  async handleSignIn(@Req() req: Request, @Res() res: Response) {
+    return this.handleAuth(req, res);
+  }
+
+  @All('sign-out')
+  async handleSignOut(@Req() req: Request, @Res() res: Response) {
+    return this.handleAuth(req, res);
+  }
+
+  @All('user')
+  async handleUser(@Req() req: Request, @Res() res: Response) {
+    return this.handleAuth(req, res);
+  }
+
+  // Catch-all for other Better-Auth routes
   @All('*')
   async handleAuth(@Req() req: Request, @Res() res: Response) {
     try {
