@@ -18,9 +18,6 @@ export class MigrationController {
   @Get('status')
   async getMigrationStatus() {
     try {
-      const pendingMigrations = await this.dataSource.showMigrations();
-      const executedMigrations = await this.dataSource.runMigrations({ dryRun: true });
-      
       // Check if Better-Auth tables exist
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
@@ -48,10 +45,11 @@ export class MigrationController {
       
       return {
         success: true,
-        pendingMigrations,
-        executedMigrations: executedMigrations?.length || 0,
         betterAuthTables: tableChecks,
         allTablesExist: tableChecks.every(t => t.exists),
+        message: tableChecks.every(t => t.exists) 
+          ? 'All Better-Auth tables exist' 
+          : 'Some Better-Auth tables are missing',
       };
     } catch (error) {
       this.logger.error(`Failed to check migration status: ${error.message}`, error.stack);
