@@ -33,72 +33,39 @@ export class BetterAuthController {
       const handler = this.betterAuthService.getHandler();
       this.logger.log('Handler obtained, creating Web API Request...');
       
-      // Better-Auth handler expects a Web API Request and returns a Web API Response
-      // Convert Express request to Web API Request
-      // Better-Auth is configured with basePath: '/api/auth'
-      // The handler expects the full URL, but Better-Auth internally strips basePath
-      // So we need to ensure the URL matches what Better-Auth expects
+      // Better-Auth handler expects a Web API Request
+      // Construct the full URL - Better-Auth needs the complete URL including basePath
       const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
-      
-      // Get the full path - Better-Auth needs the complete URL with basePath
       const requestPath = req.originalUrl || req.url;
       const fullUrl = `${protocol}://${host}${requestPath}`;
-      
-      this.logger.log(`Full URL: ${fullUrl}`);
-      this.logger.log(`Protocol: ${protocol}`);
-      this.logger.log(`Request path: ${req.path}`);
-      this.logger.log(`Request originalUrl: ${req.originalUrl}`);
-      this.logger.log(`Request url: ${req.url}`);
-      this.logger.log(`Request secure: ${req.secure}`);
-      this.logger.log(`X-Forwarded-Proto: ${req.get('x-forwarded-proto')}`);
       
       // Get request body if present
       let requestBody: string | undefined;
       if (req.method !== 'GET' && req.method !== 'HEAD') {
         if (req.body) {
           requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-          this.logger.log(`Request body: ${requestBody.substring(0, 100)}...`);
-        } else if (req.readable) {
-          // For stream-based bodies, we'd need to read them differently
-          // But Better-Auth should handle this via the request object
-          requestBody = undefined;
         }
       }
       
-      this.logger.log('Creating Web API Request object...');
-      
-      // Better-Auth handler expects a Request object with the full URL
-      // The basePath is '/api/auth', so the URL should be: https://host/api/auth/session
-      // Better-Auth will internally strip the basePath and match '/session'
+      // Create Web API Request - Better-Auth will match routes based on the URL path
       const webRequest = new Request(fullUrl, {
         method: req.method,
         headers: req.headers as HeadersInit,
         body: requestBody,
       });
       
-      this.logger.log(`Web API Request URL: ${webRequest.url}`);
-      this.logger.log(`Web API Request method: ${webRequest.method}`);
-      this.logger.log(`Web API Request headers: ${JSON.stringify(Object.fromEntries(webRequest.headers.entries()))}`);
-      
-      this.logger.log('Calling Better-Auth handler...');
-      // Call Better-Auth handler - it should match routes relative to basePath
+      // Call Better-Auth handler
       const webResponse = await handler(webRequest);
-      this.logger.log(`Better-Auth handler returned status: ${webResponse.status}`);
       
-      // Log response headers for debugging
-      const responseHeaders: Record<string, string> = {};
-      webResponse.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
-      this.logger.log(`Response headers: ${JSON.stringify(responseHeaders)}`);
-      
-      // If 404, log more details about what Better-Auth might be expecting
+      // If 404, Better-Auth isn't matching the route
+      // This could mean the basePath configuration isn't working
       if (webResponse.status === 404) {
-        this.logger.warn(`Better-Auth returned 404 for path: ${req.path}`);
-        this.logger.warn(`Better-Auth basePath is: /api/auth`);
-        this.logger.warn(`Request URL was: ${fullUrl}`);
-        this.logger.warn(`Better-Auth might be expecting path relative to basePath: ${req.path.replace('/api/auth', '')}`);
+        this.logger.error(`Better-Auth 404: Could not match route ${requestPath}`);
+        return res.status(404).json({
+          error: 'Route not found',
+          message: `Better-Auth could not match: ${requestPath}`,
+        });
       }
       
       // Convert Web API Response to Express response
