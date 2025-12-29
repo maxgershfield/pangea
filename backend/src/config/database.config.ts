@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
+// Explicitly import Better-Auth entities to ensure they're registered
+import {
+  BetterAuthUser,
+  BetterAuthSession,
+  BetterAuthAccount,
+  BetterAuthVerification,
+} from '../auth/entities';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -16,12 +23,24 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       ? __dirname + '/../migrations/*.js'
       : __dirname + '/../../migrations/*{.ts,.js}';
 
+    // Base entities pattern - auto-discover all entities
+    const entitiesPattern = [__dirname + '/../**/*.entity{.ts,.js}'];
+    
+    // Explicitly include Better-Auth entities to ensure they're loaded
+    // This is necessary because the Better-Auth TypeORM adapter needs these entities
+    const explicitEntities = [
+      BetterAuthUser,
+      BetterAuthSession,
+      BetterAuthAccount,
+      BetterAuthVerification,
+    ];
+
     // If DATABASE_URL is provided, use it directly
     if (databaseUrl) {
       return {
         type: 'postgres',
         url: databaseUrl,
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+        entities: [...explicitEntities, ...entitiesPattern],
         migrations: [migrationsPath],
         synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
         logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
@@ -36,7 +55,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       username: this.configService.get<string>('DB_USERNAME', 'user'),
       password: this.configService.get<string>('DB_PASSWORD', 'password'),
       database: this.configService.get<string>('DB_DATABASE', 'pangea'),
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+      entities: [...explicitEntities, ...entitiesPattern],
       migrations: [migrationsPath],
       synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
       logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
