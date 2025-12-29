@@ -36,21 +36,22 @@ export class BetterAuthController {
       // Better-Auth handler expects a Web API Request and returns a Web API Response
       // Convert Express request to Web API Request
       // Better-Auth is configured with basePath: '/api/auth'
-      // The handler expects the full URL including the basePath
-      const protocol = req.protocol || (req.secure ? 'https' : 'http') || 'https';
+      // The handler expects the full URL, but Better-Auth internally strips basePath
+      // So we need to ensure the URL matches what Better-Auth expects
+      const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
       const host = req.get('host') || 'pangea-production-128d.up.railway.app';
       
-      // Get the full path - Better-Auth needs the complete URL
+      // Get the full path - Better-Auth needs the complete URL with basePath
       const requestPath = req.originalUrl || req.url;
       const fullUrl = `${protocol}://${host}${requestPath}`;
       
       this.logger.log(`Full URL: ${fullUrl}`);
+      this.logger.log(`Protocol: ${protocol}`);
       this.logger.log(`Request path: ${req.path}`);
       this.logger.log(`Request originalUrl: ${req.originalUrl}`);
       this.logger.log(`Request url: ${req.url}`);
-      
-      // Better-Auth basePath is '/api/auth', so the URL should be:
-      // https://host/api/auth/session (which matches what we're sending)
+      this.logger.log(`Request secure: ${req.secure}`);
+      this.logger.log(`X-Forwarded-Proto: ${req.get('x-forwarded-proto')}`);
       
       // Get request body if present
       let requestBody: string | undefined;
