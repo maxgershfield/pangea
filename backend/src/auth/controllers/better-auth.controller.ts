@@ -8,9 +8,23 @@ export class BetterAuthController {
 
   @All('*')
   async handleAuth(@Req() req: Request, @Res() res: Response) {
-    const handler = this.betterAuthService.getHandler();
-    // Better-Auth handler expects a single request object
-    return handler(req as any);
+    try {
+      const handler = this.betterAuthService.getHandler();
+      // Better-Auth handler expects a single request object
+      // The handler is async and returns a Promise
+      const result = await handler(req as any);
+      return result;
+    } catch (error) {
+      // If Better-Auth is not initialized yet, return 503
+      if (error.message?.includes('not initialized')) {
+        res.status(503).json({ 
+          error: 'Service temporarily unavailable',
+          message: 'Better-Auth is initializing. Please try again in a moment.'
+        });
+        return;
+      }
+      throw error;
+    }
   }
 }
 
