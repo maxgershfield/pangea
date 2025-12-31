@@ -54,17 +54,20 @@ export class BetterAuthController {
       const webResponse = await handler(webRequest);
       
       // Intercept successful sign-up/sign-in responses to add JWT token
-      // Clone the response so we can read the body without consuming it
-      const clonedResponse = webResponse.clone();
+      // Check if this is a sign-up or sign-in endpoint
+      const isSignUpOrSignIn = path.startsWith('sign-up/') || path.startsWith('sign-in/');
       
-      if ((webResponse.status === 200 || webResponse.status === 201) && 
-          (path.startsWith('sign-up/') || path.startsWith('sign-in/'))) {
+      if ((webResponse.status === 200 || webResponse.status === 201) && isSignUpOrSignIn) {
+        this.logger.log(`Intercepting ${path} response to add JWT token`);
         try {
+          // Clone response to read body without consuming it
+          const clonedResponse = webResponse.clone();
           const responseBody = await clonedResponse.text();
           const jsonBody = JSON.parse(responseBody);
           
           // Check if this is a sign-up or sign-in response that needs JWT token
           if (jsonBody.user) {
+            this.logger.log(`Generating JWT token for user: ${jsonBody.user.email}`);
             // Generate JWT token for the response (as per Rishav's requirement)
             const jwtToken = this.generateJwtToken(jsonBody.user);
             const expiresAt = this.getTokenExpiration();
@@ -75,6 +78,7 @@ export class BetterAuthController {
             });
             
             // Return response with JWT token
+            this.logger.log(`Returning response with JWT token for ${path}`);
             return res.status(webResponse.status).json({
               user: {
                 id: jsonBody.user.id,
@@ -88,10 +92,12 @@ export class BetterAuthController {
               accessToken: jwtToken, // Also include as accessToken for compatibility
               expiresAt,
             });
+          } else {
+            this.logger.warn(`Response for ${path} does not contain user object`);
           }
         } catch (error) {
           // Not JSON or parsing failed, continue with original response
-          this.logger.warn('Failed to parse response for JWT injection:', error);
+          this.logger.warn(`Failed to parse response for JWT injection (${path}):`, error);
         }
       }
       
