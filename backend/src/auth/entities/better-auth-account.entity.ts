@@ -13,24 +13,8 @@ export class BetterAuthAccount {
   @Column({ type: 'uuid', name: 'user_id', nullable: true })
   userId: string | null;
 
-  // Keep snake_case for backward compatibility if needed
-  get user_id(): string | null {
-    return this.userId;
-  }
-  set user_id(value: string | null) {
-    this.userId = value;
-  }
-
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'account_id' })
   accountId: string | null;
-
-  // Keep snake_case for backward compatibility if needed
-  get account_id(): string | null {
-    return this.accountId;
-  }
-  set account_id(value: string | null) {
-    this.accountId = value;
-  }
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   provider: string | null;
