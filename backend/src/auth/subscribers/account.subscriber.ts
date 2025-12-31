@@ -31,14 +31,14 @@ export class AccountSubscriber implements EntitySubscriberInterface<BetterAuthAc
   async beforeInsert(event: InsertEvent<BetterAuthAccount>): Promise<void> {
     const account = event.entity;
 
-    // If account has a password but provider is null, set provider='email'
-    // Better-Auth uses 'email' as the provider for email/password authentication
+    // If account has a password but provider is null, set provider='credential'
+    // Better-Auth uses 'credential' as the provider for email/password authentication
     if (account.password && !account.provider) {
-      account.provider = 'email';
+      account.provider = 'credential';
       
       // Log for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
-        console.log('[AccountSubscriber] Setting provider=email for account with password');
+        console.log('[AccountSubscriber] Setting provider=credential for account with password');
       }
     }
 
@@ -55,14 +55,14 @@ export class AccountSubscriber implements EntitySubscriberInterface<BetterAuthAc
 
     if (!account) return;
 
-    // If account has a password but provider is null, set provider='email'
-    // Better-Auth uses 'email' as the provider for email/password authentication
+    // If account has a password but provider is null, set provider='credential'
+    // Better-Auth uses 'credential' as the provider for email/password authentication
     if (account.password && !account.provider) {
-      account.provider = 'email';
+      account.provider = 'credential';
       
       // Log for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
-        console.log('[AccountSubscriber] Setting provider=email for account with password (update)');
+        console.log('[AccountSubscriber] Setting provider=credential for account with password (update)');
       }
     }
   }
