@@ -16,8 +16,17 @@ export class BetterAuthAccount {
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'account_id' })
   accountId: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true, name: 'provider' })
   provider: string | null;
+
+  // Better-Auth expects 'providerId' property (mapped to 'provider' column)
+  get providerId(): string | null {
+    return this.provider;
+  }
+  
+  set providerId(value: string | null) {
+    this.provider = value;
+  }
 
   // Password hash for email/password authentication (provider='credential')
   @Column({ type: 'varchar', length: 255, nullable: true })
