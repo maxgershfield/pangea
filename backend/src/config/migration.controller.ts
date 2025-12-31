@@ -154,4 +154,43 @@ export class MigrationController {
       };
     }
   }
+
+  @Post('fix-provider')
+  async fixProviderValues() {
+    try {
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      
+      // Fix provider values: change 'email' to 'credential' for accounts with password
+      const result = await queryRunner.query(`
+        UPDATE "account"
+        SET "provider" = 'credential'
+        WHERE "provider" = 'email'
+        AND "password" IS NOT NULL
+      `);
+      
+      // Get count of updated accounts
+      const updated = await queryRunner.query(`
+        SELECT COUNT(*) as count
+        FROM "account"
+        WHERE "provider" = 'credential'
+        AND "password" IS NOT NULL
+      `);
+      
+      await queryRunner.release();
+      
+      return {
+        success: true,
+        message: `Updated provider values from 'email' to 'credential'`,
+        updatedCount: parseInt(updated[0].count, 10),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fix provider values: ${error.message}`, error.stack);
+      return {
+        success: false,
+        message: `Failed to fix provider values: ${error.message}`,
+        error: error.message,
+      };
+    }
+  }
 }
