@@ -4,12 +4,12 @@ export class FixAccountProvider1767198139000 implements MigrationInterface {
   name = 'FixAccountProvider1767198139000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Fix existing accounts with password but provider=null
-    // Set provider='credential' for email/password authentication
+    // Fix existing accounts with password but provider=null or provider='credential'
+    // Better-Auth uses 'email' as the provider for email/password authentication
     await queryRunner.query(`
       UPDATE "account"
-      SET "provider" = 'credential'
-      WHERE "provider" IS NULL
+      SET "provider" = 'email'
+      WHERE ("provider" IS NULL OR "provider" = 'credential')
       AND "password" IS NOT NULL
     `);
   }
@@ -19,7 +19,7 @@ export class FixAccountProvider1767198139000 implements MigrationInterface {
     await queryRunner.query(`
       UPDATE "account"
       SET "provider" = NULL
-      WHERE "provider" = 'credential'
+      WHERE "provider" = 'email'
       AND "password" IS NOT NULL
     `);
   }

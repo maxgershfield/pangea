@@ -25,21 +25,26 @@ export class AccountSubscriber implements EntitySubscriberInterface<BetterAuthAc
 
   /**
    * Before insert: Set provider='credential' if password is set but provider is null
-   * This is a workaround for Better-Auth TypeORM adapter not setting provider correctly
+   * Also set account_id to email if it's not set (for email/password auth)
+   * This is a workaround for Better-Auth TypeORM adapter not setting these correctly
    */
   async beforeInsert(event: InsertEvent<BetterAuthAccount>): Promise<void> {
     const account = event.entity;
 
-    // If account has a password but provider is null, set provider='credential'
-    // This is for email/password authentication
+    // If account has a password but provider is null, set provider='email'
+    // Better-Auth uses 'email' as the provider for email/password authentication
     if (account.password && !account.provider) {
-      account.provider = 'credential';
+      account.provider = 'email';
       
       // Log for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
-        console.log('[AccountSubscriber] Setting provider=credential for account with password');
+        console.log('[AccountSubscriber] Setting provider=email for account with password');
       }
     }
+
+    // If we have a user relation, we might need to set account_id to email
+    // But we don't have direct access to user email here, so this might need to be done
+    // at a different level or via a database trigger
   }
 
   /**
@@ -50,13 +55,14 @@ export class AccountSubscriber implements EntitySubscriberInterface<BetterAuthAc
 
     if (!account) return;
 
-    // If account has a password but provider is null, set provider='credential'
+    // If account has a password but provider is null, set provider='email'
+    // Better-Auth uses 'email' as the provider for email/password authentication
     if (account.password && !account.provider) {
-      account.provider = 'credential';
+      account.provider = 'email';
       
       // Log for debugging (only in development)
       if (process.env.NODE_ENV === 'development') {
-        console.log('[AccountSubscriber] Setting provider=credential for account with password (update)');
+        console.log('[AccountSubscriber] Setting provider=email for account with password (update)');
       }
     }
   }
