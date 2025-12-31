@@ -9,6 +9,7 @@ import {
   BetterAuthVerification,
 } from '../auth/entities';
 import { SessionSubscriber } from '../auth/subscribers/session.subscriber';
+import { AccountSubscriber } from '../auth/subscribers/account.subscriber';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -37,7 +38,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     ];
 
     // Register subscribers to fix Better-Auth adapter issues
-    const subscribers = [SessionSubscriber];
+    const subscribers = [SessionSubscriber, AccountSubscriber];
 
     // If DATABASE_URL is provided, use it directly
     if (databaseUrl) {
