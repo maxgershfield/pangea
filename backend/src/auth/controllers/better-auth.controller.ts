@@ -70,6 +70,18 @@ export class BetterAuthController {
       // Check if this is a sign-up or sign-in endpoint
       const isSignUpOrSignIn = path.startsWith('sign-up/') || path.startsWith('sign-in/');
       
+      // Log the raw response for debugging
+      if (isSignUpOrSignIn) {
+        this.logger.log(`Better-Auth ${path} response status: ${webResponse.status}`);
+        try {
+          const clonedResponse = webResponse.clone();
+          const responseBody = await clonedResponse.text();
+          this.logger.log(`Better-Auth ${path} response body: ${responseBody.substring(0, 500)}`);
+        } catch (e) {
+          this.logger.warn(`Could not read response body for logging: ${e}`);
+        }
+      }
+      
       if ((webResponse.status === 200 || webResponse.status === 201) && isSignUpOrSignIn) {
         this.logger.log(`Intercepting ${path} response to add JWT token`);
         try {
@@ -77,6 +89,11 @@ export class BetterAuthController {
           const clonedResponse = webResponse.clone();
           const responseBody = await clonedResponse.text();
           const jsonBody = JSON.parse(responseBody);
+          
+          // Log account creation for debugging
+          if (path.startsWith('sign-up/')) {
+            this.logger.log(`Sign-up successful for user: ${jsonBody.user?.email}, user ID: ${jsonBody.user?.id}`);
+          }
           
           // Check if this is a sign-up or sign-in response that needs JWT token
           if (jsonBody.user) {
@@ -120,13 +137,18 @@ export class BetterAuthController {
       
       // Log if sign-in/sign-up didn't get intercepted (for debugging)
       if (isSignUpOrSignIn && webResponse.status !== 200 && webResponse.status !== 201) {
-        this.logger.warn(`Sign-in/sign-up returned status ${webResponse.status} for path: ${path}`);
+        this.logger.error(`Sign-in/sign-up returned status ${webResponse.status} for path: ${path}`);
         // Try to read the error response body for debugging
         try {
           const errorBody = await webResponse.clone().text();
-          this.logger.warn(`Error response body: ${errorBody}`);
+          this.logger.error(`Error response body: ${errorBody}`);
+          
+          // For sign-in errors, log the request email to help debug
+          if (path.startsWith('sign-in/') && parsedBody?.email) {
+            this.logger.error(`Sign-in failed for email: ${parsedBody.email}`);
+          }
         } catch (e) {
-          this.logger.warn(`Could not read error response body: ${e}`);
+          this.logger.error(`Could not read error response body: ${e}`);
         }
       }
       
