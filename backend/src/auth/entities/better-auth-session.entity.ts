@@ -9,23 +9,24 @@ export class BetterAuthSession {
   @PrimaryColumn({ type: 'varchar', length: 255, nullable: false })
   id: string;
 
+  // Better-Auth expects camelCase property names, but DB uses snake_case
   @Column({ type: 'uuid', name: 'user_id', nullable: true })
-  user_id: string | null;
+  userId: string | null;
 
   @Column({ type: 'timestamp', name: 'expires_at', nullable: true })
-  expires_at: Date | null;
+  expiresAt: Date | null;
 
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   token: string | null;
 
   @Column({ type: 'varchar', length: 45, nullable: true, name: 'ip_address' })
-  ip_address: string | null;
+  ipAddress: string | null;
 
   @Column({ type: 'text', nullable: true, name: 'user_agent' })
-  user_agent: string | null;
+  userAgent: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  createdAt: Date;
 
   @ManyToOne(() => BetterAuthUser, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

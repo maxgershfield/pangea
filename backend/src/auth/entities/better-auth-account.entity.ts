@@ -9,26 +9,43 @@ export class BetterAuthAccount {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // Better-Auth expects camelCase property names, but DB uses snake_case
   @Column({ type: 'uuid', name: 'user_id', nullable: true })
-  user_id: string | null;
+  userId: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  account_id: string | null;
+  // Keep snake_case for backward compatibility if needed
+  get user_id(): string | null {
+    return this.userId;
+  }
+  set user_id(value: string | null) {
+    this.userId = value;
+  }
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'account_id' })
+  accountId: string | null;
+
+  // Keep snake_case for backward compatibility if needed
+  get account_id(): string | null {
+    return this.accountId;
+  }
+  set account_id(value: string | null) {
+    this.accountId = value;
+  }
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   provider: string | null;
 
   @Column({ type: 'text', nullable: true, name: 'access_token' })
-  access_token: string | null;
+  accessToken: string | null;
 
   @Column({ type: 'text', nullable: true, name: 'refresh_token' })
-  refresh_token: string | null;
+  refreshToken: string | null;
 
   @Column({ type: 'timestamp', nullable: true, name: 'expires_at' })
-  expires_at: Date | null;
+  expiresAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  createdAt: Date;
 
   @ManyToOne(() => BetterAuthUser, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
