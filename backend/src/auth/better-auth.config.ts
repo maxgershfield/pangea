@@ -25,6 +25,8 @@ export async function createBetterAuth(dataSource: DataSource, configService: Co
     database: typeormAdapter(dataSource, {
       // Configure adapter to generate IDs for sessions
       generateId: true,
+      // Enable debug logs to see what queries are being made
+      debugLogs: true,
     }),
     
     emailAndPassword: {
