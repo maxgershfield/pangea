@@ -53,6 +53,48 @@ export class BetterAuthController {
       
       const webResponse = await handler(webRequest);
       
+      // Intercept successful sign-up/sign-in responses to add JWT token
+      // Clone the response so we can read the body without consuming it
+      const clonedResponse = webResponse.clone();
+      
+      if ((webResponse.status === 200 || webResponse.status === 201) && 
+          (path.startsWith('sign-up/') || path.startsWith('sign-in/'))) {
+        try {
+          const responseBody = await clonedResponse.text();
+          const jsonBody = JSON.parse(responseBody);
+          
+          // Check if this is a sign-up or sign-in response that needs JWT token
+          if (jsonBody.user) {
+            // Generate JWT token for the response (as per Rishav's requirement)
+            const jwtToken = this.generateJwtToken(jsonBody.user);
+            const expiresAt = this.getTokenExpiration();
+            
+            // Copy headers from original response
+            webResponse.headers.forEach((value, key) => {
+              res.setHeader(key, value);
+            });
+            
+            // Return response with JWT token
+            return res.status(webResponse.status).json({
+              user: {
+                id: jsonBody.user.id,
+                email: jsonBody.user.email,
+                username: jsonBody.user.email?.split('@')[0] || jsonBody.user.name,
+                name: jsonBody.user.name || undefined,
+                avatarId: '', // Will be set when OASIS avatar is created
+                role: 'user',
+              },
+              token: jwtToken,
+              accessToken: jwtToken, // Also include as accessToken for compatibility
+              expiresAt,
+            });
+          }
+        } catch (error) {
+          // Not JSON or parsing failed, continue with original response
+          this.logger.warn('Failed to parse response for JWT injection:', error);
+        }
+      }
+      
       // Handle 404 - Better-Auth handler route not matched
       // Use Better-Auth API methods directly as fallback
       if (webResponse.status === 404) {
@@ -175,17 +217,19 @@ export class BetterAuthController {
       // Convert Web API Response to Express response
       // Copy status
       res.status(webResponse.status);
-      
+
       // Copy headers
       webResponse.headers.forEach((value, key) => {
         res.setHeader(key, value);
       });
-      
+
       this.logger.log('Reading response body...');
       // Get response body and send it
+      // Note: responseBody was already read above if it was a sign-up/sign-in, so we need to clone
+      // For now, read it again (we'll optimize later if needed)
       const responseBody = await webResponse.text();
       this.logger.log(`Response body length: ${responseBody.length}`);
-      
+
       // Try to parse as JSON, otherwise send as text
       try {
         const jsonBody = JSON.parse(responseBody);
