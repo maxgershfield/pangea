@@ -1,8 +1,11 @@
 import { Controller, All, Req, Res, Logger } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Request, Response as ExpressResponse } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { BetterAuthService } from '../services/better-auth.service';
+
+// Web API Response type (from fetch API)
+type WebResponse = globalThis.Response;
 
 @Controller('auth')
 export class BetterAuthController {
@@ -18,7 +21,7 @@ export class BetterAuthController {
   // Better-Auth uses paths like: /session, /sign-up/email, /sign-in/email, etc.
   // We need to catch all routes that don't match the old auth controller
   @All('*')
-  async handleAuth(@Req() req: Request, @Res() res: Response) {
+  async handleAuth(@Req() req: Request, @Res() res: ExpressResponse) {
     // Skip if this is an old auth route
     const oldAuthRoutes = ['register', 'login', 'forgot-password', 'reset-password'];
     const path = req.url.split('?')[0].replace('/api/auth/', '');
@@ -51,7 +54,7 @@ export class BetterAuthController {
         body: requestBody,
       });
       
-      let webResponse: Response;
+      let webResponse: WebResponse;
       try {
         webResponse = await handler(webRequest);
       } catch (handlerError: any) {
@@ -248,10 +251,11 @@ export class BetterAuthController {
       }
       
       // Convert Web API Response to Express response
-      // Copy status
-      res.status(webResponse.status);
+      // Copy status (webResponse.status is a number)
+      const statusCode: number = webResponse.status;
+      res.status(statusCode);
 
-      // Copy headers
+      // Copy headers (webResponse.headers is a Headers object from Web API)
       webResponse.headers.forEach((value, key) => {
         res.setHeader(key, value);
       });
