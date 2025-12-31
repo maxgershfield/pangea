@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ChangeProviderToEmail${TIMESTAMP} implements MigrationInterface {
-  name = 'ChangeProviderToEmail${TIMESTAMP}';
+export class ChangeProviderToEmail1767199884000 implements MigrationInterface {
+  name = 'ChangeProviderToEmail1767199884000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Change provider from 'credential' to 'email' for email/password authentication
