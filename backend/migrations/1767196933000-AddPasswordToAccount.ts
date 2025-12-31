@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddPasswordToAccount${TIMESTAMP} implements MigrationInterface {
-  name = 'AddPasswordToAccount${TIMESTAMP}';
+export class AddPasswordToAccount1767196933000 implements MigrationInterface {
+  name = 'AddPasswordToAccount1767196933000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add password field to account table for Better-Auth email/password authentication
