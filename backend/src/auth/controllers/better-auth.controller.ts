@@ -51,7 +51,17 @@ export class BetterAuthController {
         body: requestBody,
       });
       
-      const webResponse = await handler(webRequest);
+      let webResponse: Response;
+      try {
+        webResponse = await handler(webRequest);
+      } catch (handlerError: any) {
+        this.logger.error(`Better-Auth handler threw error for ${path}: ${handlerError.message}`, handlerError.stack);
+        return res.status(500).json({
+          error: 'Handler error',
+          message: handlerError.message || 'Unknown handler error',
+          path: path,
+        });
+      }
       
       // Intercept successful sign-up/sign-in responses to add JWT token
       // Check if this is a sign-up or sign-in endpoint
@@ -95,12 +105,12 @@ export class BetterAuthController {
           } else {
             this.logger.warn(`Response for ${path} does not contain user object`);
           }
-        } catch (error) {
+        } catch (error: any) {
           // Not JSON or parsing failed, continue with original response
-          this.logger.warn(`Failed to parse response for JWT injection (${path}):`, error);
+          this.logger.warn(`Failed to parse response for JWT injection (${path}): ${error.message}`);
           // If it's a sign-in/sign-up and we can't parse, log the error but continue
           if (isSignUpOrSignIn) {
-            this.logger.error(`Failed to inject JWT for ${path}, returning original response`);
+            this.logger.error(`Failed to inject JWT for ${path}, returning original response. Error: ${error.message}`);
           }
         }
       }
@@ -108,6 +118,13 @@ export class BetterAuthController {
       // Log if sign-in/sign-up didn't get intercepted (for debugging)
       if (isSignUpOrSignIn && webResponse.status !== 200 && webResponse.status !== 201) {
         this.logger.warn(`Sign-in/sign-up returned status ${webResponse.status} for path: ${path}`);
+        // Try to read the error response body for debugging
+        try {
+          const errorBody = await webResponse.clone().text();
+          this.logger.warn(`Error response body: ${errorBody}`);
+        } catch (e) {
+          this.logger.warn(`Could not read error response body: ${e}`);
+        }
       }
       
       // Handle 404 - Better-Auth handler route not matched
@@ -256,7 +273,7 @@ export class BetterAuthController {
         return res.send(responseBody);
       }
     } catch (error) {
-      this.logger.error(`Better-Auth handler error: ${error.message}`, error.stack);
+      this.logger.error(`Better-Auth handler error for path ${path}: ${error.message}`, error.stack);
       
       // If Better-Auth is not initialized yet, return 503
       if (error.message?.includes('not initialized')) {
@@ -267,11 +284,18 @@ export class BetterAuthController {
       }
       
       // Return the error details for debugging
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      });
+      // Make sure we always send a response, even if there's an error
+      if (!res.headersSent) {
+        return res.status(500).json({
+          error: 'Internal server error',
+          message: error.message || 'Unknown error',
+          path: path,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        });
+      } else {
+        // Headers already sent, log the error
+        this.logger.error('Response headers already sent, cannot send error response');
+      }
     }
   }
 
