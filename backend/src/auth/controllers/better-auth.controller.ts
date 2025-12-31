@@ -98,7 +98,16 @@ export class BetterAuthController {
         } catch (error) {
           // Not JSON or parsing failed, continue with original response
           this.logger.warn(`Failed to parse response for JWT injection (${path}):`, error);
+          // If it's a sign-in/sign-up and we can't parse, log the error but continue
+          if (isSignUpOrSignIn) {
+            this.logger.error(`Failed to inject JWT for ${path}, returning original response`);
+          }
         }
+      }
+      
+      // Log if sign-in/sign-up didn't get intercepted (for debugging)
+      if (isSignUpOrSignIn && webResponse.status !== 200 && webResponse.status !== 201) {
+        this.logger.warn(`Sign-in/sign-up returned status ${webResponse.status} for path: ${path}`);
       }
       
       // Handle 404 - Better-Auth handler route not matched
@@ -188,7 +197,8 @@ export class BetterAuthController {
               
               return res.json(result);
             } catch (error: any) {
-              return res.status(401).json({ error: error.message });
+              this.logger.error(`Sign-in error: ${error.message}`, error.stack);
+              return res.status(401).json({ error: error.message || 'Invalid credentials' });
             }
           }
         }
