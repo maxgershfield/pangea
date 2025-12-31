@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class FixAccountProvider${TIMESTAMP} implements MigrationInterface {
-  name = 'FixAccountProvider${TIMESTAMP}';
+export class FixAccountProvider1767198139000 implements MigrationInterface {
+  name = 'FixAccountProvider1767198139000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Fix existing accounts with password but provider=null
