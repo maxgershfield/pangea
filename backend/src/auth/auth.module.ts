@@ -18,6 +18,7 @@ import { BetterAuthUser } from './entities/better-auth-user.entity';
 import { BetterAuthSession } from './entities/better-auth-session.entity';
 import { BetterAuthAccount } from './entities/better-auth-account.entity';
 import { BetterAuthVerification } from './entities/better-auth-verification.entity';
+import { SessionSubscriber } from './subscribers/session.subscriber';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { BetterAuthVerification } from './entities/better-auth-verification.enti
     JwtStrategy,
     BetterAuthService,
     OasisLinkService,
+    SessionSubscriber, // Register session subscriber to fix adapter ID issue
   ],
   exports: [
     AuthService,

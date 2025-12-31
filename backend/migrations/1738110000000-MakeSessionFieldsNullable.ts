@@ -9,6 +9,7 @@ export class MakeSessionFieldsNullable1738110000000 implements MigrationInterfac
     // Note: id remains NOT NULL as it's the primary key
     
     // Create a function to generate random session IDs as fallback
+    // This is used both as a default value and by the trigger
     await queryRunner.query(`
       CREATE OR REPLACE FUNCTION generate_session_id() RETURNS TEXT AS $$
       BEGIN
@@ -21,6 +22,32 @@ export class MakeSessionFieldsNullable1738110000000 implements MigrationInterfac
     await queryRunner.query(`
       ALTER TABLE "session" 
       ALTER COLUMN "id" SET DEFAULT generate_session_id()
+    `);
+    
+    // Create a trigger to ensure ID is always set, even if adapter bypasses defaults
+    // This is a safety net in case the TypeORM adapter uses raw queries
+    await queryRunner.query(`
+      CREATE OR REPLACE FUNCTION ensure_session_id()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        -- If ID is NULL or empty, generate one
+        IF NEW.id IS NULL OR NEW.id = '' THEN
+          NEW.id := generate_session_id();
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    
+    await queryRunner.query(`
+      DROP TRIGGER IF EXISTS trigger_ensure_session_id ON "session";
+    `);
+    
+    await queryRunner.query(`
+      CREATE TRIGGER trigger_ensure_session_id
+      BEFORE INSERT ON "session"
+      FOR EACH ROW
+      EXECUTE FUNCTION ensure_session_id();
     `);
     
     await queryRunner.query(`
@@ -44,6 +71,15 @@ export class MakeSessionFieldsNullable1738110000000 implements MigrationInterfac
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    // Drop trigger first
+    await queryRunner.query(`
+      DROP TRIGGER IF EXISTS trigger_ensure_session_id ON "session";
+    `);
+    
+    // Drop functions
+    await queryRunner.query(`DROP FUNCTION IF EXISTS ensure_session_id()`);
+    await queryRunner.query(`DROP FUNCTION IF EXISTS generate_session_id()`);
+    
     // Restore NOT NULL constraints
     await queryRunner.query(`
       ALTER TABLE "session" 
@@ -52,9 +88,6 @@ export class MakeSessionFieldsNullable1738110000000 implements MigrationInterfac
       ALTER COLUMN "expires_at" SET NOT NULL,
       ALTER COLUMN "token" SET NOT NULL
     `);
-    
-    // Drop the function
-    await queryRunner.query(`DROP FUNCTION IF EXISTS generate_session_id()`);
   }
 }
 

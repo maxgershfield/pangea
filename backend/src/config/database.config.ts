@@ -8,6 +8,7 @@ import {
   BetterAuthAccount,
   BetterAuthVerification,
 } from '../auth/entities';
+import { SessionSubscriber } from '../auth/subscribers/session.subscriber';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -35,6 +36,9 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       BetterAuthVerification,
     ];
 
+    // Register subscribers to fix Better-Auth adapter issues
+    const subscribers = [SessionSubscriber];
+
     // If DATABASE_URL is provided, use it directly
     if (databaseUrl) {
       return {
@@ -42,6 +46,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         url: databaseUrl,
         entities: [...explicitEntities, ...entitiesPattern],
         migrations: [migrationsPath],
+        subscribers, // Register subscribers
         synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
         logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
       };
@@ -57,6 +62,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       database: this.configService.get<string>('DB_DATABASE', 'pangea'),
       entities: [...explicitEntities, ...entitiesPattern],
       migrations: [migrationsPath],
+      subscribers, // Register subscribers
       synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
       logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
     };
