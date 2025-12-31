@@ -19,6 +19,10 @@ export class BetterAuthAccount {
   @Column({ type: 'varchar', length: 50, nullable: true })
   provider: string | null;
 
+  // Password hash for email/password authentication (provider='credential')
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  password: string | null;
+
   @Column({ type: 'text', nullable: true, name: 'access_token' })
   accessToken: string | null;
 
