@@ -83,6 +83,22 @@ export class MigrationController {
         LIMIT 10
       `);
       
+      // Check if accounts are properly linked to users (join test)
+      const accountUserJoin = await queryRunner.query(`
+        SELECT 
+          a.id as account_id,
+          a.user_id,
+          a.provider,
+          a.password IS NOT NULL as has_password,
+          u.id as user_id_from_user,
+          u.email
+        FROM account a
+        LEFT JOIN "user" u ON a.user_id = u.id
+        WHERE a.provider = 'credential'
+        ORDER BY a.created_at DESC
+        LIMIT 5
+      `);
+      
       await queryRunner.release();
       
       return {
@@ -91,6 +107,7 @@ export class MigrationController {
         recentUsers: users,
         accountCount: accounts.length,
         userCount: users.length,
+        accountUserJoin: accountUserJoin,
       };
     } catch (error) {
       this.logger.error(`Failed to check account records: ${error.message}`, error.stack);
