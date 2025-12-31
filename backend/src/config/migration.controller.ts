@@ -61,6 +61,47 @@ export class MigrationController {
     }
   }
 
+  @Get('check-account')
+  async checkAccountRecords() {
+    try {
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      
+      // Check recent account records
+      const accounts = await queryRunner.query(`
+        SELECT id, user_id, account_id, provider, password IS NOT NULL as has_password, created_at
+        FROM account
+        ORDER BY created_at DESC
+        LIMIT 10
+      `);
+      
+      // Check recent user records
+      const users = await queryRunner.query(`
+        SELECT id, email, name, created_at
+        FROM "user"
+        ORDER BY created_at DESC
+        LIMIT 10
+      `);
+      
+      await queryRunner.release();
+      
+      return {
+        success: true,
+        recentAccounts: accounts,
+        recentUsers: users,
+        accountCount: accounts.length,
+        userCount: users.length,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to check account records: ${error.message}`, error.stack);
+      return {
+        success: false,
+        message: `Check failed: ${error.message}`,
+        error: error.message,
+      };
+    }
+  }
+
   @Post('run')
   @HttpCode(HttpStatus.OK)
   async runMigrations() {
