@@ -24,7 +24,7 @@ import type {
 	UpdateKycStatusDto,
 	UpdateUserDto,
 } from "../dto/index.js";
-import type { AdminService } from "../services/admin.service.js";
+import { AdminService } from "../services/admin.service.js";
 
 @Controller("admin")
 @UseGuards(JwksJwtGuard, AdminGuard)
