@@ -8,7 +8,7 @@ import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
 import { Order } from '../../orders/entities/order.entity';
 import { Trade } from '../../trades/entities/trade.entity';
 import { Transaction } from '../../transactions/entities/transaction.entity';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 
 describe('AdminController', () => {
@@ -79,7 +79,7 @@ describe('AdminController', () => {
         },
       ],
     })
-      .overrideGuard(JwtAuthGuard)
+      .overrideGuard(JwksJwtGuard)
       .useValue({ canActivate: () => true })
       .overrideGuard(AdminGuard)
       .useValue({ canActivate: () => true })

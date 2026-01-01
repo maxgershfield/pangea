@@ -9,14 +9,14 @@ import {
   Request,
 } from '@nestjs/common';
 import { TransactionsService } from '../services/transactions.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 import { DepositDto } from '../dto/deposit.dto';
 import { WithdrawalDto } from '../dto/withdrawal.dto';
 import { TransactionFiltersDto } from '../dto/transaction-filters.dto';
 
 @Controller('transactions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwksJwtGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 

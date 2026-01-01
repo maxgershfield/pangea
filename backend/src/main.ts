@@ -1,73 +1,67 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module';
-import { webcrypto } from 'node:crypto';
+import { ValidationPipe } from "@nestjs/common";
+import { NestFactory } from "@nestjs/core";
+import { webcrypto } from "node:crypto";
+import { AppModule } from "./app.module";
 
 // Polyfill Web Crypto API for Better-Auth (ES module compatibility)
 // Better-Auth expects `crypto` to be available globally
-if (typeof globalThis.crypto === 'undefined') {
-  globalThis.crypto = webcrypto as any;
+if (typeof globalThis.crypto === "undefined") {
+	globalThis.crypto = webcrypto as any;
 }
 // Also make it available as a global variable for ES modules
-if (typeof (global as any).crypto === 'undefined') {
-  (global as any).crypto = webcrypto;
+if (typeof (global as any).crypto === "undefined") {
+	(global as any).crypto = webcrypto;
 }
 
 async function bootstrap() {
-  // Create app with JSON body parser enabled
-  // Better-Auth will handle its own routes, but we need body parser for other routes
-  const app = await NestFactory.create(AppModule);
+	// Create app with JSON body parser enabled
+	// Better-Auth will handle its own routes, but we need body parser for other routes
+	const app = await NestFactory.create(AppModule);
 
-  // Enable CORS
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'];
-  app.enableCors({
-    origin: corsOrigins,
-    credentials: true,
-  });
+	// Enable CORS
+	const corsOrigins = process.env.CORS_ORIGIN?.split(",") || [
+		"http://localhost:3001",
+	];
+	app.enableCors({
+		origin: corsOrigins,
+		credentials: true,
+	});
 
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+	// Global validation pipe
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		}),
+	);
 
-  // Global prefix
-  app.setGlobalPrefix('api');
+	// Global prefix
+	app.setGlobalPrefix("api");
 
-  // Enable graceful shutdown
-  app.enableShutdownHooks();
+	// Enable graceful shutdown
+	app.enableShutdownHooks();
 
-  const port = process.env.PORT || 3000;
-  // Bind to 0.0.0.0 to accept connections from Railway/external hosts
-  await app.listen(port, '0.0.0.0');
+	const port = process.env.PORT || 3000;
+	// Bind to 0.0.0.0 to accept connections from Railway/external hosts
+	await app.listen(port, "0.0.0.0");
 
-  console.log(`🚀 Pangea Markets Backend is running on: http://0.0.0.0:${port}/api`);
+	console.log(
+		`🚀 Pangea Markets Backend is running on: http://0.0.0.0:${port}/api`,
+	);
 
-  // Handle graceful shutdown
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully...');
-    await app.close();
-    process.exit(0);
-  });
+	// Handle graceful shutdown
+	process.on("SIGTERM", async () => {
+		console.log("SIGTERM received, shutting down gracefully...");
+		await app.close();
+		process.exit(0);
+	});
 
-  process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully...');
-    await app.close();
-    process.exit(0);
-  });
+	process.on("SIGINT", async () => {
+		console.log("SIGINT received, shutting down gracefully...");
+		await app.close();
+		process.exit(0);
+	});
 }
 
 bootstrap();
-
-
-
-
-
-
-
-
-
-

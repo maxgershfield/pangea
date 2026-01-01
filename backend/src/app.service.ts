@@ -1,7 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import Redis from 'ioredis';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class AppService {
@@ -65,11 +65,3 @@ export class AppService {
     }
   }
 }
-
-
-
-
-
-
-
-

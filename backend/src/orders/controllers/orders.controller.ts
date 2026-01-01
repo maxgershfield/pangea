@@ -10,12 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { OrdersService } from '../services/orders.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard, UserContext } from '../../auth/guards/jwks-jwt.guard';
 import { CreateOrderDto, UpdateOrderDto, OrderFiltersDto } from '../dto';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../auth/decorators/session-auth.decorators';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwksJwtGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

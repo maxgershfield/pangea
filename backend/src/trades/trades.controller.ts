@@ -8,12 +8,12 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { TradesService } from './trades.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { TradeResponseDto, TradeListResponseDto, TradeStatisticsDto } from './dto';
 
 @Controller('trades')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwksJwtGuard)
 export class TradesController {
   constructor(private readonly tradesService: TradesService) {}
 

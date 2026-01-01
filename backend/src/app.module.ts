@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AssetsModule } from './assets/assets.module';
 import { DatabaseConfig } from './config/database.config';
-import { RedisModule } from './config/redis.module';
 import { MigrationRunnerService } from './config/migration-runner.service';
 import { MigrationController } from './config/migration.controller';
-import { TradesModule } from './trades/trades.module';
+import { RedisModule } from './config/redis.module';
 import { OrdersModule } from './orders/orders.module';
-import { AssetsModule } from './assets/assets.module';
-import { SmartContractsModule } from './smart-contracts/smart-contracts.module';
-import { TransactionsModule } from './transactions/transactions.module';
-import { AdminModule } from './admin/admin.module';
-import { WalletModule } from './wallet/wallet.module';
 import { OasisModule } from './services/oasis.module';
+import { SmartContractsModule } from './smart-contracts/smart-contracts.module';
+import { TradesModule } from './trades/trades.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -52,13 +52,3 @@ import { OasisModule } from './services/oasis.module';
   providers: [AppService, MigrationRunnerService],
 })
 export class AppModule {}
-
-
-
-
-
-
-
-
-
-
