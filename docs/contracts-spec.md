@@ -235,7 +235,7 @@ import axios from 'axios';
 
 class SmartContractService {
   private generatorApiUrl = 'http://localhost:5000/api/v1/contracts';
-  
+
   async generateRwaToken(assetSpec: {
     name: string;
     symbol: string;
@@ -257,38 +257,38 @@ class SmartContractService {
         features: ['mint', 'burn', 'transfer', 'freeze']
       }
     };
-    
+
     // 2. Generate
     const generateResponse = await axios.post(
       `${this.generatorApiUrl}/generate`,
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
-    
+
     // 3. Compile
     const compileResponse = await axios.post(
       `${this.generatorApiUrl}/compile`,
       compileFormData
     );
-    
+
     // 4. Deploy
     const deployResponse = await axios.post(
       `${this.generatorApiUrl}/deploy`,
       deployFormData
     );
-    
+
     // 5. Return contract address
     return deployResponse.data.contractAddress;
   }
-  
+
   async deployOrderBook(): Promise<string> {
     // Similar flow for order book contract
   }
-  
+
   async deployTradeExecution(): Promise<string> {
     // Similar flow for trade execution contract
   }
-  
+
   async deployVault(): Promise<string> {
     // Similar flow for vault contract
   }
@@ -307,14 +307,14 @@ import { Program, AnchorProvider } from '@coral-xyz/anchor';
 class BlockchainService {
   private connection: Connection;
   private program: Program;
-  
+
   async getTokenBalance(
     walletAddress: string,
     mintAddress: string
   ): Promise<bigint> {
     // Query on-chain balance
   }
-  
+
   async createOrder(
     orderData: {
       user: string;
@@ -327,7 +327,7 @@ class BlockchainService {
     // Call order book contract
     // Return transaction signature
   }
-  
+
   async executeTrade(
     buyOrderId: string,
     sellOrderId: string
@@ -335,7 +335,7 @@ class BlockchainService {
     // Call trade execution contract
     // Return transaction signature
   }
-  
+
   async deposit(
     userAddress: string,
     amount: bigint,
@@ -344,7 +344,7 @@ class BlockchainService {
     // Call vault contract deposit
     // Return transaction signature
   }
-  
+
   async withdraw(
     userAddress: string,
     amount: bigint,

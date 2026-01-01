@@ -1,8 +1,8 @@
 import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
-import { AuthService } from '../services/auth.service';
-import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard';
-import { CurrentUser } from '../decorators/session-auth.decorators';
-import { User } from '../../users/entities/user.entity';
+import { AuthService } from '../services/auth.service.js';
+import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard.js';
+import { CurrentUser } from '../decorators/session-auth.decorators.js';
+import { User } from '../../users/entities/user.entity.js';
 
 @Controller('user')
 @UseGuards(JwksJwtGuard)
@@ -30,11 +30,3 @@ export class UserController {
     return this.authService.updateProfile(user.id, updateData);
   }
 }
-
-
-
-
-
-
-
-

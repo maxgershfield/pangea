@@ -1,6 +1,6 @@
-export * from './create-trade.dto';
-export * from './trade-filters.dto';
-export * from './trade-response.dto';
+export * from './create-trade.dto.js';
+export * from './trade-filters.dto.js';
+export * from './trade-response.dto.js';
 
 
 

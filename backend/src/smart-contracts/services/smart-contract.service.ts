@@ -1,29 +1,7 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import axios, { AxiosError } from 'axios';
-import * as fs from 'fs';
-import * as path from 'path';
-
-// Use global FormData (Node.js 18+) or fallback to form-data package
-let FormDataClass: any;
-try {
-  // Try to use global FormData first (Node.js 18+)
-  if (typeof globalThis.FormData !== 'undefined') {
-    FormDataClass = globalThis.FormData;
-  } else {
-    // Fallback to form-data package
-    const formDataModule = require('form-data');
-    FormDataClass = formDataModule.default || formDataModule;
-  }
-} catch (e) {
-  // If form-data package is not available, use global FormData
-  if (typeof globalThis.FormData !== 'undefined') {
-    FormDataClass = globalThis.FormData;
-  } else {
-    throw new Error(
-      'FormData is required. Please ensure Node.js 18+ or install form-data: npm install form-data',
-    );
-  }
-}
+import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
+import axios, { AxiosError } from "axios";
+import * as fs from "node:fs";
+import FormData from "form-data";
 
 export interface RwaTokenSpec {
   name: string;
@@ -311,31 +289,21 @@ export class SmartContractService {
     spec: any,
     language: 'Rust' | 'Solidity' | 'Scrypto',
   ): Promise<Buffer> {
-    const formData = new FormDataClass();
+    const formData = new FormData();
     const jsonBuffer = Buffer.from(JSON.stringify(spec, null, 2));
-    
-    // Handle both form-data package and global FormData
-    if (formData.append) {
-      // form-data package
-      formData.append('JsonFile', jsonBuffer, {
-        filename: 'spec.json',
-        contentType: 'application/json',
-      });
-      formData.append('Language', language);
-    } else {
-      // Global FormData (Node.js 18+)
-      const blob = new Blob([jsonBuffer], { type: 'application/json' });
-      formData.append('JsonFile', blob, 'spec.json');
-      formData.append('Language', language);
-    }
+
+    formData.append('JsonFile', jsonBuffer, {
+      filename: 'spec.json',
+      contentType: 'application/json',
+    });
+    formData.append('Language', language);
 
     try {
-      const headers = formData.getHeaders ? formData.getHeaders() : {};
       const response = await axios.post(
         `${this.baseUrl}/api/v1/contracts/generate`,
         formData,
         {
-          headers,
+          headers: formData.getHeaders(),
           responseType: 'arraybuffer',
           timeout: 300000, // 5 minutes for generation
         },
@@ -358,37 +326,24 @@ export class SmartContractService {
     language: 'Rust' | 'Solidity' | 'Scrypto',
     contractName: string,
   ): Promise<Buffer> {
-    const formData = new FormDataClass();
-    
-    // Handle both form-data package and global FormData
-    if (formData.append && typeof formData.append === 'function' && formData.append.length > 2) {
-      // form-data package
-      formData.append('Source', sourceBlob, {
-        filename: 'contract.zip',
-        contentType: 'application/zip',
-      });
-      formData.append('Language', language);
-    } else {
-      // Global FormData (Node.js 18+)
-      const blobArray = Buffer.isBuffer(sourceBlob)
-        ? new Uint8Array(sourceBlob)
-        : sourceBlob;
-      const blob = new Blob([blobArray], { type: 'application/zip' });
-      formData.append('Source', blob, 'contract.zip');
-      formData.append('Language', language);
-    }
+    const formData = new FormData();
+
+    formData.append('Source', sourceBlob, {
+      filename: 'contract.zip',
+      contentType: 'application/zip',
+    });
+    formData.append('Language', language);
 
     try {
       this.logger.log(
         `[${contractName}] Compiling contract (this may take 20+ minutes for first build)...`,
       );
 
-      const headers = formData.getHeaders ? formData.getHeaders() : {};
       const response = await axios.post(
         `${this.baseUrl}/api/v1/contracts/compile`,
         formData,
         {
-          headers,
+          headers: formData.getHeaders(),
           responseType: 'arraybuffer',
           timeout: 1200000, // 20 minutes for compilation
         },
@@ -416,84 +371,48 @@ export class SmartContractService {
     language: 'Rust' | 'Solidity' | 'Scrypto',
     contractName: string,
   ): Promise<DeployResult> {
-    const formData = new FormDataClass();
+    const formData = new FormData();
 
     // Determine file extension based on language
     const extension = language === 'Rust' ? 'so' : 'bin';
     const filename = `program.${extension}`;
 
-    // Handle both form-data package and global FormData
-    const isFormDataPackage = formData.append && typeof formData.append === 'function' && formData.append.length > 2;
-    
-    if (isFormDataPackage) {
-      // form-data package
-      formData.append('Language', language);
-      formData.append('CompiledContractFile', compiledBlob, {
-        filename,
-        contentType: 'application/octet-stream',
-      });
+    formData.append('Language', language);
+    formData.append('CompiledContractFile', compiledBlob, {
+      filename,
+      contentType: 'application/octet-stream',
+    });
 
-      // Add wallet keypair if available (for Solana)
-      const walletKeypairPath = process.env.SOLANA_WALLET_KEYPAIR_PATH;
-      if (language === 'Rust' && walletKeypairPath) {
-        try {
-          const keypairContent = fs.readFileSync(walletKeypairPath, 'utf-8');
-          const keypairBuffer = Buffer.from(keypairContent);
-          formData.append('WalletKeypair', keypairBuffer, {
-            filename: 'wallet.json',
-            contentType: 'application/json',
-          });
-          this.logger.log(`[${contractName}] Using wallet keypair from ${walletKeypairPath}`);
-        } catch (error) {
-          this.logger.warn(
-            `[${contractName}] Could not read wallet keypair: ${error.message}`,
-          );
-        }
+    // Add wallet keypair if available (for Solana)
+    const walletKeypairPath = process.env.SOLANA_WALLET_KEYPAIR_PATH;
+    if (language === 'Rust' && walletKeypairPath) {
+      try {
+        const keypairContent = fs.readFileSync(walletKeypairPath, 'utf-8');
+        const keypairBuffer = Buffer.from(keypairContent);
+        formData.append('WalletKeypair', keypairBuffer, {
+          filename: 'wallet.json',
+          contentType: 'application/json',
+        });
+        this.logger.log(`[${contractName}] Using wallet keypair from ${walletKeypairPath}`);
+      } catch (error) {
+        this.logger.warn(
+          `[${contractName}] Could not read wallet keypair: ${(error as Error).message}`,
+        );
       }
-
-      // Schema is required by the API
-      const schemaContent = '{}';
-      formData.append('Schema', Buffer.from(schemaContent), {
-        filename: 'schema.json',
-        contentType: 'application/json',
-      });
-    } else {
-      // Global FormData (Node.js 18+)
-      const bufferArray = Buffer.isBuffer(compiledBlob) 
-        ? new Uint8Array(compiledBlob)
-        : compiledBlob;
-      const compiledBlob_obj = new Blob([bufferArray], { type: 'application/octet-stream' });
-      formData.append('Language', language);
-      formData.append('CompiledContractFile', compiledBlob_obj, filename);
-
-      // Add wallet keypair if available (for Solana)
-      const walletKeypairPath = process.env.SOLANA_WALLET_KEYPAIR_PATH;
-      if (language === 'Rust' && walletKeypairPath) {
-        try {
-          const keypairContent = fs.readFileSync(walletKeypairPath, 'utf-8');
-          const keypairBlob = new Blob([keypairContent], { type: 'application/json' });
-          formData.append('WalletKeypair', keypairBlob, 'wallet.json');
-          this.logger.log(`[${contractName}] Using wallet keypair from ${walletKeypairPath}`);
-        } catch (error) {
-          this.logger.warn(
-            `[${contractName}] Could not read wallet keypair: ${error.message}`,
-          );
-        }
-      }
-
-      // Schema is required by the API
-      const schemaContent = '{}';
-      const schemaBlob = new Blob([schemaContent], { type: 'application/json' });
-      formData.append('Schema', schemaBlob, 'schema.json');
     }
 
+    // Schema is required by the API
+    formData.append('Schema', Buffer.from('{}'), {
+      filename: 'schema.json',
+      contentType: 'application/json',
+    });
+
     try {
-      const headers = formData.getHeaders ? formData.getHeaders() : {};
       const response = await axios.post(
         `${this.baseUrl}/api/v1/contracts/deploy`,
         formData,
         {
-          headers,
+          headers: formData.getHeaders(),
           timeout: 300000, // 5 minutes for deployment
         },
       );
@@ -554,11 +473,3 @@ export class SmartContractService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
-
-
-
-
-
-
-
-

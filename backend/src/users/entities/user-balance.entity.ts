@@ -8,8 +8,8 @@ import {
   Unique,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
+import { User } from './user.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
 
 @Entity('user_balances')
 @Unique(['userId', 'assetId'])
@@ -57,11 +57,3 @@ export class UserBalance {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-
-
-
-
-
-
-
-

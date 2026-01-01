@@ -1,10 +1,14 @@
+// reflect-metadata MUST be first for TypeORM decorator metadata
+import 'reflect-metadata';
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TradesController } from './trades.controller';
-import { TradesService } from './trades.service';
+import { TradesController } from './trades.controller.js';
+import { TradesService } from './trades.service.js';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Trade } from './entities/trade.entity';
-import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard';
+import { Trade } from './entities/trade.entity.js';
+import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('TradesController', () => {
@@ -18,10 +22,14 @@ describe('TradesController', () => {
   };
 
   const mockTradesService = {
-    findByUser: jest.fn(),
-    findOne: jest.fn(),
-    findByAsset: jest.fn(),
-    getStatistics: jest.fn(),
+    findByUser: vi.fn(),
+    findOne: vi.fn(),
+    findByAsset: vi.fn(),
+    getStatistics: vi.fn(),
+    mapTradeToResponse: vi.fn((trade) => ({
+      ...trade,
+      quantity: trade.quantity?.toString() ?? '0',
+    })),
   };
 
   beforeEach(async () => {
@@ -45,7 +53,7 @@ describe('TradesController', () => {
     controller = module.get<TradesController>(TradesController);
     service = module.get<TradesService>(TradesService);
 
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should be defined', () => {

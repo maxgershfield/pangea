@@ -1,6 +1,6 @@
-import { Module, Global } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+import { Module, Global } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { Redis } from "ioredis";
 
 @Global()
 @Module({
@@ -27,11 +27,3 @@ import Redis from 'ioredis';
   exports: ['REDIS_CLIENT'],
 })
 export class RedisModule {}
-
-
-
-
-
-
-
-

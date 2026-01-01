@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { Order } from '../../orders/entities/order.entity';
-import { Trade } from '../../trades/entities/trade.entity';
-import { Transaction } from '../../transactions/entities/transaction.entity';
+import { User } from '../../users/entities/user.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
+import { Order } from '../../orders/entities/order.entity.js';
+import { Trade } from '../../trades/entities/trade.entity.js';
+import { Transaction } from '../../transactions/entities/transaction.entity.js';
 import {
   AdminUserFiltersDto,
   UpdateUserDto,
@@ -21,9 +21,9 @@ import {
   AdminTransactionFiltersDto,
   AnalyticsFiltersDto,
   AnalyticsPeriod,
-} from '../dto';
-import { CreateAssetDto } from '../../assets/dto/create-asset.dto';
-import { UpdateAssetDto } from '../../assets/dto/update-asset.dto';
+} from '../dto/index.js';
+import { CreateAssetDto } from '../../assets/dto/create-asset.dto.js';
+import { UpdateAssetDto } from '../../assets/dto/update-asset.dto.js';
 
 @Injectable()
 export class AdminService {
@@ -834,11 +834,3 @@ export class AdminService {
     return `${prefix}-${year}-${sequence}`;
   }
 }
-
-
-
-
-
-
-
-

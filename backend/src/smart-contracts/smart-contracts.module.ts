@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { SmartContractService } from './services/smart-contract.service';
-import { SmartContractsController } from './controllers/smart-contracts.controller';
+import { SmartContractService } from './services/smart-contract.service.js';
+import { SmartContractsController } from './controllers/smart-contracts.controller.js';
 
 @Module({
   controllers: [SmartContractsController],
@@ -8,11 +8,3 @@ import { SmartContractsController } from './controllers/smart-contracts.controll
   exports: [SmartContractService],
 })
 export class SmartContractsModule {}
-
-
-
-
-
-
-
-

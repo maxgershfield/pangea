@@ -1,4 +1,4 @@
-export * from './auth-response.dto';
-export * from './login.dto';
-export * from './register.dto';
+export * from './auth-response.dto.js';
+export * from './login.dto.js';
+export * from './register.dto.js';
 

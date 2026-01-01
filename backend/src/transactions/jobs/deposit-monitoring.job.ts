@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { TransactionsService } from '../services/transactions.service';
+import { TransactionsService } from '../services/transactions.service.js';
 
 /**
  * Background job to monitor blockchain for deposits

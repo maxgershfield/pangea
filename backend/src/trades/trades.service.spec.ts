@@ -1,9 +1,13 @@
+// reflect-metadata MUST be first for TypeORM decorator metadata
+import 'reflect-metadata';
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TradesService } from './trades.service';
-import { Trade } from './entities/trade.entity';
-import { CreateTradeDto } from './dto/create-trade.dto';
+import { TradesService } from './trades.service.js';
+import { Trade } from './entities/trade.entity.js';
+import { CreateTradeDto } from './dto/create-trade.dto.js';
 import { NotFoundException } from '@nestjs/common';
 
 describe('TradesService', () => {
@@ -11,24 +15,24 @@ describe('TradesService', () => {
   let repository: Repository<Trade>;
 
   const mockRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    create: vi.fn(),
+    save: vi.fn(),
+    findOne: vi.fn(),
+    createQueryBuilder: vi.fn(),
   };
 
   const mockQueryBuilder = {
-    leftJoinAndSelect: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    getCount: jest.fn(),
-    getMany: jest.fn(),
-    getRawOne: jest.fn(),
-    select: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
+    leftJoinAndSelect: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    andWhere: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    take: vi.fn().mockReturnThis(),
+    getCount: vi.fn(),
+    getMany: vi.fn(),
+    getRawOne: vi.fn(),
+    select: vi.fn().mockReturnThis(),
+    addSelect: vi.fn().mockReturnThis(),
   };
 
   beforeEach(async () => {
@@ -46,7 +50,7 @@ describe('TradesService', () => {
     repository = module.get<Repository<Trade>>(getRepositoryToken(Trade));
 
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
   });
 
@@ -177,6 +181,13 @@ describe('TradesService', () => {
           quantity: BigInt(100),
           pricePerTokenUsd: 10.5,
           totalValueUsd: 1050,
+          platformFeeUsd: 10.5,
+          platformFeePercentage: 1.0,
+          blockchain: 'solana',
+          transactionHash: 'tx-hash',
+          status: 'completed',
+          settlementStatus: 'settled',
+          executedAt: new Date(),
         },
       ];
 
@@ -241,6 +252,16 @@ describe('TradesService', () => {
           assetId,
           buyer: { id: 'buyer-uuid', email: 'buyer@test.com' },
           seller: { id: 'seller-uuid', email: 'seller@test.com' },
+          quantity: BigInt(100),
+          pricePerTokenUsd: 10.5,
+          totalValueUsd: 1050,
+          platformFeeUsd: 10.5,
+          platformFeePercentage: 1.0,
+          blockchain: 'solana',
+          transactionHash: 'tx-hash',
+          status: 'completed',
+          settlementStatus: 'settled',
+          executedAt: new Date(),
         },
       ];
 

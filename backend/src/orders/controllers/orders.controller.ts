@@ -9,10 +9,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { OrdersService } from '../services/orders.service';
-import { JwksJwtGuard, UserContext } from '../../auth/guards/jwks-jwt.guard';
-import { CreateOrderDto, UpdateOrderDto, OrderFiltersDto } from '../dto';
-import { CurrentUser } from '../../auth/decorators/session-auth.decorators';
+import { OrdersService } from '../services/orders.service.js';
+import { JwksJwtGuard, UserContext } from '../../auth/guards/jwks-jwt.guard.js';
+import { CreateOrderDto, UpdateOrderDto, OrderFiltersDto } from '../dto/index.js';
+import { CurrentUser } from '../../auth/decorators/session-auth.decorators.js';
 
 @Controller('orders')
 @UseGuards(JwksJwtGuard)
@@ -113,11 +113,3 @@ export class OrdersController {
     return this.ordersService.cancel(orderId, user.id);
   }
 }
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-export * from './deploy-rwa-token.dto';
+export * from './deploy-rwa-token.dto.js';
 
 
 

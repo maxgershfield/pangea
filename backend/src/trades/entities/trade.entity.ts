@@ -7,9 +7,9 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { Order } from '../../orders/entities/order.entity';
+import { User } from '../../users/entities/user.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
+import { Order } from '../../orders/entities/order.entity.js';
 
 @Entity('trades')
 export class Trade {

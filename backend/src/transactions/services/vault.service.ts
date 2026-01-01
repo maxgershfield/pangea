@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { SmartContractService } from '../../smart-contracts/services/smart-contract.service';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
+import { SmartContractService } from '../../smart-contracts/services/smart-contract.service.js';
 
 /**
  * Vault Service

@@ -15,9 +15,9 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { Trade } from '../../trades/entities/trade.entity';
-import { Order } from '../entities/order.entity';
-import { AuthService } from '../../auth/services/auth.service';
+import { Trade } from '../../trades/entities/trade.entity.js';
+import { Order } from '../entities/order.entity.js';
+import { AuthService } from '../../auth/services/auth.service.js';
 
 @Injectable()
 @WebSocketGateway({
@@ -377,11 +377,3 @@ export class WebSocketService
     });
   }
 }
-
-
-
-
-
-
-
-

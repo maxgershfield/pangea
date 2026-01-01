@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Order } from '../entities/order.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { CreateOrderDto, UpdateOrderDto } from '../dto';
-import { BalanceService } from './balance.service';
-import { OrderMatchingService } from './order-matching.service';
+import { Order } from '../entities/order.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
+import { CreateOrderDto, UpdateOrderDto } from '../dto/index.js';
+import { BalanceService } from './balance.service.js';
+import { OrderMatchingService } from './order-matching.service.js';
 
 @Injectable()
 export class OrdersService {
@@ -388,11 +388,3 @@ export class OrdersService {
     };
   }
 }
-
-
-
-
-
-
-
-

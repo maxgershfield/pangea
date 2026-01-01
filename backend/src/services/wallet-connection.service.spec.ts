@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { WalletConnectionService } from './wallet-connection.service';
+import { WalletConnectionService } from './wallet-connection.service.js';
 
 describe('WalletConnectionService', () => {
   let service: WalletConnectionService;
@@ -30,11 +31,3 @@ describe('WalletConnectionService', () => {
     });
   });
 });
-
-
-
-
-
-
-
-

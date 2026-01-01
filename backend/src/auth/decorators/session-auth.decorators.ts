@@ -9,7 +9,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard';
+import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard.js';
 
 /**
  * Require JWT authentication, validated via JWKS.

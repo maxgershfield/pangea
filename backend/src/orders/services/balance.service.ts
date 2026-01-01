@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserBalance } from '../../users/entities/user-balance.entity';
+import { UserBalance } from '../../users/entities/user-balance.entity.js';
 
 @Injectable()
 export class BalanceService {
@@ -182,11 +182,3 @@ export class BalanceService {
     await this.balanceRepository.save(balance);
   }
 }
-
-
-
-
-
-
-
-

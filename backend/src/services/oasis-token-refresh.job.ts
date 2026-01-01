@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { OasisTokenManagerService } from './oasis-token-manager.service';
+import { OasisTokenManagerService } from './oasis-token-manager.service.js';
 
 /**
  * Scheduled job to refresh OASIS API token before expiration

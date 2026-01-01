@@ -7,10 +7,10 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
-import { AdminGuard } from '../../auth/guards/admin.guard';
-import { SmartContractService } from '../services/smart-contract.service';
-import { DeployRwaTokenDto } from '../dto/deploy-rwa-token.dto';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard.js';
+import { AdminGuard } from '../../auth/guards/admin.guard.js';
+import { SmartContractService } from '../services/smart-contract.service.js';
+import { DeployRwaTokenDto } from '../dto/deploy-rwa-token.dto.js';
 
 @Controller('smart-contracts')
 @UseGuards(JwksJwtGuard, AdminGuard)
@@ -86,11 +86,3 @@ export class SmartContractsController {
     return stats;
   }
 }
-
-
-
-
-
-
-
-

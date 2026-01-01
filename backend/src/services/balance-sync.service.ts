@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OasisWalletService } from './oasis-wallet.service';
+import { OasisWalletService } from './oasis-wallet.service.js';
 
 // Note: This assumes user_balances entity exists from Task 02
 // For now, we'll use a placeholder interface

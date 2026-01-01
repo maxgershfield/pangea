@@ -1,10 +1,24 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { OasisWalletService } from './oasis-wallet.service';
+import { OasisWalletService } from './oasis-wallet.service.js';
+import { OasisTokenManagerService } from './oasis-token-manager.service.js';
 
 describe('OasisWalletService', () => {
   let service: OasisWalletService;
   let configService: ConfigService;
+
+  const mockConfigService = {
+    get: vi.fn((key: string) => {
+      if (key === 'OASIS_API_URL') return 'https://api.oasisplatform.world';
+      if (key === 'OASIS_API_KEY') return 'test-api-key';
+      return undefined;
+    }),
+  };
+
+  const mockTokenManager = {
+    getToken: vi.fn().mockResolvedValue('test-token'),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -12,13 +26,11 @@ describe('OasisWalletService', () => {
         OasisWalletService,
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              if (key === 'OASIS_API_URL') return 'https://api.oasisplatform.world';
-              if (key === 'OASIS_API_KEY') return 'test-api-key';
-              return undefined;
-            }),
-          },
+          useValue: mockConfigService,
+        },
+        {
+          provide: OasisTokenManagerService,
+          useValue: mockTokenManager,
         },
       ],
     }).compile();

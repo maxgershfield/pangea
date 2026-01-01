@@ -5,9 +5,9 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService } from '../services/auth.service';
-import { RegisterDto, LoginDto, AuthResponseDto } from '../dto';
-import { Public } from '../decorators/public.decorator';
+import { AuthService } from '../services/auth.service.js';
+import { RegisterDto, LoginDto, AuthResponseDto } from '../dto/index.js';
+import { Public } from '../decorators/public.decorator.js';
 
 @Controller('auth')
 export class AuthController {
@@ -62,11 +62,3 @@ export class AuthController {
     return { message: 'Password reset successfully' };
   }
 }
-
-
-
-
-
-
-
-

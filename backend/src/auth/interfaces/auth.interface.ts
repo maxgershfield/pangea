@@ -1,25 +1,25 @@
-import { Request } from 'express';
+import type { Request } from "express";
 
 /**
  * Identity attached to `request.user` after successful authentication
  */
 export interface UserContext {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  name: string | null;
-  role?: string;
-  kycStatus?: 'none' | 'pending' | 'verified' | 'rejected';
+	id: string;
+	email: string;
+	emailVerified: boolean;
+	name: string | null;
+	role?: string;
+	kycStatus?: "none" | "pending" | "verified" | "rejected";
 }
 
 /**
  * Session metadata attached to `request.session` after authentication
  */
 export interface SessionInfo {
-  id: string;
-  /** Session token [same as Bearer token] */
-  token: string;
-  expiresAt: Date;
+	id: string;
+	/** Session token [same as Bearer token] */
+	token: string;
+	expiresAt: Date;
 }
 
 /**
@@ -33,14 +33,14 @@ export interface SessionInfo {
  * ```
  */
 export interface AuthenticatedRequest extends Request {
-  user: UserContext;
-  session: SessionInfo;
+	user: UserContext;
+	session: SessionInfo;
 }
 
 /**
  * Express request where auth may be absent [public routes with optional auth]
  */
 export interface MaybeAuthenticatedRequest extends Request {
-  user?: UserContext;
-  session?: SessionInfo;
+	user?: UserContext;
+	session?: SessionInfo;
 }

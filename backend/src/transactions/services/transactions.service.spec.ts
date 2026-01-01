@@ -1,13 +1,18 @@
+// reflect-metadata MUST be first for TypeORM decorator metadata
+import 'reflect-metadata';
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TransactionsService } from './transactions.service';
-import { Transaction } from '../entities/transaction.entity';
-import { User } from '../../users/entities/user.entity';
-import { BalanceService } from '../../orders/services/balance.service';
-import { BlockchainService } from '../../blockchain/services/blockchain.service';
-import { VaultService } from './vault.service';
-import { OasisWalletService } from '../../services/oasis-wallet.service';
+import { TransactionsService } from './transactions.service.js';
+import { Transaction } from '../entities/transaction.entity.js';
+import { User } from '../../users/entities/user.entity.js';
+import { BalanceService } from '../../orders/services/balance.service.js';
+import { BlockchainService } from '../../blockchain/services/blockchain.service.js';
+import { VaultService } from './vault.service.js';
+import { OasisWalletService } from '../../services/oasis-wallet.service.js';
+import { WebSocketService } from '../../orders/services/websocket.service.js';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -19,38 +24,43 @@ describe('TransactionsService', () => {
   let oasisWalletService: OasisWalletService;
 
   const mockTransactionRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
-    find: jest.fn(),
-    findAndCount: jest.fn(),
+    create: vi.fn(),
+    save: vi.fn(),
+    findOne: vi.fn(),
+    find: vi.fn(),
+    findAndCount: vi.fn(),
   };
 
   const mockUserRepository = {
-    findOne: jest.fn(),
+    findOne: vi.fn(),
   };
 
   const mockBalanceService = {
-    getBalance: jest.fn(),
-    lockBalance: jest.fn(),
-    unlockBalance: jest.fn(),
-    addBalance: jest.fn(),
-    subtractBalance: jest.fn(),
+    getBalance: vi.fn(),
+    lockBalance: vi.fn(),
+    unlockBalance: vi.fn(),
+    addBalance: vi.fn(),
+    subtractBalance: vi.fn(),
   };
 
   const mockBlockchainService = {
-    withdraw: jest.fn(),
-    getTransaction: jest.fn(),
-    monitorVaultDeposits: jest.fn(),
+    withdraw: vi.fn(),
+    getTransaction: vi.fn(),
+    monitorVaultDeposits: vi.fn(),
   };
 
   const mockVaultService = {
-    getVaultAddress: jest.fn(),
+    getVaultAddress: vi.fn(),
   };
 
   const mockOasisWalletService = {
-    getDefaultWallet: jest.fn(),
-    getWallets: jest.fn(),
+    getDefaultWallet: vi.fn(),
+    getWallets: vi.fn(),
+  };
+
+  const mockWebSocketService = {
+    emitBalanceUpdate: vi.fn(),
+    emitTransactionUpdate: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -68,6 +78,10 @@ describe('TransactionsService', () => {
         {
           provide: BalanceService,
           useValue: mockBalanceService,
+        },
+        {
+          provide: WebSocketService,
+          useValue: mockWebSocketService,
         },
         {
           provide: BlockchainService,
@@ -96,7 +110,7 @@ describe('TransactionsService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should be defined', () => {

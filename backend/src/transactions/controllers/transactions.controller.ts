@@ -8,12 +8,12 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { TransactionsService } from '../services/transactions.service';
-import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
-import { AdminGuard } from '../../auth/guards/admin.guard';
-import { DepositDto } from '../dto/deposit.dto';
-import { WithdrawalDto } from '../dto/withdrawal.dto';
-import { TransactionFiltersDto } from '../dto/transaction-filters.dto';
+import { TransactionsService } from '../services/transactions.service.js';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard.js';
+import { AdminGuard } from '../../auth/guards/admin.guard.js';
+import { DepositDto } from '../dto/deposit.dto.js';
+import { WithdrawalDto } from '../dto/withdrawal.dto.js';
+import { TransactionFiltersDto } from '../dto/transaction-filters.dto.js';
 
 @Controller('transactions')
 @UseGuards(JwksJwtGuard)

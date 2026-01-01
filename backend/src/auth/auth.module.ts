@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OasisModule } from '../services/oasis.module';
-import { User } from '../users/entities/user.entity';
-import { AuthController } from './controllers/auth.controller';
-import { UserController } from './controllers/user.controller';
-import { KycGuard, RoleGuard } from './decorators/session-auth.decorators';
-import { BetterAuthAccount } from './entities/better-auth-account.entity';
-import { BetterAuthSession } from './entities/better-auth-session.entity';
-import { BetterAuthUser } from './entities/better-auth-user.entity';
-import { BetterAuthVerification } from './entities/better-auth-verification.entity';
-import { JwksJwtGuard } from './guards/jwks-jwt.guard';
-import { AuthService } from './services/auth.service';
-import { OasisAuthService } from './services/oasis-auth.service';
-import { OasisLinkService } from './services/oasis-link.service';
-import { UserSyncService } from './services/user-sync.service';
-import { SessionSubscriber } from './subscribers/session.subscriber';
+import { OasisModule } from '../services/oasis.module.js';
+import { User } from '../users/entities/user.entity.js';
+import { AuthController } from './controllers/auth.controller.js';
+import { UserController } from './controllers/user.controller.js';
+import { KycGuard, RoleGuard } from './decorators/session-auth.decorators.js';
+import { BetterAuthAccount } from './entities/better-auth-account.entity.js';
+import { BetterAuthSession } from './entities/better-auth-session.entity.js';
+import { BetterAuthUser } from './entities/better-auth-user.entity.js';
+import { BetterAuthVerification } from './entities/better-auth-verification.entity.js';
+import { JwksJwtGuard } from './guards/jwks-jwt.guard.js';
+import { AuthService } from './services/auth.service.js';
+import { OasisAuthService } from './services/oasis-auth.service.js';
+import { OasisLinkService } from './services/oasis-link.service.js';
+import { UserSyncService } from './services/user-sync.service.js';
+import { SessionSubscriber } from './subscribers/session.subscriber.js';
 
 /**
  * Auth Module

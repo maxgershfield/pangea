@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
-import { WebSocketService } from './websocket.service';
-import { AuthService } from '../../auth/services/auth.service';
-import { Trade } from '../../trades/entities/trade.entity';
-import { Order } from '../entities/order.entity';
-import { User } from '../../users/entities/user.entity';
+import { WebSocketService } from './websocket.service.js';
+import { AuthService } from '../../auth/services/auth.service.js';
+import { Trade } from '../../trades/entities/trade.entity.js';
+import { Order } from '../entities/order.entity.js';
+import { User } from '../../users/entities/user.entity.js';
 import { Socket, Server } from 'socket.io';
 
 describe('WebSocketService', () => {
@@ -16,11 +17,11 @@ describe('WebSocketService', () => {
   let mockSocket: Partial<Socket>;
 
   const mockJwtService = {
-    verify: jest.fn(),
+    verify: vi.fn(),
   };
 
   const mockAuthService = {
-    validateUser: jest.fn(),
+    validateUser: vi.fn(),
   };
 
   const mockUser: Partial<User> = {
@@ -40,16 +41,16 @@ describe('WebSocketService', () => {
         headers: {},
         query: {},
       } as any,
-      join: jest.fn(),
-      leave: jest.fn(),
-      emit: jest.fn(),
-      disconnect: jest.fn(),
-      to: jest.fn().mockReturnThis(),
+      join: vi.fn(),
+      leave: vi.fn(),
+      emit: vi.fn(),
+      disconnect: vi.fn(),
+      to: vi.fn().mockReturnThis(),
     };
 
     mockServer = {
-      emit: jest.fn(),
-      to: jest.fn().mockReturnThis(),
+      emit: vi.fn(),
+      to: vi.fn().mockReturnThis(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -75,7 +76,7 @@ describe('WebSocketService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -339,10 +340,10 @@ describe('WebSocketService', () => {
       };
 
       const mockToChain = {
-        emit: jest.fn(),
-        to: jest.fn().mockReturnThis(),
+        emit: vi.fn(),
+        to: vi.fn().mockReturnThis(),
       };
-      (mockServer.to as jest.Mock).mockReturnValue(mockToChain);
+      (mockServer.to as Mock).mockReturnValue(mockToChain);
 
       service.emitTradeExecution(trade as Trade);
 
@@ -367,10 +368,10 @@ describe('WebSocketService', () => {
       };
 
       const mockToChain = {
-        emit: jest.fn(),
-        to: jest.fn().mockReturnThis(),
+        emit: vi.fn(),
+        to: vi.fn().mockReturnThis(),
       };
-      (mockServer.to as jest.Mock).mockReturnValue(mockToChain);
+      (mockServer.to as Mock).mockReturnValue(mockToChain);
 
       service.emitOrderUpdate(order as Order);
 
@@ -396,10 +397,10 @@ describe('WebSocketService', () => {
       };
 
       const mockToChain = {
-        emit: jest.fn(),
-        to: jest.fn().mockReturnThis(),
+        emit: vi.fn(),
+        to: vi.fn().mockReturnThis(),
       };
-      (mockServer.to as jest.Mock).mockReturnValue(mockToChain);
+      (mockServer.to as Mock).mockReturnValue(mockToChain);
 
       service.emitOrderBookUpdate(assetId, orderBook);
 
@@ -423,10 +424,10 @@ describe('WebSocketService', () => {
       };
 
       const mockToChain = {
-        emit: jest.fn(),
-        to: jest.fn().mockReturnThis(),
+        emit: vi.fn(),
+        to: vi.fn().mockReturnThis(),
       };
-      (mockServer.to as jest.Mock).mockReturnValue(mockToChain);
+      (mockServer.to as Mock).mockReturnValue(mockToChain);
 
       service.emitBalanceUpdate(userId, balance);
 
@@ -474,10 +475,3 @@ describe('WebSocketService', () => {
     });
   });
 });
-
-
-
-
-
-
-

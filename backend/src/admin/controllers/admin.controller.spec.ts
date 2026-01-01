@@ -1,250 +1,248 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { AdminController } from './admin.controller';
-import { AdminService } from '../services/admin.service';
-import { User } from '../../users/entities/user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { Order } from '../../orders/entities/order.entity';
-import { Trade } from '../../trades/entities/trade.entity';
-import { Transaction } from '../../transactions/entities/transaction.entity';
-import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
-import { AdminGuard } from '../../auth/guards/admin.guard';
+import "reflect-metadata";
 
-describe('AdminController', () => {
-  let controller: AdminController;
-  let service: AdminService;
+import { Test, type TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { DataSource, Repository } from "typeorm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
+import { AdminGuard } from "../../auth/guards/admin.guard.js";
+import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
+import { Order } from "../../orders/entities/order.entity.js";
+import { Trade } from "../../trades/entities/trade.entity.js";
+import { Transaction } from "../../transactions/entities/transaction.entity.js";
+import { User } from "../../users/entities/user.entity.js";
+import { AdminService } from "../services/admin.service.js";
+import { AdminController } from "./admin.controller.js";
 
-  const mockAdminService = {
-    getUsers: jest.fn(),
-    getUser: jest.fn(),
-    updateUser: jest.fn(),
-    updateUserKycStatus: jest.fn(),
-    getUserActivityLogs: jest.fn(),
-    getAssets: jest.fn(),
-    createAsset: jest.fn(),
-    updateAsset: jest.fn(),
-    deleteAsset: jest.fn(),
-    approveAssetListing: jest.fn(),
-    getAssetStatistics: jest.fn(),
-    getOrders: jest.fn(),
-    cancelOrder: jest.fn(),
-    getOrderStatistics: jest.fn(),
-    getTrades: jest.fn(),
-    getTradeStatistics: jest.fn(),
-    getTransactions: jest.fn(),
-    approveWithdrawal: jest.fn(),
-    getPlatformStatistics: jest.fn(),
-    getAnalytics: jest.fn(),
-  };
+describe("AdminController", () => {
+	let controller: AdminController;
+	let service: AdminService;
 
-  const mockUserRepository = {};
-  const mockAssetRepository = {};
-  const mockOrderRepository = {};
-  const mockTradeRepository = {};
-  const mockTransactionRepository = {};
-  const mockDataSource = {};
+	const mockAdminService = {
+		getUsers: vi.fn(),
+		getUser: vi.fn(),
+		updateUser: vi.fn(),
+		updateUserKycStatus: vi.fn(),
+		getUserActivityLogs: vi.fn(),
+		getAssets: vi.fn(),
+		createAsset: vi.fn(),
+		updateAsset: vi.fn(),
+		deleteAsset: vi.fn(),
+		approveAssetListing: vi.fn(),
+		getAssetStatistics: vi.fn(),
+		getOrders: vi.fn(),
+		cancelOrder: vi.fn(),
+		getOrderStatistics: vi.fn(),
+		getTrades: vi.fn(),
+		getTradeStatistics: vi.fn(),
+		getTransactions: vi.fn(),
+		approveWithdrawal: vi.fn(),
+		getPlatformStatistics: vi.fn(),
+		getAnalytics: vi.fn(),
+	};
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AdminController],
-      providers: [
-        {
-          provide: AdminService,
-          useValue: mockAdminService,
-        },
-        {
-          provide: getRepositoryToken(User),
-          useValue: mockUserRepository,
-        },
-        {
-          provide: getRepositoryToken(TokenizedAsset),
-          useValue: mockAssetRepository,
-        },
-        {
-          provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository,
-        },
-        {
-          provide: getRepositoryToken(Trade),
-          useValue: mockTradeRepository,
-        },
-        {
-          provide: getRepositoryToken(Transaction),
-          useValue: mockTransactionRepository,
-        },
-        {
-          provide: DataSource,
-          useValue: mockDataSource,
-        },
-      ],
-    })
-      .overrideGuard(JwksJwtGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(AdminGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+	const mockUserRepository = {};
+	const mockAssetRepository = {};
+	const mockOrderRepository = {};
+	const mockTradeRepository = {};
+	const mockTransactionRepository = {};
+	const mockDataSource = {};
 
-    controller = module.get<AdminController>(AdminController);
-    service = module.get<AdminService>(AdminService);
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [AdminController],
+			providers: [
+				{
+					provide: AdminService,
+					useValue: mockAdminService,
+				},
+				{
+					provide: getRepositoryToken(User),
+					useValue: mockUserRepository,
+				},
+				{
+					provide: getRepositoryToken(TokenizedAsset),
+					useValue: mockAssetRepository,
+				},
+				{
+					provide: getRepositoryToken(Order),
+					useValue: mockOrderRepository,
+				},
+				{
+					provide: getRepositoryToken(Trade),
+					useValue: mockTradeRepository,
+				},
+				{
+					provide: getRepositoryToken(Transaction),
+					useValue: mockTransactionRepository,
+				},
+				{
+					provide: DataSource,
+					useValue: mockDataSource,
+				},
+			],
+		})
+			.overrideGuard(JwksJwtGuard)
+			.useValue({ canActivate: () => true })
+			.overrideGuard(AdminGuard)
+			.useValue({ canActivate: () => true })
+			.compile();
 
-    jest.clearAllMocks();
-  });
+		controller = module.get<AdminController>(AdminController);
+		service = module.get<AdminService>(AdminService);
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+		vi.clearAllMocks();
+	});
 
-  describe('getUsers', () => {
-    it('should return users from service', async () => {
-      const filters = { page: 1, limit: 20 };
-      const expectedResult = {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
-      };
-      mockAdminService.getUsers.mockResolvedValue(expectedResult);
+	it("should be defined", () => {
+		expect(controller).toBeDefined();
+	});
 
-      const result = await controller.getUsers(filters);
+	describe("getUsers", () => {
+		it("should return users from service", async () => {
+			const filters = { page: 1, limit: 20 };
+			const expectedResult = {
+				items: [],
+				total: 0,
+				page: 1,
+				limit: 20,
+				totalPages: 0,
+			};
+			mockAdminService.getUsers.mockResolvedValue(expectedResult);
 
-      expect(result).toEqual(expectedResult);
-      expect(mockAdminService.getUsers).toHaveBeenCalledWith(filters);
-    });
-  });
+			const result = await controller.getUsers(filters);
 
-  describe('getUser', () => {
-    it('should return user by id', async () => {
-      const userId = '123';
-      const expectedUser = { id: userId, email: 'test@test.com' };
-      mockAdminService.getUser.mockResolvedValue(expectedUser);
+			expect(result).toEqual(expectedResult);
+			expect(mockAdminService.getUsers).toHaveBeenCalledWith(filters);
+		});
+	});
 
-      const result = await controller.getUser(userId);
+	describe("getUser", () => {
+		it("should return user by id", async () => {
+			const userId = "123";
+			const expectedUser = { id: userId, email: "test@test.com" };
+			mockAdminService.getUser.mockResolvedValue(expectedUser);
 
-      expect(result).toEqual(expectedUser);
-      expect(mockAdminService.getUser).toHaveBeenCalledWith(userId);
-    });
-  });
+			const result = await controller.getUser(userId);
 
-  describe('updateUser', () => {
-    it('should update user', async () => {
-      const userId = '123';
-      const updateDto = { firstName: 'New Name' };
-      const updatedUser = { id: userId, ...updateDto };
-      mockAdminService.updateUser.mockResolvedValue(updatedUser);
+			expect(result).toEqual(expectedUser);
+			expect(mockAdminService.getUser).toHaveBeenCalledWith(userId);
+		});
+	});
 
-      const result = await controller.updateUser(userId, updateDto);
+	describe("updateUser", () => {
+		it("should update user", async () => {
+			const userId = "123";
+			const updateDto = { firstName: "New Name" };
+			const updatedUser = { id: userId, ...updateDto };
+			mockAdminService.updateUser.mockResolvedValue(updatedUser);
 
-      expect(result).toEqual(updatedUser);
-      expect(mockAdminService.updateUser).toHaveBeenCalledWith(userId, updateDto);
-    });
-  });
+			const result = await controller.updateUser(userId, updateDto);
 
-  describe('updateKycStatus', () => {
-    it('should update KYC status', async () => {
-      const userId = '123';
-      const dto = { status: 'approved' as any };
-      const updatedUser = { id: userId, kycStatus: 'approved' };
-      mockAdminService.updateUserKycStatus.mockResolvedValue(updatedUser);
+			expect(result).toEqual(updatedUser);
+			expect(mockAdminService.updateUser).toHaveBeenCalledWith(
+				userId,
+				updateDto,
+			);
+		});
+	});
 
-      const result = await controller.updateKycStatus(userId, dto);
+	describe("updateKycStatus", () => {
+		it("should update KYC status", async () => {
+			const userId = "123";
+			const dto = { status: "approved" as any };
+			const updatedUser = { id: userId, kycStatus: "approved" };
+			mockAdminService.updateUserKycStatus.mockResolvedValue(updatedUser);
 
-      expect(result).toEqual(updatedUser);
-      expect(mockAdminService.updateUserKycStatus).toHaveBeenCalledWith(
-        userId,
-        dto,
-      );
-    });
-  });
+			const result = await controller.updateKycStatus(userId, dto);
 
-  describe('getAssets', () => {
-    it('should return assets from service', async () => {
-      const filters = { page: 1, limit: 20 };
-      const expectedResult = {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
-      };
-      mockAdminService.getAssets.mockResolvedValue(expectedResult);
+			expect(result).toEqual(updatedUser);
+			expect(mockAdminService.updateUserKycStatus).toHaveBeenCalledWith(
+				userId,
+				dto,
+			);
+		});
+	});
 
-      const result = await controller.getAssets(filters);
+	describe("getAssets", () => {
+		it("should return assets from service", async () => {
+			const filters = { page: 1, limit: 20 };
+			const expectedResult = {
+				items: [],
+				total: 0,
+				page: 1,
+				limit: 20,
+				totalPages: 0,
+			};
+			mockAdminService.getAssets.mockResolvedValue(expectedResult);
 
-      expect(result).toEqual(expectedResult);
-      expect(mockAdminService.getAssets).toHaveBeenCalledWith(filters);
-    });
-  });
+			const result = await controller.getAssets(filters);
 
-  describe('createAsset', () => {
-    it('should create asset', async () => {
-      const dto = { name: 'Test Asset', symbol: 'TEST' } as any;
-      const createdAsset = { id: '123', ...dto };
-      mockAdminService.createAsset.mockResolvedValue(createdAsset);
+			expect(result).toEqual(expectedResult);
+			expect(mockAdminService.getAssets).toHaveBeenCalledWith(filters);
+		});
+	});
 
-      const result = await controller.createAsset(dto);
+	describe("createAsset", () => {
+		it("should create asset", async () => {
+			const dto = { name: "Test Asset", symbol: "TEST" } as any;
+			const createdAsset = { id: "123", ...dto };
+			mockAdminService.createAsset.mockResolvedValue(createdAsset);
 
-      expect(result).toEqual(createdAsset);
-      expect(mockAdminService.createAsset).toHaveBeenCalledWith(dto, undefined);
-    });
-  });
+			const result = await controller.createAsset(dto);
 
-  describe('cancelOrder', () => {
-    it('should cancel order', async () => {
-      const orderId = '123';
-      const cancelledOrder = { id: orderId, orderStatus: 'cancelled' };
-      mockAdminService.cancelOrder.mockResolvedValue(cancelledOrder);
+			expect(result).toEqual(createdAsset);
+			expect(mockAdminService.createAsset).toHaveBeenCalledWith(dto, undefined);
+		});
+	});
 
-      const result = await controller.cancelOrder(orderId);
+	describe("cancelOrder", () => {
+		it("should cancel order", async () => {
+			const orderId = "123";
+			const cancelledOrder = { id: orderId, orderStatus: "cancelled" };
+			mockAdminService.cancelOrder.mockResolvedValue(cancelledOrder);
 
-      expect(result).toEqual(cancelledOrder);
-      expect(mockAdminService.cancelOrder).toHaveBeenCalledWith(orderId);
-    });
-  });
+			const result = await controller.cancelOrder(orderId);
 
-  describe('getPlatformStatistics', () => {
-    it('should return platform statistics', async () => {
-      const expectedStats = {
-        totalUsers: 100,
-        activeUsers: 80,
-        totalAssets: 50,
-        totalOrders: 200,
-        totalTrades: 150,
-        totalVolume: 50000,
-        totalRevenue: 500,
-      };
-      mockAdminService.getPlatformStatistics.mockResolvedValue(expectedStats);
+			expect(result).toEqual(cancelledOrder);
+			expect(mockAdminService.cancelOrder).toHaveBeenCalledWith(orderId);
+		});
+	});
 
-      const result = await controller.getPlatformStatistics();
+	describe("getPlatformStatistics", () => {
+		it("should return platform statistics", async () => {
+			const expectedStats = {
+				totalUsers: 100,
+				activeUsers: 80,
+				totalAssets: 50,
+				totalOrders: 200,
+				totalTrades: 150,
+				totalVolume: 50000,
+				totalRevenue: 500,
+			};
+			mockAdminService.getPlatformStatistics.mockResolvedValue(expectedStats);
 
-      expect(result).toEqual(expectedStats);
-      expect(mockAdminService.getPlatformStatistics).toHaveBeenCalled();
-    });
-  });
+			const result = await controller.getPlatformStatistics();
 
-  describe('getAnalytics', () => {
-    it('should return analytics data', async () => {
-      const filters = { period: 'month' as any };
-      const expectedAnalytics = {
-        period: 'month',
-        dateRange: { start: new Date(), end: new Date() },
-        trades: { count: 10, volume: 1000, fees: 10 },
-      };
-      mockAdminService.getAnalytics.mockResolvedValue(expectedAnalytics);
+			expect(result).toEqual(expectedStats);
+			expect(mockAdminService.getPlatformStatistics).toHaveBeenCalled();
+		});
+	});
 
-      const result = await controller.getAnalytics(filters);
+	describe("getAnalytics", () => {
+		it("should return analytics data", async () => {
+			const filters = { period: "month" as any };
+			const expectedAnalytics = {
+				period: "month",
+				dateRange: { start: new Date(), end: new Date() },
+				trades: { count: 10, volume: 1000, fees: 10 },
+			};
+			mockAdminService.getAnalytics.mockResolvedValue(expectedAnalytics);
 
-      expect(result).toEqual(expectedAnalytics);
-      expect(mockAdminService.getAnalytics).toHaveBeenCalledWith(filters);
-    });
-  });
+			const result = await controller.getAnalytics(filters);
+
+			expect(result).toEqual(expectedAnalytics);
+			expect(mockAdminService.getAnalytics).toHaveBeenCalledWith(filters);
+		});
+	});
 });
-
-
-
-
-
-
-
-

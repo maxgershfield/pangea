@@ -6,17 +6,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Between } from 'typeorm';
-import { Transaction } from '../entities/transaction.entity';
-import { User } from '../../users/entities/user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
-import { BalanceService } from '../../orders/services/balance.service';
-import { WebSocketService } from '../../orders/services/websocket.service';
-import { BlockchainService } from '../../blockchain/services/blockchain.service';
-import { VaultService } from './vault.service';
-import { OasisWalletService } from '../../services/oasis-wallet.service';
-import { DepositDto } from '../dto/deposit.dto';
-import { WithdrawalDto } from '../dto/withdrawal.dto';
-import { TransactionFilters } from '../dto/transaction-filters.dto';
+import { Transaction } from '../entities/transaction.entity.js';
+import { User } from '../../users/entities/user.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
+import { BalanceService } from '../../orders/services/balance.service.js';
+import { WebSocketService } from '../../orders/services/websocket.service.js';
+import { BlockchainService } from '../../blockchain/services/blockchain.service.js';
+import { VaultService } from './vault.service.js';
+import { OasisWalletService } from '../../services/oasis-wallet.service.js';
+import { DepositDto } from '../dto/deposit.dto.js';
+import { WithdrawalDto } from '../dto/withdrawal.dto.js';
+import { TransactionFilters } from '../dto/transaction-filters.dto.js';
 
 @Injectable()
 export class TransactionsService {

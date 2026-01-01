@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional } from 'class-validator';
-import { KycStatus } from './admin-user-filters.dto';
+import { KycStatus } from './admin-user-filters.dto.js';
 
 export class UpdateKycStatusDto {
   @IsEnum(KycStatus)
@@ -9,11 +9,3 @@ export class UpdateKycStatusDto {
   @IsString()
   reason?: string; // Optional reason for rejection
 }
-
-
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { OasisTokenManagerService } from './oasis-token-manager.service';
+import { OasisTokenManagerService } from './oasis-token-manager.service.js';
 
 export interface GenerateWalletRequest {
   avatarId: string;

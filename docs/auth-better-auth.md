@@ -311,13 +311,13 @@ const orders = await response.json();
 
 ### Common Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `INVALID_EMAIL_OR_PASSWORD` | 401 | Email or password is incorrect |
-| `EMAIL_ALREADY_EXISTS` | 400 | Email is already registered |
-| `INVALID_EMAIL` | 400 | Email format is invalid |
-| `UNAUTHORIZED` | 401 | Token is missing, invalid, or expired |
-| `PASSWORD_TOO_SHORT` | 400 | Password doesn't meet minimum length requirement |
+| Code                        | HTTP Status | Description                                      |
+| --------------------------- | ----------- | ------------------------------------------------ |
+| `INVALID_EMAIL_OR_PASSWORD` | 401         | Email or password is incorrect                   |
+| `EMAIL_ALREADY_EXISTS`      | 400         | Email is already registered                      |
+| `INVALID_EMAIL`             | 400         | Email format is invalid                          |
+| `UNAUTHORIZED`              | 401         | Token is missing, invalid, or expired            |
+| `PASSWORD_TOO_SHORT`        | 400         | Password doesn't meet minimum length requirement |
 
 ### Error Response Format
 
@@ -382,7 +382,7 @@ class AuthService {
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       localStorage.setItem('accessToken', data.accessToken);
       return { success: true, user: data.user, token: data.accessToken };
@@ -399,7 +399,7 @@ class AuthService {
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       localStorage.setItem('accessToken', data.accessToken);
       return { success: true, user: data.user, token: data.accessToken };
@@ -420,7 +420,7 @@ class AuthService {
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       return { success: true, user: data.user, session: data.session };
     } else {

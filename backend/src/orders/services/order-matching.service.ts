@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order } from '../entities/order.entity';
-import { TradesService } from '../../trades/trades.service';
-import { BalanceService } from './balance.service';
-import { BlockchainService } from '../../blockchain/services/blockchain.service';
-import { WebSocketService } from './websocket.service';
-import { User } from '../../users/entities/user.entity';
+import { Order } from '../entities/order.entity.js';
+import { TradesService } from '../../trades/trades.service.js';
+import { BalanceService } from './balance.service.js';
+import { BlockchainService } from '../../blockchain/services/blockchain.service.js';
+import { WebSocketService } from './websocket.service.js';
+import { User } from '../../users/entities/user.entity.js';
 
 @Injectable()
 export class OrderMatchingService {
@@ -362,11 +362,3 @@ export class OrderMatchingService {
     this.logger.log(`Balance validation passed`);
   }
 }
-
-
-
-
-
-
-
-

@@ -1,6 +1,12 @@
-import { DataSource, DataSourceOptions } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { config } from 'dotenv';
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { DataSource, DataSourceOptions } from "typeorm";
+import { ConfigService } from "@nestjs/config";
+import { config } from "dotenv";
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables
 config();
@@ -35,11 +41,3 @@ const dataSourceOptions: DataSourceOptions = databaseUrl
     };
 
 export const AppDataSource = new DataSource(dataSourceOptions);
-
-
-
-
-
-
-
-

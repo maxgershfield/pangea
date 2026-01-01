@@ -1,6 +1,6 @@
 # API Coverage Analysis - Pangea Markets
 
-**Date:** 2025-01-27  
+**Date:** 2025-01-27
 **Question:** Does the API support the requirements for UI integration?
 
 ---
@@ -244,7 +244,7 @@ socket.on('trade:executed', (trade) => {
 - ✅ Trade history and statistics
 - ✅ Integration with smart contracts (ready, pending Task 05 deployment)
 
-**Location:** 
+**Location:**
 - Order Matching: `src/orders/services/order-matching.service.ts`
 - Trades API: `src/trades/trades.controller.ts`
 
@@ -264,14 +264,14 @@ Authorization: Bearer JWT_TOKEN
 
 ## 📊 Summary
 
-| Requirement | Status | Endpoints | Notes |
-|------------|--------|-----------|-------|
-| **Phantom/MM Integration** | ✅ Complete | 7 endpoints | Full wallet connection, verification, balance queries |
-| **See Tokens on Testnet** | ✅ Complete | Balance endpoints | Works via OASIS API (testnet configurable) |
-| **Deposits/Withdrawals** | ✅ Complete | 6 endpoints | Full flow with vault integration |
-| **Buy Order Creation** | ✅ Complete | 8 endpoints | Buy/sell, limit/market orders |
-| **Listing Subscription** | ✅ Complete | WebSocket + REST | Real-time order book and trade updates |
-| **Trade Execution** | ✅ Complete | 5 endpoints | Automatic execution on order match |
+| Requirement                | Status     | Endpoints         | Notes                                                 |
+| -------------------------- | ---------- | ----------------- | ----------------------------------------------------- |
+| **Phantom/MM Integration** | ✅ Complete | 7 endpoints       | Full wallet connection, verification, balance queries |
+| **See Tokens on Testnet**  | ✅ Complete | Balance endpoints | Works via OASIS API (testnet configurable)            |
+| **Deposits/Withdrawals**   | ✅ Complete | 6 endpoints       | Full flow with vault integration                      |
+| **Buy Order Creation**     | ✅ Complete | 8 endpoints       | Buy/sell, limit/market orders                         |
+| **Listing Subscription**   | ✅ Complete | WebSocket + REST  | Real-time order book and trade updates                |
+| **Trade Execution**        | ✅ Complete | 5 endpoints       | Automatic execution on order match                    |
 
 ---
 

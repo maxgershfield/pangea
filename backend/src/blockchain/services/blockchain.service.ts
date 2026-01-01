@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { User } from '../../users/entities/user.entity';
+import { User } from '../../users/entities/user.entity.js';
 
 // Placeholder interface for TokenizedAsset
 export interface TokenizedAsset {
@@ -190,11 +190,3 @@ export class BlockchainService {
     return [];
   }
 }
-
-
-
-
-
-
-
-

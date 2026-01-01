@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
-import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity';
+import { User } from '../../users/entities/user.entity.js';
+import { TokenizedAsset } from '../../assets/entities/tokenized-asset.entity.js';
 
 @Entity('orders')
 export class Order {
@@ -91,11 +91,3 @@ export class Order {
   @Column({ nullable: true, name: 'filled_at' })
   filledAt: Date;
 }
-
-
-
-
-
-
-
-

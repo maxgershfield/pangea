@@ -1,47 +1,39 @@
-import { IsOptional, IsString, IsEnum, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
+import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export enum AssetStatus {
-  DRAFT = 'draft',
-  LISTED = 'listed',
-  TRADING = 'trading',
-  CLOSED = 'closed',
+	DRAFT = "draft",
+	LISTED = "listed",
+	TRADING = "trading",
+	CLOSED = "closed",
 }
 
 export class AdminAssetFiltersDto {
-  @IsOptional()
-  @IsEnum(AssetStatus)
-  status?: AssetStatus;
+	@IsOptional()
+	@IsEnum(AssetStatus)
+	status?: AssetStatus;
 
-  @IsOptional()
-  @IsString()
-  assetClass?: string;
+	@IsOptional()
+	@IsString()
+	assetClass?: string;
 
-  @IsOptional()
-  @IsString()
-  blockchain?: string;
+	@IsOptional()
+	@IsString()
+	blockchain?: string;
 
-  @IsOptional()
-  @IsString()
-  search?: string; // Search by name, symbol, assetId
+	@IsOptional()
+	@IsString()
+	search?: string; // Search by name, symbol, assetId
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	page?: number = 1;
 
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 20;
+	@IsOptional()
+	@Type(() => Number)
+	@IsInt()
+	@Min(1)
+	limit?: number = 20;
 }
-
-
-
-
-
-
-
-

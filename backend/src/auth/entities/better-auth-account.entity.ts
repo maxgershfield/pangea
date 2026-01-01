@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { BetterAuthUser } from './better-auth-user.entity';
+import { BetterAuthUser } from './better-auth-user.entity.js';
 
 /**
  * Better-Auth Account Entity (for OAuth providers)

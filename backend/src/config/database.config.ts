@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from "@nestjs/typeorm";
+
+// ESM equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 // Explicitly import Better-Auth entities to ensure they're registered
 import {
   BetterAuthUser,
   BetterAuthSession,
   BetterAuthAccount,
   BetterAuthVerification,
-} from '../auth/entities';
-import { SessionSubscriber } from '../auth/subscribers/session.subscriber';
-import { AccountSubscriber } from '../auth/subscribers/account.subscriber';
+} from '../auth/entities/index.js';
+import { SessionSubscriber } from '../auth/subscribers/session.subscriber.js';
+import { AccountSubscriber } from '../auth/subscribers/account.subscriber.js';
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
@@ -69,11 +75,3 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     };
   }
 }
-
-
-
-
-
-
-
-

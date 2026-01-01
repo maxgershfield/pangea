@@ -1,9 +1,9 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { RedisModule } from '../config/redis.module';
-import { OasisTokenManagerService } from './oasis-token-manager.service';
-import { OasisTokenRefreshJob } from './oasis-token-refresh.job';
-import { OasisWalletService } from './oasis-wallet.service';
+import { RedisModule } from '../config/redis.module.js';
+import { OasisTokenManagerService } from './oasis-token-manager.service.js';
+import { OasisTokenRefreshJob } from './oasis-token-refresh.job.js';
+import { OasisWalletService } from './oasis-wallet.service.js';
 
 /**
  * Global OASIS services module

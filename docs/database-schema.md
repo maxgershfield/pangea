@@ -1,8 +1,8 @@
 # Database Schema Documentation
 
-**Project:** Pangea Markets RWA Trading Platform  
-**Database:** PostgreSQL  
-**ORM:** TypeORM  
+**Project:** Pangea Markets RWA Trading Platform
+**Database:** PostgreSQL
+**ORM:** TypeORM
 **Last Updated:** 2025-01-27
 
 ---
@@ -394,7 +394,7 @@ All entities are located in their respective module directories:
 
 ---
 
-**Last Updated:** 2025-01-27  
+**Last Updated:** 2025-01-27
 **Schema Version:** 1.0.0
 
 

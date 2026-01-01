@@ -2,19 +2,19 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Order } from './entities/order.entity';
-import { OrderBookSnapshot } from './entities/order-book-snapshot.entity';
-import { UserBalance } from '../users/entities/user-balance.entity';
-import { OrderMatchingService } from './services/order-matching.service';
-import { BalanceService } from './services/balance.service';
-import { WebSocketService } from './services/websocket.service';
-import { OrderMatchingJob } from './jobs/order-matching.job';
-import { OrdersService } from './services/orders.service';
-import { OrdersController } from './controllers/orders.controller';
-import { TradesModule } from '../trades/trades.module';
-import { BlockchainModule } from '../blockchain/blockchain.module';
-import { AssetsModule } from '../assets/assets.module';
-import { AuthModule } from '../auth/auth.module';
+import { Order } from './entities/order.entity.js';
+import { OrderBookSnapshot } from './entities/order-book-snapshot.entity.js';
+import { UserBalance } from '../users/entities/user-balance.entity.js';
+import { OrderMatchingService } from './services/order-matching.service.js';
+import { BalanceService } from './services/balance.service.js';
+import { WebSocketService } from './services/websocket.service.js';
+import { OrderMatchingJob } from './jobs/order-matching.job.js';
+import { OrdersService } from './services/orders.service.js';
+import { OrdersController } from './controllers/orders.controller.js';
+import { TradesModule } from '../trades/trades.module.js';
+import { BlockchainModule } from '../blockchain/blockchain.module.js';
+import { AssetsModule } from '../assets/assets.module.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
   imports: [
@@ -50,11 +50,3 @@ import { AuthModule } from '../auth/auth.module';
   ],
 })
 export class OrdersModule {}
-
-
-
-
-
-
-
-

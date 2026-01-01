@@ -26,14 +26,14 @@ Pangea Markets enables users to:
 └────────┬────────┘
          │ REST API + WebSocket
          ↓
-┌─────────────────────────────────────┐
-│   Pangea Backend (NestJS)           │
-│                                      │
+┌────────────────────────────────────┐
+│   Pangea Backend (NestJS)          │
+│                                    │
 │  ┌──────────────┐  ┌─────────────┐ │
 │  │   Auth       │  │   Orders    │ │
 │  │   (OASIS)    │  │   Matching  │ │
 │  └──────────────┘  └─────────────┘ │
-│                                      │
+│                                    │
 │  ┌──────────────┐  ┌─────────────┐ │
 │  │   Wallet     │  │  WebSocket  │ │
 │  │   (Phantom)  │  │  (Real-time)│ │
@@ -42,8 +42,8 @@ Pangea Markets enables users to:
          │                   │
          ↓                   ↓
 ┌─────────────────┐  ┌──────────────────┐
-│   PostgreSQL    │  │   OASIS API      │
-│   (Orders/Trades)│  │   (Auth/Wallets) │
+│   PostgreSQL    │  │    OASIS API     │
+│  (Orders/Trades)│  │  (Auth/Wallets)  │
 └─────────────────┘  └──────────────────┘
          │
          ↓

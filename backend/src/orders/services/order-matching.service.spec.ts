@@ -1,13 +1,17 @@
+// reflect-metadata MUST be first for TypeORM decorator metadata
+import 'reflect-metadata';
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrderMatchingService } from './order-matching.service';
-import { Order } from '../entities/order.entity';
-import { TradesService } from '../../trades/trades.service';
-import { BalanceService } from './balance.service';
-import { BlockchainService } from '../../blockchain/services/blockchain.service';
-import { WebSocketService } from './websocket.service';
-import { User } from '../../users/entities/user.entity';
+import { OrderMatchingService } from './order-matching.service.js';
+import { Order } from '../entities/order.entity.js';
+import { TradesService } from '../../trades/trades.service.js';
+import { BalanceService } from './balance.service.js';
+import { BlockchainService } from '../../blockchain/services/blockchain.service.js';
+import { WebSocketService } from './websocket.service.js';
+import { User } from '../../users/entities/user.entity.js';
 
 describe('OrderMatchingService', () => {
   let service: OrderMatchingService;
@@ -18,32 +22,32 @@ describe('OrderMatchingService', () => {
   let webSocketService: WebSocketService;
 
   const mockOrderRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    find: jest.fn(),
-    findOne: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    create: vi.fn(),
+    save: vi.fn(),
+    find: vi.fn(),
+    findOne: vi.fn(),
+    createQueryBuilder: vi.fn(),
   };
 
   const mockTradesService = {
-    create: jest.fn(),
+    create: vi.fn(),
   };
 
   const mockBalanceService = {
-    getBalance: jest.fn(),
-    lockBalance: jest.fn(),
-    unlockBalance: jest.fn(),
-    transfer: jest.fn(),
-    getPaymentTokenBalance: jest.fn(),
+    getBalance: vi.fn(),
+    lockBalance: vi.fn(),
+    unlockBalance: vi.fn(),
+    transfer: vi.fn(),
+    getPaymentTokenBalance: vi.fn(),
   };
 
   const mockBlockchainService = {
-    executeTrade: jest.fn(),
+    executeTrade: vi.fn(),
   };
 
   const mockWebSocketService = {
-    emitTradeEvent: jest.fn(),
-    emitOrderUpdate: jest.fn(),
+    emitTradeEvent: vi.fn(),
+    emitOrderUpdate: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -84,7 +88,7 @@ describe('OrderMatchingService', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -103,11 +107,11 @@ describe('OrderMatchingService', () => {
       };
 
       const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        addOrderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
       };
 
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
@@ -142,11 +146,11 @@ describe('OrderMatchingService', () => {
       };
 
       const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        addOrderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
       };
 
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
@@ -178,11 +182,11 @@ describe('OrderMatchingService', () => {
       };
 
       const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        addOrderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([]),
       };
 
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
@@ -223,11 +227,11 @@ describe('OrderMatchingService', () => {
       };
 
       const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        addOrderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([sellOrder]),
+        where: vi.fn().mockReturnThis(),
+        andWhere: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        addOrderBy: vi.fn().mockReturnThis(),
+        getMany: vi.fn().mockResolvedValue([sellOrder]),
       };
 
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
@@ -235,8 +239,9 @@ describe('OrderMatchingService', () => {
       mockBalanceService.getBalance.mockResolvedValue({
         availableBalance: BigInt(10),
       });
+      // Provide enough balance for the trade (5 tokens * 95 price = 475)
       mockBalanceService.getPaymentTokenBalance.mockResolvedValue(
-        BigInt(1000000),
+        BigInt(500000000), // 500 USD in smallest units
       );
       mockBlockchainService.executeTrade.mockResolvedValue('tx-hash-123');
       mockTradesService.create.mockResolvedValue({
@@ -317,11 +322,3 @@ describe('OrderMatchingService', () => {
     });
   });
 });
-
-
-
-
-
-
-
-

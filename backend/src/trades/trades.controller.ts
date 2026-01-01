@@ -7,10 +7,10 @@ import {
   Request,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { TradesService } from './trades.service';
-import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard';
-import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { TradeResponseDto, TradeListResponseDto, TradeStatisticsDto } from './dto';
+import { TradesService } from './trades.service.js';
+import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard.js';
+import { TradeFiltersDto } from './dto/trade-filters.dto.js';
+import { TradeResponseDto, TradeListResponseDto, TradeStatisticsDto } from './dto/index.js';
 
 @Controller('trades')
 @UseGuards(JwksJwtGuard)
