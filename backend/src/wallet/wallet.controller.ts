@@ -15,11 +15,11 @@ import { BalanceSyncService } from '../services/balance-sync.service';
 import { ConnectWalletDto } from './dto/connect-wallet.dto';
 import { VerifyWalletDto } from './dto/verify-wallet.dto';
 import { GenerateWalletDto } from './dto/generate-wallet.dto';
-import { BetterAuthGuard } from '../auth/guards/better-auth.guard';
+import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard';
 import { OasisLinkService } from '../auth/services/oasis-link.service';
 
 @Controller('wallet')
-@UseGuards(BetterAuthGuard)
+@UseGuards(JwksJwtGuard)
 export class WalletController {
   constructor(
     private readonly walletConnectionService: WalletConnectionService,

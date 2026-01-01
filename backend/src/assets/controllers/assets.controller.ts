@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { AssetsService } from '../services/assets.service';
 import { CreateAssetDto, UpdateAssetDto, FindAssetsDto } from '../dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 import { Public } from '../../auth/decorators/public.decorator';
 
@@ -96,7 +96,7 @@ export class AssetsController {
    * Create new asset (admin only)
    */
   @Post()
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwksJwtGuard, AdminGuard)
   async create(@Request() req, @Body() dto: CreateAssetDto) {
     return this.assetsService.create(dto, req.user.id);
   }
@@ -106,7 +106,7 @@ export class AssetsController {
    * Update asset (admin only)
    */
   @Put(':assetId')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwksJwtGuard, AdminGuard)
   async update(
     @Param('assetId') assetId: string,
     @Body() dto: UpdateAssetDto,
@@ -120,7 +120,7 @@ export class AssetsController {
    * Note: Soft delete - marks asset as 'closed'
    */
   @Delete(':assetId')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwksJwtGuard, AdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('assetId') assetId: string) {
     await this.assetsService.delete(assetId);

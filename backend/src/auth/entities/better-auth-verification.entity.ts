@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 /**
  * Better-Auth Verification Entity (for email verification, password reset, etc.)
@@ -20,4 +20,3 @@ export class BetterAuthVerification {
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 }
-

@@ -6,7 +6,7 @@ import { AuthModule } from '../auth/auth.module';
 // OasisWalletService is provided by OasisModule (global)
 
 @Module({
-  imports: [AuthModule], // For JwtAuthGuard
+  imports: [AuthModule], // For JwksJwtGuard
   controllers: [WalletController],
   providers: [WalletConnectionService, BalanceSyncService],
   exports: [WalletConnectionService, BalanceSyncService],

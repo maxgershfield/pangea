@@ -4,7 +4,7 @@ import { TradesService } from './trades.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Trade } from './entities/trade.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard';
 import { NotFoundException } from '@nestjs/common';
 
 describe('TradesController', () => {
@@ -38,7 +38,7 @@ describe('TradesController', () => {
         },
       ],
     })
-      .overrideGuard(JwtAuthGuard)
+      .overrideGuard(JwksJwtGuard)
       .useValue({ canActivate: () => true })
       .compile();
 

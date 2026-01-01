@@ -11,7 +11,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { AdminService } from '../services/admin.service';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 import {
   AdminUserFiltersDto,
@@ -27,7 +27,7 @@ import { CreateAssetDto } from '../../assets/dto/create-asset.dto';
 import { UpdateAssetDto } from '../../assets/dto/update-asset.dto';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwksJwtGuard, AdminGuard)
 export class AdminController {
   private readonly logger = new Logger(AdminController.name);
 

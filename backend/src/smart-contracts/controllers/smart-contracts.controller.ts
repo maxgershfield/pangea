@@ -7,13 +7,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 import { SmartContractService } from '../services/smart-contract.service';
 import { DeployRwaTokenDto } from '../dto/deploy-rwa-token.dto';
 
 @Controller('smart-contracts')
-@UseGuards(JwtAuthGuard, AdminGuard)
+@UseGuards(JwksJwtGuard, AdminGuard)
 export class SmartContractsController {
   constructor(private readonly smartContractService: SmartContractService) {}
 

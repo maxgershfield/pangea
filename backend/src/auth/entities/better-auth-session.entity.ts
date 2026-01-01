@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BetterAuthUser } from './better-auth-user.entity';
 
 /**
@@ -32,4 +32,3 @@ export class BetterAuthSession {
   @JoinColumn({ name: 'user_id' })
   user: BetterAuthUser;
 }
-

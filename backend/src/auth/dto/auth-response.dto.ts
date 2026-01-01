@@ -11,11 +11,3 @@ export class AuthResponseDto {
   token: string;
   expiresAt: Date;
 }
-
-
-
-
-
-
-
-
