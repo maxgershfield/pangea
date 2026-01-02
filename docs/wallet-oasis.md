@@ -353,6 +353,5 @@ REDIS_URL=redis://localhost:6379
 ## Module Documentation
 
 For implementation details, see:
-- [`backend/src/wallet/README.md`](../backend/src/wallet/README.md) - Wallet module internals
-- [`backend/src/auth/README.md`](../backend/src/auth/README.md) - Authentication with OASIS
-
+- [`src/wallet/README.md`](../src/wallet/README.md) - Wallet module internals
+- [`src/auth/README.md`](../src/auth/README.md) - Authentication with OASIS

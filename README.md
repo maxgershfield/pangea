@@ -250,7 +250,7 @@ Backend → Emits events:
 ## 📦 Project Structure
 
 ```
-backend/
+pangea-backend/
 ├── src/
 │   ├── auth/              # Authentication (OASIS integration)
 │   │   ├── services/      # Auth logic, OASIS API client
@@ -269,7 +269,6 @@ backend/
 │   │   ├── controllers/   # Order endpoints
 │   │   ├── services/      # Order creation, matching engine
 │   │   ├── jobs/          # Background matching jobs
-│   │   ├── services/      # WebSocket service
 │   │   └── entities/      # Order, OrderBookSnapshot entities
 │   │
 │   ├── trades/            # Trade history
@@ -310,6 +309,7 @@ backend/
 │   │
 │   └── app.module.ts       # Root module (imports all feature modules)
 │
+├── docs/                  # Documentation
 ├── migrations/            # Database migrations
 ├── scripts/               # Deployment scripts
 └── package.json
@@ -329,8 +329,7 @@ backend/
 ### Installation
 
 ```bash
-cd backend
-npm install
+pnpm install
 cp .env.example .env
 # Edit .env with your configuration
 ```
@@ -372,13 +371,13 @@ CORS_ORIGIN=http://localhost:3001
 createdb pangea
 
 # Run migrations
-npm run migration:run
+pnpm migration:run
 ```
 
 ### Start Development Server
 
 ```bash
-npm run start:dev
+pnpm start:dev
 ```
 
 Server runs at `http://localhost:3000/api`
@@ -469,11 +468,12 @@ See [PROGRESS_TRACKER.md](./PROGRESS_TRACKER.md) for detailed status.
 
 ## 📚 Additional Documentation
 
-- **[API_COVERAGE_ANALYSIS.md](./API_COVERAGE_ANALYSIS.md)** - Complete API reference
-- **[PROGRESS_TRACKER.md](./PROGRESS_TRACKER.md)** - Task completion status
-- **[TASK_05_STATUS.md](./TASK_05_STATUS.md)** - Smart contract deployment status
-- **[backend/README.md](./backend/README.md)** - Backend setup guide
-- **[task-briefs/](./task-briefs/)** - Individual task specifications
+See the [`/docs`](./docs/README.md) directory for comprehensive documentation:
+
+- **[Getting Started](./docs/getting-started.md)** - Installation, environment setup
+- **[API Reference](./docs/api-reference.md)** - Endpoint documentation
+- **[Architecture Overview](./docs/architecture-overview.md)** - System design, security
+- **[Deployment Guide](./docs/deployment-railway.md)** - Railway deployment
 
 ---
 

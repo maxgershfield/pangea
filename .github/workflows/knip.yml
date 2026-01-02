@@ -4,21 +4,22 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'backend/**'
+      - 'src/**'
+      - 'package.json'
+      - 'knip.json'
       - '.github/workflows/knip.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'backend/**'
+      - 'src/**'
+      - 'package.json'
+      - 'knip.json'
       - '.github/workflows/knip.yml'
 
 jobs:
   knip:
     name: Scan for unused dependencies
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     steps:
       - name: Checkout
@@ -34,7 +35,7 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-          cache-dependency-path: backend/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
-          path: backend/knip-report.md
+          path: knip-report.md
           retention-days: 30
 
       - name: Check for issues

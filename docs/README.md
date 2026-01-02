@@ -46,14 +46,14 @@ Welcome to the Pangea Markets backend documentation. This guide covers setup, AP
 
 These READMEs are colocated with their source code:
 
-- [`backend/src/auth/README.md`](../backend/src/auth/README.md) - Authentication module internals
-- [`backend/src/wallet/README.md`](../backend/src/wallet/README.md) - Wallet module internals
+- [`src/auth/README.md`](../src/auth/README.md) - Authentication module internals
+- [`src/wallet/README.md`](../src/wallet/README.md) - Wallet module internals
 
 ---
 
 ## Contributing
 
 When adding new documentation:
-1. Use flat file naming with topic prefixes (e.g., `api-*.md`, `deployment-*.md`)
+1. Use flat file naming with topic prefixes (`api-*.md`, `deployment-*.md`)
 2. Update this README with links to new docs
 3. Keep module-specific docs colocated in `src/*/README.md`

@@ -1,17 +1,6 @@
-/**
- * Vitest Setup File for NestJS + TypeORM
- *
- * This file runs before each test file.
- * IMPORTANT: reflect-metadata must be imported first for TypeORM decorators.
- */
-
-// 1. TypeORM decorator metadata support - must be first
 import 'reflect-metadata';
-
-// 2. Vitest utilities
 import { vi } from 'vitest';
 
-// 3. Create mock Redis class
 class MockRedis {
   private store = new Map<string, string>();
 
@@ -32,7 +21,6 @@ class MockRedis {
   status = 'ready';
 }
 
-// 4. Mock ioredis - export both default and named Redis
 vi.mock('ioredis', () => {
   const MockRedisClass = MockRedis;
   return {
@@ -41,7 +29,6 @@ vi.mock('ioredis', () => {
   };
 });
 
-// 5. Mock axios for external API calls (OASIS, blockchain, etc.)
 vi.mock('axios', async (importOriginal) => {
   const actual = await importOriginal<typeof import('axios')>();
   return {

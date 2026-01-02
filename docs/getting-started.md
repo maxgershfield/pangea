@@ -14,19 +14,13 @@ Quick setup guide for the Pangea Markets backend.
 
 ## Installation
 
-### 1. Clone and Navigate
-
-```bash
-cd backend
-```
-
-### 2. Install Dependencies
+### 1. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. Environment Variables
+### 2. Environment Variables
 
 ```bash
 cp .env.example .env
@@ -34,7 +28,7 @@ cp .env.example .env
 
 Edit `.env` with your configuration (see [Environment Variables](#environment-variables) below).
 
-### 4. Database Setup
+### 3. Database Setup
 
 ```bash
 # Create database
@@ -44,7 +38,7 @@ createdb pangea
 pnpm migration:run
 ```
 
-### 5. Start Redis
+### 4. Start Redis
 
 ```bash
 # Using Docker
@@ -54,7 +48,7 @@ docker run -d -p 6379:6379 redis:latest
 redis-server
 ```
 
-### 6. Run the Application
+### 5. Run the Application
 
 ```bash
 # Development (with hot-reload)
@@ -65,7 +59,7 @@ pnpm build
 pnpm start:prod
 ```
 
-### 7. Verify Setup
+### 6. Verify Setup
 
 ```bash
 curl http://localhost:3000/api/health
@@ -155,7 +149,7 @@ pnpm migration:revert
 ## Project Structure
 
 ```
-backend/
+pangea-backend/
 ├── src/
 │   ├── auth/              # Authentication
 │   ├── users/             # User management
@@ -171,6 +165,7 @@ backend/
 │   ├── config/            # Configuration
 │   └── main.ts            # Entry point
 ├── migrations/            # Database migrations
+├── docs/                  # Documentation
 ├── knip.json             # Unused code detection
 └── vitest.config.ts      # Test configuration
 ```
@@ -208,4 +203,3 @@ backend/
 - [API Reference](./api-reference.md) - Endpoint documentation
 - [Architecture Overview](./architecture-overview.md) - System design
 - [Deployment Guide](./deployment-railway.md) - Railway deployment
-

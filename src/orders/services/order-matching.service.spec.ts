@@ -1,17 +1,17 @@
 // reflect-metadata MUST be first for TypeORM decorator metadata
 import 'reflect-metadata';
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrderMatchingService } from './order-matching.service.js';
-import { Order } from '../entities/order.entity.js';
-import { TradesService } from '../../trades/trades.service.js';
-import { BalanceService } from './balance.service.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlockchainService } from '../../blockchain/services/blockchain.service.js';
-import { WebSocketService } from './websocket.service.js';
+import { TradesService } from '../../trades/trades.service.js';
 import { User } from '../../users/entities/user.entity.js';
+import { Order } from '../entities/order.entity.js';
+import { BalanceService } from './balance.service.js';
+import { OrderMatchingService } from './order-matching.service.js';
+import { WebSocketService } from './websocket.service.js';
 
 describe('OrderMatchingService', () => {
   let service: OrderMatchingService;
@@ -47,6 +47,7 @@ describe('OrderMatchingService', () => {
 
   const mockWebSocketService = {
     emitTradeEvent: vi.fn(),
+    emitTradeExecution: vi.fn(),
     emitOrderUpdate: vi.fn(),
   };
 

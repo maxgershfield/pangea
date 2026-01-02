@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	plugins: [
-		// Use SWC for TypeScript transformation
+		// swc for typescript transformation
 		swc.vite({
 			jsc: {
 				parser: {
@@ -19,24 +19,24 @@ export default defineConfig({
 		}),
 	],
 	test: {
-		// Test globals
+		// test globals
 		globals: true,
 		environment: "node",
 
-		// Test file patterns
+		// test file patterns
 		include: ["src/**/*.spec.ts", "test/**/*.spec.ts"],
 
-		// Setup file - must load before tests for reflect-metadata
+		// setup file
 		setupFiles: ["./vitest.setup.ts"],
 
-		// Isolate each test file for clean state
+		// isolate each test file for clean state
 		isolate: true,
 
-		// Increase timeouts for async NestJS operations
+		// increase timeouts for async NestJS operations
 		testTimeout: 30000,
 		hookTimeout: 30000,
 
-		// Coverage configuration
+		// coverage configuration
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "html"],

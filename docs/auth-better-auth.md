@@ -622,4 +622,3 @@ For issues or questions:
 - Email verification is currently disabled but can be enabled
 - Passwords are hashed using secure algorithms
 - Sessions are managed server-side with Better-Auth
-
