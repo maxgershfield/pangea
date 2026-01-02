@@ -20,7 +20,7 @@ import type {
 	FindAssetsDto,
 	UpdateAssetDto,
 } from "../dto/index.js";
-import type { AssetsService } from "../services/assets.service.js";
+import { AssetsService } from "../services/assets.service.js";
 
 @Controller("assets")
 export class AssetsController {

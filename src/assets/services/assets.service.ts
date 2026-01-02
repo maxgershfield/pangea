@@ -7,7 +7,7 @@ import {
 import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
 import type { DataSource, Repository } from "typeorm";
 import { Order } from "../../orders/entities/order.entity.js";
-import type { SmartContractService } from "../../smart-contracts/services/smart-contract.service.js";
+import { SmartContractService } from "../../smart-contracts/services/smart-contract.service.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
 import type {
 	CreateAssetDto,

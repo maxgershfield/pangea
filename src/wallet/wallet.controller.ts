@@ -10,10 +10,10 @@ import {
 	UseGuards,
 } from "@nestjs/common";
 import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
-import type { OasisLinkService } from "../auth/services/oasis-link.service.js";
-import type { BalanceSyncService } from "../services/balance-sync.service.js";
-import type { OasisWalletService } from "../services/oasis-wallet.service.js";
-import type { WalletConnectionService } from "../services/wallet-connection.service.js";
+import { OasisLinkService } from "../auth/services/oasis-link.service.js";
+import { BalanceSyncService } from "../services/balance-sync.service.js";
+import { OasisWalletService } from "../services/oasis-wallet.service.js";
+import { WalletConnectionService } from "../services/wallet-connection.service.js";
 import type { ConnectWalletDto } from "./dto/connect-wallet.dto.js";
 import type { GenerateWalletDto } from "./dto/generate-wallet.dto.js";
 import type { VerifyWalletDto } from "./dto/verify-wallet.dto.js";

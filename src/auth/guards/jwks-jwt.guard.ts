@@ -6,8 +6,8 @@ import {
 	type OnModuleInit,
 	UnauthorizedException,
 } from "@nestjs/common";
-import type { ConfigService } from "@nestjs/config";
-import type { Reflector } from "@nestjs/core";
+import { ConfigService } from "@nestjs/config";
+import { Reflector } from "@nestjs/core";
 import { createRemoteJWKSet, type JWTPayload, jwtVerify } from "jose";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator.js";
 

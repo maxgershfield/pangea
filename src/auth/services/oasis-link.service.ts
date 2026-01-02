@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import type { DataSource } from "typeorm";
-import type { OasisAuthService } from "./oasis-auth.service.js";
+import { OasisAuthService } from "./oasis-auth.service.js";
 
 @Injectable()
 export class OasisLinkService {

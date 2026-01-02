@@ -5,12 +5,12 @@ import {
 	Logger,
 	UnauthorizedException,
 } from "@nestjs/common";
-import type { ConfigService } from "@nestjs/config";
-import type { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
 import type { User } from "../../users/entities/user.entity.js";
 import type { AuthResponseDto, LoginDto, RegisterDto } from "../dto/index.js";
-import type { OasisAuthService } from "./oasis-auth.service.js";
-import type { UserSyncService } from "./user-sync.service.js";
+import { OasisAuthService } from "./oasis-auth.service.js";
+import { UserSyncService } from "./user-sync.service.js";
 
 /**
  * Main authentication service
