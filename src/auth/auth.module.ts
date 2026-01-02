@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OasisModule } from '../services/oasis.module.js';
 import { User } from '../users/entities/user.entity.js';
@@ -43,6 +44,16 @@ import { SessionSubscriber } from './subscribers/session.subscriber.js';
 @Module({
   imports: [
     ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'pangea-jwt-secret',
+        signOptions: {
+          expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds
+        },
+      }),
+    }),
     TypeOrmModule.forFeature([
       User,
       BetterAuthUser,
