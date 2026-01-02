@@ -1,0 +1,58 @@
+name: Knip - Identify unused dependencies
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'knip.json'
+      - '.github/workflows/knip.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'knip.json'
+      - '.github/workflows/knip.yml'
+
+jobs:
+  knip:
+    name: Scan for unused dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Knip
+        run: pnpm knip --reporter markdown > knip-report.md 2>&1 || true
+
+      - name: Upload Knip Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-report
+          path: knip-report.md
+          retention-days: 30
+
+      - name: Check for issues
+        run: |
+          if pnpm knip --reporter json 2>/dev/null | grep -q '"files":\|"dependencies":\|"devDependencies":'; then
+            echo "::warning::Knip found unused files or dependencies. Check the uploaded report for details."
+          fi
+          exit 0

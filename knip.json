@@ -1,0 +1,24 @@
+{
+	"$schema": "https://unpkg.com/knip@latest/schema.json",
+	"entry": ["src/main.ts", "src/auth/decorators/session-auth.decorators.ts"],
+	"project": ["src/**/*.ts"],
+	"ignore": [
+		"src/**/*.spec.ts",
+		"src/**/*.test.ts",
+		"test/**/*.ts",
+		"dist/**",
+		"src/config/data-source.ts",
+		"src/**/dto/index.ts",
+		"src/common/common.module.ts",
+		"src/users/users.module.ts",
+		"src/auth/decorators/current-user.decorator.ts",
+		"src/auth/interfaces/auth.interface.ts"
+	],
+	"ignoreDependencies": ["source-map-support"],
+	"ignoreExportsUsedInFile": true,
+	"rules": {
+		"exports": "warn",
+		"types": "warn",
+		"enumMembers": "warn"
+	}
+}

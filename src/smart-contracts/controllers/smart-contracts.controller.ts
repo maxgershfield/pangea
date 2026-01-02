@@ -1,0 +1,88 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { JwksJwtGuard } from '../../auth/guards/jwks-jwt.guard.js';
+import { AdminGuard } from '../../auth/guards/admin.guard.js';
+import { SmartContractService } from '../services/smart-contract.service.js';
+import { DeployRwaTokenDto } from '../dto/deploy-rwa-token.dto.js';
+
+@Controller('smart-contracts')
+@UseGuards(JwksJwtGuard, AdminGuard)
+export class SmartContractsController {
+  constructor(private readonly smartContractService: SmartContractService) {}
+
+  @Post('deploy-rwa-token')
+  @HttpCode(HttpStatus.OK)
+  async deployRwaToken(@Body() dto: DeployRwaTokenDto) {
+    const result = await this.smartContractService.generateRwaToken({
+      name: dto.name,
+      symbol: dto.symbol,
+      totalSupply: dto.totalSupply,
+      metadataUri: dto.metadataUri || '',
+      issuerWallet: dto.issuerWallet,
+      decimals: dto.decimals,
+    });
+
+    return {
+      success: true,
+      contractAddress: result.contractAddress,
+      transactionHash: result.transactionHash,
+      programId: result.programId,
+      message: 'RWA Token contract deployed successfully',
+    };
+  }
+
+  @Post('deploy-order-book')
+  @HttpCode(HttpStatus.OK)
+  async deployOrderBook() {
+    const result = await this.smartContractService.deployOrderBook();
+
+    return {
+      success: true,
+      contractAddress: result.contractAddress,
+      transactionHash: result.transactionHash,
+      programId: result.programId,
+      message: 'Order Book contract deployed successfully',
+    };
+  }
+
+  @Post('deploy-trade-execution')
+  @HttpCode(HttpStatus.OK)
+  async deployTradeExecution() {
+    const result = await this.smartContractService.deployTradeExecution();
+
+    return {
+      success: true,
+      contractAddress: result.contractAddress,
+      transactionHash: result.transactionHash,
+      programId: result.programId,
+      message: 'Trade Execution contract deployed successfully',
+    };
+  }
+
+  @Post('deploy-vault')
+  @HttpCode(HttpStatus.OK)
+  async deployVault() {
+    const result = await this.smartContractService.deployVault();
+
+    return {
+      success: true,
+      contractAddress: result.contractAddress,
+      transactionHash: result.transactionHash,
+      programId: result.programId,
+      message: 'Vault contract deployed successfully',
+    };
+  }
+
+  @Get('cache-stats')
+  async getCacheStats() {
+    const stats = await this.smartContractService.getCacheStats();
+    return stats;
+  }
+}
