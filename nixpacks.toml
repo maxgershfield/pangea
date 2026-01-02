@@ -1,6 +1,0 @@
-# Nixpacks configuration for Railway deployment
-# Adds Python for native module compilation (better-sqlite3)
-# The '...' preserves auto-detected packages (nodejs, pnpm)
-
-[phases.setup]
-nixPkgs = ['...', 'python3']
