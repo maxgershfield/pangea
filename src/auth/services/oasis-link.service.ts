@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import type { DataSource } from "typeorm";
+import { DataSource } from "typeorm";
 import { OasisAuthService } from "./oasis-auth.service.js";
 
 @Injectable()
@@ -8,18 +8,18 @@ export class OasisLinkService {
 	private readonly logger = new Logger(OasisLinkService.name);
 
 	constructor(
-    @InjectDataSource()
-    private dataSource: DataSource,
-    private oasisAuthService: OasisAuthService,
-  ) {}
+		@InjectDataSource()
+		private readonly dataSource: DataSource,
+		private readonly oasisAuthService: OasisAuthService
+	) {}
 
 	/**
 	 * Get OASIS avatar ID for Better-Auth user (if exists)
 	 */
 	async getAvatarId(userId: string): Promise<string | null> {
 		const result = await this.dataSource.query(
-			`SELECT avatar_id FROM user_oasis_mapping WHERE user_id = $1`,
-			[userId],
+			"SELECT avatar_id FROM user_oasis_mapping WHERE user_id = $1",
+			[userId]
 		);
 
 		return result.length > 0 ? result[0].avatar_id : null;
@@ -28,11 +28,7 @@ export class OasisLinkService {
 	/**
 	 * Create OASIS avatar and link to Better-Auth user
 	 */
-	async createAndLinkAvatar(
-		userId: string,
-		email: string,
-		name?: string,
-	): Promise<string> {
+	async createAndLinkAvatar(userId: string, email: string, name?: string): Promise<string> {
 		// Check if already linked
 		const existing = await this.getAvatarId(userId);
 		if (existing) {
@@ -62,12 +58,10 @@ export class OasisLinkService {
 				`INSERT INTO user_oasis_mapping (user_id, avatar_id)
          VALUES ($1, $2)
          ON CONFLICT (user_id) DO NOTHING`,
-				[userId, oasisAvatar.avatarId],
+				[userId, oasisAvatar.avatarId]
 			);
 
-			this.logger.log(
-				`Created and linked OASIS avatar ${oasisAvatar.avatarId} for user ${userId}`,
-			);
+			this.logger.log(`Created and linked OASIS avatar ${oasisAvatar.avatarId} for user ${userId}`);
 			return oasisAvatar.avatarId;
 		} catch (error: any) {
 			this.logger.error(`Failed to create OASIS avatar: ${error.message}`);
@@ -79,11 +73,7 @@ export class OasisLinkService {
 	 * Ensure OASIS avatar exists (lazy creation)
 	 * This is the main method called by wallet services
 	 */
-	async ensureOasisAvatar(
-		userId: string,
-		email: string,
-		name?: string,
-	): Promise<string> {
+	async ensureOasisAvatar(userId: string, email: string, name?: string): Promise<string> {
 		let avatarId = await this.getAvatarId(userId);
 
 		if (!avatarId) {
@@ -96,11 +86,7 @@ export class OasisLinkService {
 	/**
 	 * Get or create avatar (used when we know user will need OASIS features)
 	 */
-	async getOrCreateAvatar(
-		userId: string,
-		email: string,
-		name?: string,
-	): Promise<string> {
+	async getOrCreateAvatar(userId: string, email: string, name?: string): Promise<string> {
 		return this.ensureOasisAvatar(userId, email, name);
 	}
 

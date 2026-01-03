@@ -1,32 +1,32 @@
-import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
-import { AuthService } from '../services/auth.service.js';
-import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard.js';
-import { CurrentUser } from '../decorators/session-auth.decorators.js';
-import { User } from '../../users/entities/user.entity.js';
+import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
+import { User } from "../../users/entities/user.entity.js";
+import { CurrentUser } from "../decorators/session-auth.decorators.js";
+import { JwksJwtGuard, UserContext } from "../guards/jwks-jwt.guard.js";
+import { AuthService } from "../services/auth.service.js";
 
-@Controller('user')
+@Controller("user")
 @UseGuards(JwksJwtGuard)
 export class UserController {
-  constructor(private authService: AuthService) {}
+	constructor(private readonly authService: AuthService) {}
 
-  /**
-   * Get current user profile
-   * GET /api/user/profile
-   */
-  @Get('profile')
-  async getProfile(@CurrentUser() user: UserContext): Promise<User> {
-    return this.authService.getProfile(user.id);
-  }
+	/**
+	 * Get current user profile
+	 * GET /api/user/profile
+	 */
+	@Get("profile")
+	async getProfile(@CurrentUser() user: UserContext): Promise<User> {
+		return this.authService.getProfile(user.id);
+	}
 
-  /**
-   * Update user profile
-   * PUT /api/user/profile
-   */
-  @Put('profile')
-  async updateProfile(
-    @CurrentUser() user: UserContext,
-    @Body() updateData: { firstName?: string; lastName?: string; email?: string },
-  ): Promise<User> {
-    return this.authService.updateProfile(user.id, updateData);
-  }
+	/**
+	 * Update user profile
+	 * PUT /api/user/profile
+	 */
+	@Put("profile")
+	async updateProfile(
+		@CurrentUser() user: UserContext,
+		@Body() updateData: { firstName?: string; lastName?: string; email?: string }
+	): Promise<User> {
+		return this.authService.updateProfile(user.id, updateData);
+	}
 }

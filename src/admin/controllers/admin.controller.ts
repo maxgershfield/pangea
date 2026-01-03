@@ -1,20 +1,9 @@
-import {
-	Body,
-	Controller,
-	Delete,
-	Get,
-	Logger,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards,
-} from "@nestjs/common";
-import type { CreateAssetDto } from "../../assets/dto/create-asset.dto.js";
-import type { UpdateAssetDto } from "../../assets/dto/update-asset.dto.js";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { CreateAssetDto } from "../../assets/dto/create-asset.dto.js";
+import { UpdateAssetDto } from "../../assets/dto/update-asset.dto.js";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
-import type {
+import {
 	AdminAssetFiltersDto,
 	AdminOrderFiltersDto,
 	AdminTradeFiltersDto,
@@ -29,8 +18,6 @@ import { AdminService } from "../services/admin.service.js";
 @Controller("admin")
 @UseGuards(JwksJwtGuard, AdminGuard)
 export class AdminController {
-	private readonly logger = new Logger(AdminController.name);
-
 	constructor(private readonly adminService: AdminService) {}
 
 	// ==================== USER MANAGEMENT ====================
@@ -39,29 +26,26 @@ export class AdminController {
 	 * Get all users with filters
 	 * GET /admin/users
 	 */
-	@Get('users')
-  async getUsers(@Query() filters: AdminUserFiltersDto) {
-    return this.adminService.getUsers(filters);
-  }
+	@Get("users")
+	async getUsers(@Query() filters: AdminUserFiltersDto) {
+		return this.adminService.getUsers(filters);
+	}
 
 	/**
 	 * Get user by ID
 	 * GET /admin/users/:userId
 	 */
-	@Get('users/:userId')
-  async getUser(@Param('userId') userId: string) {
-    return this.adminService.getUser(userId);
-  }
+	@Get("users/:userId")
+	async getUser(@Param("userId") userId: string) {
+		return this.adminService.getUser(userId);
+	}
 
 	/**
 	 * Update user information
 	 * PUT /admin/users/:userId
 	 */
 	@Put("users/:userId")
-	async updateUser(
-		@Param('userId') userId: string,
-		@Body() dto: UpdateUserDto,
-	) {
+	async updateUser(@Param("userId") userId: string, @Body() dto: UpdateUserDto) {
 		return this.adminService.updateUser(userId, dto);
 	}
 
@@ -70,10 +54,7 @@ export class AdminController {
 	 * PUT /admin/users/:userId/kyc
 	 */
 	@Put("users/:userId/kyc")
-	async updateKycStatus(
-		@Param('userId') userId: string,
-		@Body() dto: UpdateKycStatusDto,
-	) {
+	async updateKycStatus(@Param("userId") userId: string, @Body() dto: UpdateKycStatusDto) {
 		return this.adminService.updateUserKycStatus(userId, dto);
 	}
 
@@ -81,10 +62,10 @@ export class AdminController {
 	 * Get user activity logs
 	 * GET /admin/users/:userId/activity
 	 */
-	@Get('users/:userId/activity')
-  async getUserActivityLogs(@Param('userId') userId: string) {
-    return this.adminService.getUserActivityLogs(userId);
-  }
+	@Get("users/:userId/activity")
+	async getUserActivityLogs(@Param("userId") userId: string) {
+		return this.adminService.getUserActivityLogs(userId);
+	}
 
 	// ==================== ASSET MANAGEMENT ====================
 
@@ -92,20 +73,17 @@ export class AdminController {
 	 * Get all assets with filters
 	 * GET /admin/assets
 	 */
-	@Get('assets')
-  async getAssets(@Query() filters: AdminAssetFiltersDto) {
-    return this.adminService.getAssets(filters);
-  }
+	@Get("assets")
+	async getAssets(@Query() filters: AdminAssetFiltersDto) {
+		return this.adminService.getAssets(filters);
+	}
 
 	/**
 	 * Create new asset (admin)
 	 * POST /admin/assets
 	 */
 	@Post("assets")
-	async createAsset(
-		@Body() dto: CreateAssetDto,
-		@Query('issuerId') issuerId?: string,
-	) {
+	async createAsset(@Body() dto: CreateAssetDto, @Query("issuerId") issuerId?: string) {
 		return this.adminService.createAsset(dto, issuerId);
 	}
 
@@ -114,10 +92,7 @@ export class AdminController {
 	 * PUT /admin/assets/:assetId
 	 */
 	@Put("assets/:assetId")
-	async updateAsset(
-		@Param('assetId') assetId: string,
-		@Body() dto: UpdateAssetDto,
-	) {
+	async updateAsset(@Param("assetId") assetId: string, @Body() dto: UpdateAssetDto) {
 		return this.adminService.updateAsset(assetId, dto);
 	}
 
@@ -125,29 +100,29 @@ export class AdminController {
 	 * Delete asset (admin - soft delete)
 	 * DELETE /admin/assets/:assetId
 	 */
-	@Delete('assets/:assetId')
-  async deleteAsset(@Param('assetId') assetId: string) {
-    await this.adminService.deleteAsset(assetId);
-    return { message: 'Asset deleted successfully' };
-  }
+	@Delete("assets/:assetId")
+	async deleteAsset(@Param("assetId") assetId: string) {
+		await this.adminService.deleteAsset(assetId);
+		return { message: "Asset deleted successfully" };
+	}
 
 	/**
 	 * Approve asset listing
 	 * POST /admin/assets/:assetId/approve
 	 */
-	@Post('assets/:assetId/approve')
-  async approveAssetListing(@Param('assetId') assetId: string) {
-    return this.adminService.approveAssetListing(assetId);
-  }
+	@Post("assets/:assetId/approve")
+	async approveAssetListing(@Param("assetId") assetId: string) {
+		return this.adminService.approveAssetListing(assetId);
+	}
 
 	/**
 	 * Get asset statistics
 	 * GET /admin/assets/:assetId/statistics
 	 */
-	@Get('assets/:assetId/statistics')
-  async getAssetStatistics(@Param('assetId') assetId: string) {
-    return this.adminService.getAssetStatistics(assetId);
-  }
+	@Get("assets/:assetId/statistics")
+	async getAssetStatistics(@Param("assetId") assetId: string) {
+		return this.adminService.getAssetStatistics(assetId);
+	}
 
 	// ==================== ORDER MANAGEMENT ====================
 
@@ -155,19 +130,19 @@ export class AdminController {
 	 * Get all orders with filters
 	 * GET /admin/orders
 	 */
-	@Get('orders')
-  async getOrders(@Query() filters: AdminOrderFiltersDto) {
-    return this.adminService.getOrders(filters);
-  }
+	@Get("orders")
+	async getOrders(@Query() filters: AdminOrderFiltersDto) {
+		return this.adminService.getOrders(filters);
+	}
 
 	/**
 	 * Cancel order (emergency admin action)
 	 * DELETE /admin/orders/:orderId
 	 */
-	@Delete('orders/:orderId')
-  async cancelOrder(@Param('orderId') orderId: string) {
-    return this.adminService.cancelOrder(orderId);
-  }
+	@Delete("orders/:orderId")
+	async cancelOrder(@Param("orderId") orderId: string) {
+		return this.adminService.cancelOrder(orderId);
+	}
 
 	/**
 	 * Get order statistics
@@ -184,10 +159,10 @@ export class AdminController {
 	 * Get all trades with filters
 	 * GET /admin/trades
 	 */
-	@Get('trades')
-  async getTrades(@Query() filters: AdminTradeFiltersDto) {
-    return this.adminService.getTrades(filters);
-  }
+	@Get("trades")
+	async getTrades(@Query() filters: AdminTradeFiltersDto) {
+		return this.adminService.getTrades(filters);
+	}
 
 	/**
 	 * Get trade statistics
@@ -204,19 +179,19 @@ export class AdminController {
 	 * Get all transactions with filters
 	 * GET /admin/transactions
 	 */
-	@Get('transactions')
-  async getTransactions(@Query() filters: AdminTransactionFiltersDto) {
-    return this.adminService.getTransactions(filters);
-  }
+	@Get("transactions")
+	async getTransactions(@Query() filters: AdminTransactionFiltersDto) {
+		return this.adminService.getTransactions(filters);
+	}
 
 	/**
 	 * Approve withdrawal (if manual approval is required)
 	 * POST /admin/transactions/:transactionId/approve
 	 */
-	@Post('transactions/:transactionId/approve')
-  async approveWithdrawal(@Param('transactionId') transactionId: string) {
-    return this.adminService.approveWithdrawal(transactionId);
-  }
+	@Post("transactions/:transactionId/approve")
+	async approveWithdrawal(@Param("transactionId") transactionId: string) {
+		return this.adminService.approveWithdrawal(transactionId);
+	}
 
 	// ==================== PLATFORM STATISTICS ====================
 
@@ -235,8 +210,8 @@ export class AdminController {
 	 * Get analytics data
 	 * GET /admin/analytics
 	 */
-	@Get('analytics')
-  async getAnalytics(@Query() filters: AnalyticsFiltersDto) {
-    return this.adminService.getAnalytics(filters);
-  }
+	@Get("analytics")
+	async getAnalytics(@Query() filters: AnalyticsFiltersDto) {
+		return this.adminService.getAnalytics(filters);
+	}
 }

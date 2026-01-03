@@ -33,8 +33,8 @@ export default defineConfig({
 		isolate: true,
 
 		// increase timeouts for async NestJS operations
-		testTimeout: 30000,
-		hookTimeout: 30000,
+		testTimeout: 30_000,
+		hookTimeout: 30_000,
 
 		// coverage configuration
 		coverage: {

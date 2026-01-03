@@ -1,9 +1,1 @@
-export * from './deploy-rwa-token.dto.js';
-
-
-
-
-
-
-
-
+export * from "./deploy-rwa-token.dto.js";

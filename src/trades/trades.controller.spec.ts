@@ -1,237 +1,221 @@
 // reflect-metadata MUST be first for TypeORM decorator metadata
-import 'reflect-metadata';
+import "reflect-metadata";
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { TradesController } from './trades.controller.js';
-import { TradesService } from './trades.service.js';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Trade } from './entities/trade.entity.js';
-import { JwksJwtGuard } from '../auth/guards/jwks-jwt.guard.js';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
+import { Trade } from "./entities/trade.entity.js";
+import { TradesController } from "./trades.controller.js";
+import { TradesService } from "./trades.service.js";
 
-describe('TradesController', () => {
-  let controller: TradesController;
-  let service: TradesService;
+describe("TradesController", () => {
+	let controller: TradesController;
+	let service: TradesService;
 
-  const mockUser = {
-    id: 'user-uuid',
-    email: 'user@test.com',
-    username: 'testuser',
-  };
+	const mockUser = {
+		id: "user-uuid",
+		email: "user@test.com",
+		username: "testuser",
+	};
 
-  const mockTradesService = {
-    findByUser: vi.fn(),
-    findOne: vi.fn(),
-    findByAsset: vi.fn(),
-    getStatistics: vi.fn(),
-    mapTradeToResponse: vi.fn((trade) => ({
-      ...trade,
-      quantity: trade.quantity?.toString() ?? '0',
-    })),
-  };
+	const mockTradesService = {
+		findByUser: vi.fn(),
+		findOne: vi.fn(),
+		findByAsset: vi.fn(),
+		getStatistics: vi.fn(),
+		mapTradeToResponse: vi.fn((trade) => ({
+			...trade,
+			quantity: trade.quantity?.toString() ?? "0",
+		})),
+	};
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [TradesController],
-      providers: [
-        {
-          provide: TradesService,
-          useValue: mockTradesService,
-        },
-        {
-          provide: getRepositoryToken(Trade),
-          useValue: {},
-        },
-      ],
-    })
-      .overrideGuard(JwksJwtGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [TradesController],
+			providers: [
+				{
+					provide: TradesService,
+					useValue: mockTradesService,
+				},
+				{
+					provide: getRepositoryToken(Trade),
+					useValue: {},
+				},
+			],
+		})
+			.overrideGuard(JwksJwtGuard)
+			.useValue({ canActivate: () => true })
+			.compile();
 
-    controller = module.get<TradesController>(TradesController);
-    service = module.get<TradesService>(TradesService);
+		controller = module.get<TradesController>(TradesController);
+		service = module.get<TradesService>(TradesService);
 
-    vi.clearAllMocks();
-  });
+		vi.clearAllMocks();
+	});
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+	it("should be defined", () => {
+		expect(controller).toBeDefined();
+	});
 
-  describe('findAll', () => {
-    it('should return user trades with pagination', async () => {
-      const mockResponse = {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
-      };
+	describe("findAll", () => {
+		it("should return user trades with pagination", async () => {
+			const mockResponse = {
+				items: [],
+				total: 0,
+				page: 1,
+				limit: 20,
+				totalPages: 0,
+			};
 
-      mockTradesService.findByUser.mockResolvedValue(mockResponse);
+			mockTradesService.findByUser.mockResolvedValue(mockResponse);
 
-      const req = { user: mockUser };
-      const filters = { page: 1, limit: 20 };
+			const req = { user: mockUser };
+			const filters = { page: 1, limit: 20 };
 
-      const result = await controller.findAll(req, filters);
+			const result = await controller.findAll(req, filters);
 
-      expect(service.findByUser).toHaveBeenCalledWith(
-        mockUser.id,
-        expect.objectContaining({ page: 1, limit: 20 }),
-      );
-      expect(result).toEqual(mockResponse);
-    });
-  });
+			expect(service.findByUser).toHaveBeenCalledWith(
+				mockUser.id,
+				expect.objectContaining({ page: 1, limit: 20 })
+			);
+			expect(result).toEqual(mockResponse);
+		});
+	});
 
-  describe('findOne', () => {
-    it('should return a trade by ID', async () => {
-      const tradeId = 'TRD-2025-001';
-      const mockTrade = {
-        id: 'trade-uuid',
-        tradeId,
-        buyer: mockUser,
-        seller: { id: 'seller-uuid', email: 'seller@test.com' },
-        assetId: 'asset-uuid',
-        quantity: BigInt(100),
-        pricePerTokenUsd: 10.5,
-        totalValueUsd: 1050,
-        blockchain: 'solana',
-        transactionHash: 'tx-hash',
-        status: 'completed',
-        settlementStatus: 'settled',
-      };
+	describe("findOne", () => {
+		it("should return a trade by ID", async () => {
+			const tradeId = "TRD-2025-001";
+			const mockTrade = {
+				id: "trade-uuid",
+				tradeId,
+				buyer: mockUser,
+				seller: { id: "seller-uuid", email: "seller@test.com" },
+				assetId: "asset-uuid",
+				quantity: BigInt(100),
+				pricePerTokenUsd: 10.5,
+				totalValueUsd: 1050,
+				blockchain: "solana",
+				transactionHash: "tx-hash",
+				status: "completed",
+				settlementStatus: "settled",
+			};
 
-      mockTradesService.findOne.mockResolvedValue(mockTrade);
+			mockTradesService.findOne.mockResolvedValue(mockTrade);
 
-      const req = { user: mockUser };
-      const result = await controller.findOne(tradeId, req);
+			const req = { user: mockUser };
+			const result = await controller.findOne(tradeId, req);
 
-      expect(service.findOne).toHaveBeenCalledWith(tradeId, mockUser.id);
-      expect(result).toMatchObject({
-        tradeId,
-        buyer: expect.objectContaining({ id: mockUser.id }),
-      });
-    });
+			expect(service.findOne).toHaveBeenCalledWith(tradeId, mockUser.id);
+			expect(result).toMatchObject({
+				tradeId,
+				buyer: expect.objectContaining({ id: mockUser.id }),
+			});
+		});
 
-    it('should throw NotFoundException when trade not found', async () => {
-      const tradeId = 'TRD-2025-999';
-      mockTradesService.findOne.mockRejectedValue(
-        new NotFoundException('Trade not found'),
-      );
+		it("should throw NotFoundException when trade not found", async () => {
+			const tradeId = "TRD-2025-999";
+			mockTradesService.findOne.mockRejectedValue(new NotFoundException("Trade not found"));
 
-      const req = { user: mockUser };
+			const req = { user: mockUser };
 
-      await expect(controller.findOne(tradeId, req)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
+			await expect(controller.findOne(tradeId, req)).rejects.toThrow(NotFoundException);
+		});
+	});
 
-  describe('findByAsset', () => {
-    it('should return trades for a specific asset', async () => {
-      const assetId = 'asset-uuid';
-      const mockResponse = {
-        items: [
-          {
-            id: 'trade-1',
-            tradeId: 'TRD-2025-001',
-            assetId,
-            buyer: mockUser,
-            seller: { id: 'seller-uuid', email: 'seller@test.com' },
-          },
-        ],
-        total: 1,
-        page: 1,
-        limit: 20,
-        totalPages: 1,
-      };
+	describe("findByAsset", () => {
+		it("should return trades for a specific asset", async () => {
+			const assetId = "asset-uuid";
+			const mockResponse = {
+				items: [
+					{
+						id: "trade-1",
+						tradeId: "TRD-2025-001",
+						assetId,
+						buyer: mockUser,
+						seller: { id: "seller-uuid", email: "seller@test.com" },
+					},
+				],
+				total: 1,
+				page: 1,
+				limit: 20,
+				totalPages: 1,
+			};
 
-      mockTradesService.findByAsset.mockResolvedValue(mockResponse);
+			mockTradesService.findByAsset.mockResolvedValue(mockResponse);
 
-      const filters = { page: 1, limit: 20 };
-      const result = await controller.findByAsset(assetId, filters);
+			const filters = { page: 1, limit: 20 };
+			const result = await controller.findByAsset(assetId, filters);
 
-      expect(service.findByAsset).toHaveBeenCalledWith(
-        assetId,
-        expect.objectContaining({ page: 1, limit: 20 }),
-      );
-      expect(result).toEqual(mockResponse);
-    });
-  });
+			expect(service.findByAsset).toHaveBeenCalledWith(
+				assetId,
+				expect.objectContaining({ page: 1, limit: 20 })
+			);
+			expect(result).toEqual(mockResponse);
+		});
+	});
 
-  describe('getHistory', () => {
-    it('should return trade history (alias for findAll)', async () => {
-      const mockResponse = {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 20,
-        totalPages: 0,
-      };
+	describe("getHistory", () => {
+		it("should return trade history (alias for findAll)", async () => {
+			const mockResponse = {
+				items: [],
+				total: 0,
+				page: 1,
+				limit: 20,
+				totalPages: 0,
+			};
 
-      mockTradesService.findByUser.mockResolvedValue(mockResponse);
+			mockTradesService.findByUser.mockResolvedValue(mockResponse);
 
-      const req = { user: mockUser };
-      const filters = { page: 1, limit: 20 };
+			const req = { user: mockUser };
+			const filters = { page: 1, limit: 20 };
 
-      const result = await controller.getHistory(req, filters);
+			const result = await controller.getHistory(req, filters);
 
-      expect(service.findByUser).toHaveBeenCalledWith(
-        mockUser.id,
-        expect.any(Object),
-      );
-      expect(result).toEqual(mockResponse);
-    });
-  });
+			expect(service.findByUser).toHaveBeenCalledWith(mockUser.id, expect.any(Object));
+			expect(result).toEqual(mockResponse);
+		});
+	});
 
-  describe('getStatistics', () => {
-    it('should return trade statistics for user', async () => {
-      const mockStats = {
-        totalTrades: 10,
-        totalVolume: '50000.00',
-        averageTradeSize: '5000.00',
-        minPrice: '9.50',
-        maxPrice: '11.50',
-        averagePrice: '10.50',
-      };
+	describe("getStatistics", () => {
+		it("should return trade statistics for user", async () => {
+			const mockStats = {
+				totalTrades: 10,
+				totalVolume: "50000.00",
+				averageTradeSize: "5000.00",
+				minPrice: "9.50",
+				maxPrice: "11.50",
+				averagePrice: "10.50",
+			};
 
-      mockTradesService.getStatistics.mockResolvedValue(mockStats);
+			mockTradesService.getStatistics.mockResolvedValue(mockStats);
 
-      const req = { user: mockUser };
-      const result = await controller.getStatistics(req);
+			const req = { user: mockUser };
+			const result = await controller.getStatistics(req);
 
-      expect(service.getStatistics).toHaveBeenCalledWith(mockUser.id, undefined);
-      expect(result).toEqual(mockStats);
-    });
+			expect(service.getStatistics).toHaveBeenCalledWith(mockUser.id, undefined);
+			expect(result).toEqual(mockStats);
+		});
 
-    it('should return trade statistics filtered by asset', async () => {
-      const assetId = 'asset-uuid';
-      const mockStats = {
-        totalTrades: 5,
-        totalVolume: '25000.00',
-        averageTradeSize: '5000.00',
-        minPrice: '10.00',
-        maxPrice: '11.00',
-        averagePrice: '10.50',
-      };
+		it("should return trade statistics filtered by asset", async () => {
+			const assetId = "asset-uuid";
+			const mockStats = {
+				totalTrades: 5,
+				totalVolume: "25000.00",
+				averageTradeSize: "5000.00",
+				minPrice: "10.00",
+				maxPrice: "11.00",
+				averagePrice: "10.50",
+			};
 
-      mockTradesService.getStatistics.mockResolvedValue(mockStats);
+			mockTradesService.getStatistics.mockResolvedValue(mockStats);
 
-      const req = { user: mockUser };
-      const result = await controller.getStatistics(req, assetId);
+			const req = { user: mockUser };
+			const result = await controller.getStatistics(req, assetId);
 
-      expect(service.getStatistics).toHaveBeenCalledWith(mockUser.id, assetId);
-      expect(result).toEqual(mockStats);
-    });
-  });
+			expect(service.getStatistics).toHaveBeenCalledWith(mockUser.id, assetId);
+			expect(result).toEqual(mockStats);
+		});
+	});
 });
-
-
-
-
-
-
-
-

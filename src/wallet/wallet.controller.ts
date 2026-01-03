@@ -9,15 +9,15 @@ import {
 	Request,
 	UseGuards,
 } from "@nestjs/common";
-import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
 import { Public } from "../auth/decorators/public.decorator.js";
+import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
 import { OasisLinkService } from "../auth/services/oasis-link.service.js";
 import { BalanceSyncService } from "../services/balance-sync.service.js";
 import { OasisWalletService } from "../services/oasis-wallet.service.js";
 import { WalletConnectionService } from "../services/wallet-connection.service.js";
-import type { ConnectWalletDto } from "./dto/connect-wallet.dto.js";
-import type { GenerateWalletDto } from "./dto/generate-wallet.dto.js";
-import type { VerifyWalletDto } from "./dto/verify-wallet.dto.js";
+import { ConnectWalletDto } from "./dto/connect-wallet.dto.js";
+import { GenerateWalletDto } from "./dto/generate-wallet.dto.js";
+import { VerifyWalletDto } from "./dto/verify-wallet.dto.js";
 
 @Controller("wallet")
 @UseGuards(JwksJwtGuard)
@@ -26,128 +26,124 @@ export class WalletController {
 		private readonly walletConnectionService: WalletConnectionService,
 		private readonly oasisWalletService: OasisWalletService,
 		private readonly balanceSyncService: BalanceSyncService,
-		private readonly oasisLinkService: OasisLinkService,
+		private readonly oasisLinkService: OasisLinkService
 	) {}
 
 	/**
 	 * Get all balances for the authenticated user
 	 * GET /api/wallet/balance
 	 */
-  @Get('balance')
-  async getBalances(@Request() req: any) {
-    const userId = req.user?.id;
-    const email = req.user?.email;
-    const name = req.user?.name; // Optional: Better-Auth may include name
+	@Get("balance")
+	async getBalances(@Request() req: any) {
+		const userId = req.user?.id;
+		const email = req.user?.email;
+		const name = req.user?.name; // Optional: Better-Auth may include name
 
-    if (!userId || !email) {
-      throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
-    }
+		if (!(userId && email)) {
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
+		}
 
-    try {
-      // Ensure OASIS avatar exists (lazy creation)
-      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name || undefined);
+		try {
+			// Ensure OASIS avatar exists (lazy creation)
+			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
+				userId,
+				email,
+				name || undefined
+			);
 
-      // Get all wallets from OASIS
-      const wallets = await this.oasisWalletService.getWallets(avatarId);
+			// Get all wallets from OASIS
+			const wallets = await this.oasisWalletService.getWallets(avatarId);
 
-      // If no wallets exist, return helpful message
-      if (!wallets || wallets.length === 0) {
-        return {
-          success: true,
-          balances: [],
-          message: 'No wallets found. Generate a wallet first using POST /api/wallet/generate',
-          hasWallets: false,
-        };
-      }
+			// If no wallets exist, return helpful message
+			if (!wallets || wallets.length === 0) {
+				return {
+					success: true,
+					balances: [],
+					message: "No wallets found. Generate a wallet first using POST /api/wallet/generate",
+					hasWallets: false,
+				};
+			}
 
-      // Get balances for each wallet
-      const balances = await Promise.all(
-        wallets.map(async (wallet) => {
-          try {
-            const balance = await this.oasisWalletService.getBalance(
-              wallet.walletId,
-              wallet.providerType,
-            );
-            return {
-              walletId: wallet.walletId,
-              walletAddress: wallet.walletAddress,
-              providerType: wallet.providerType,
-              balance: balance.balance,
-              tokenSymbol: balance.tokenSymbol,
-            };
-          } catch (error) {
-            return {
-              walletId: wallet.walletId,
-              walletAddress: wallet.walletAddress,
-              providerType: wallet.providerType,
-              balance: 0,
-              error: error.message,
-            };
-          }
-        }),
-      );
+			// Get balances for each wallet
+			const balances = await Promise.all(
+				wallets.map(async (wallet) => {
+					try {
+						const balance = await this.oasisWalletService.getBalance(
+							wallet.walletId,
+							wallet.providerType
+						);
+						return {
+							walletId: wallet.walletId,
+							walletAddress: wallet.walletAddress,
+							providerType: wallet.providerType,
+							balance: balance.balance,
+							tokenSymbol: balance.tokenSymbol,
+						};
+					} catch (error) {
+						return {
+							walletId: wallet.walletId,
+							walletAddress: wallet.walletAddress,
+							providerType: wallet.providerType,
+							balance: 0,
+							error: error.message,
+						};
+					}
+				})
+			);
 
-      return {
-        success: true,
-        balances,
-        hasWallets: true,
-      };
-    } catch (error: any) {
-      // Provide helpful error message
-      if (error.response?.status === 404 || error.message?.includes('not found')) {
-        return {
-          success: true,
-          balances: [],
-          message: 'No wallets found. Generate a wallet first using POST /api/wallet/generate',
-          hasWallets: false,
-        };
-      }
-      throw new HttpException(
-        `Failed to get balances: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+			return {
+				success: true,
+				balances,
+				hasWallets: true,
+			};
+		} catch (error: any) {
+			// Provide helpful error message
+			if (error.response?.status === 404 || error.message?.includes("not found")) {
+				return {
+					success: true,
+					balances: [],
+					message: "No wallets found. Generate a wallet first using POST /api/wallet/generate",
+					hasWallets: false,
+				};
+			}
+			throw new HttpException(
+				`Failed to get balances: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
 
 	/**
 	 * Get balance for a specific asset
 	 * GET /api/wallet/balance/:assetId
 	 */
 	@Get("balance/:assetId")
-	async getAssetBalance(
-		@Request() req: any,
-		@Param('assetId') assetId: string,
-	) {
+	async getAssetBalance(@Request() req: any, @Param("assetId") assetId: string) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
 		const name = req.user?.name; // Optional: Better-Auth may include name
 
-		if (!userId || !email) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+		if (!(userId && email)) {
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		// Ensure OASIS avatar exists (lazy creation)
 		const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 			userId,
 			email,
-			name || undefined,
+			name || undefined
 		);
 
 		try {
 			// Determine provider type from assetId or use default
 			const providerType =
-				assetId.includes("solana") || assetId.includes("SOL")
-					? "SolanaOASIS"
-					: "EthereumOASIS";
+				assetId.includes("solana") || assetId.includes("SOL") ? "SolanaOASIS" : "EthereumOASIS";
 
 			const balance = await this.balanceSyncService.syncAssetBalance(
 				userId,
 				avatarId,
 				assetId,
-				providerType,
+				providerType
 			);
 
 			if (!balance) {
@@ -161,7 +157,7 @@ export class WalletController {
 		} catch (error) {
 			throw new HttpException(
 				`Failed to get asset balance: ${error.message}`,
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -179,11 +175,8 @@ export class WalletController {
 		const email = req.user?.email;
 		const name = req.user?.name; // Optional: Better-Auth may include name
 
-		if (!userId || !email) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+		if (!(userId && email)) {
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
@@ -191,13 +184,13 @@ export class WalletController {
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
-				name || undefined,
+				name || undefined
 			);
 
 			const wallet = await this.oasisWalletService.generateWallet(
 				avatarId,
 				dto.providerType,
-				dto.setAsDefault ?? true,
+				dto.setAsDefault ?? true
 			);
 
 			return {
@@ -218,7 +211,7 @@ export class WalletController {
 					message: `Failed to generate wallet: ${error.message}. Make sure your avatar exists (register/login first).`,
 					error: "Wallet generation failed",
 				},
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -232,10 +225,7 @@ export class WalletController {
 		const userId = req.user?.id;
 
 		if (!userId) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
@@ -245,19 +235,19 @@ export class WalletController {
 					userId,
 					dto.walletAddress,
 					dto.signature,
-					dto.message,
+					dto.message
 				);
 			} else if (dto.blockchain === "ethereum") {
 				result = await this.walletConnectionService.connectMetaMask(
 					userId,
 					dto.walletAddress,
 					dto.signature,
-					dto.message,
+					dto.message
 				);
 			} else {
 				throw new HttpException(
 					`Unsupported blockchain: ${dto.blockchain}`,
-					HttpStatus.BAD_REQUEST,
+					HttpStatus.BAD_REQUEST
 				);
 			}
 
@@ -275,7 +265,7 @@ export class WalletController {
 		} catch (error) {
 			throw new HttpException(
 				`Failed to connect wallet: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -289,10 +279,7 @@ export class WalletController {
 		const userId = req.user?.id;
 
 		if (!userId) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
@@ -314,7 +301,7 @@ export class WalletController {
 		} catch (error) {
 			throw new HttpException(
 				`Failed to verify wallet: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -323,34 +310,38 @@ export class WalletController {
 	 * Manually trigger balance sync
 	 * POST /api/wallet/sync
 	 */
-  @Post('sync')
-  async syncBalances(@Request() req: any) {
-    const userId = req.user?.id;
-    const email = req.user?.email;
-    const name = req.user?.name; // Optional: Better-Auth may include name
+	@Post("sync")
+	async syncBalances(@Request() req: any) {
+		const userId = req.user?.id;
+		const email = req.user?.email;
+		const name = req.user?.name; // Optional: Better-Auth may include name
 
-    if (!userId || !email) {
-      throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
-    }
+		if (!(userId && email)) {
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
+		}
 
-    try {
-      // Ensure OASIS avatar exists (lazy creation)
-      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name || undefined);
+		try {
+			// Ensure OASIS avatar exists (lazy creation)
+			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
+				userId,
+				email,
+				name || undefined
+			);
 
-      const balances = await this.balanceSyncService.syncUserBalances(userId, avatarId);
+			const balances = await this.balanceSyncService.syncUserBalances(userId, avatarId);
 
-      return {
-        success: true,
-        message: 'Balances synced successfully',
-        balances,
-      };
-    } catch (error) {
-      throw new HttpException(
-        `Failed to sync balances: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+			return {
+				success: true,
+				message: "Balances synced successfully",
+				balances,
+			};
+		} catch (error) {
+			throw new HttpException(
+				`Failed to sync balances: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
+		}
+	}
 
 	/**
 	 * Get wallet generation message for frontend
@@ -359,21 +350,18 @@ export class WalletController {
 	@Get("verification-message")
 	async getVerificationMessage(
 		@Request() req: any,
-		@Body() body: { walletAddress: string; blockchain: string },
+		@Body() body: { walletAddress: string; blockchain: string }
 	) {
 		const userId = req.user?.id;
 
 		if (!userId) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		const message = this.walletConnectionService.generateVerificationMessage(
 			userId,
 			body.walletAddress,
-			body.blockchain,
+			body.blockchain
 		);
 
 		return {
@@ -387,19 +375,13 @@ export class WalletController {
 	 * GET /api/wallet/transactions/:walletId
 	 */
 	@Get("transactions/:walletId")
-	async getTransactions(
-		@Request() req: any,
-		@Param('walletId') walletId: string,
-	) {
+	async getTransactions(@Request() req: any, @Param("walletId") walletId: string) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
 		const name = req.user?.name; // Optional: Better-Auth may include name
 
-		if (!userId || !email) {
-			throw new HttpException(
-				"User not authenticated",
-				HttpStatus.UNAUTHORIZED,
-			);
+		if (!(userId && email)) {
+			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
@@ -407,7 +389,7 @@ export class WalletController {
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
-				name || undefined,
+				name || undefined
 			);
 
 			// Verify wallet belongs to user
@@ -418,8 +400,7 @@ export class WalletController {
 				throw new HttpException("Wallet not found", HttpStatus.NOT_FOUND);
 			}
 
-			const transactions =
-				await this.oasisWalletService.getTransactions(walletId);
+			const transactions = await this.oasisWalletService.getTransactions(walletId);
 
 			return {
 				success: true,
@@ -428,7 +409,7 @@ export class WalletController {
 		} catch (error) {
 			throw new HttpException(
 				`Failed to get transactions: ${error.message}`,
-				error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -436,10 +417,10 @@ export class WalletController {
 	/**
 	 * TEST ENDPOINT: Generate wallet without authentication
 	 * POST /api/wallet/test/generate
-	 * 
+	 *
 	 * This is a temporary endpoint for testing wallet generation.
 	 * TODO: Remove before production deployment.
-	 * 
+	 *
 	 * Body: {
 	 *   providerType: "SolanaOASIS" | "EthereumOASIS",
 	 *   userId: string,
@@ -450,28 +431,23 @@ export class WalletController {
 	 */
 	@Public()
 	@Post("test/generate")
-	async testGenerateWallet(@Body() dto: GenerateWalletDto & { userId: string; email: string; name?: string }) {
+	async testGenerateWallet(
+		@Body() dto: GenerateWalletDto & { userId: string; email: string; name?: string }
+	) {
 		const { userId, email, name, providerType, setAsDefault } = dto;
 
-		if (!userId || !email) {
-			throw new HttpException(
-				"userId and email are required",
-				HttpStatus.BAD_REQUEST,
-			);
+		if (!(userId && email)) {
+			throw new HttpException("userId and email are required", HttpStatus.BAD_REQUEST);
 		}
 
 		try {
 			// Ensure OASIS avatar exists (lazy creation)
-			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-				userId,
-				email,
-				name,
-			);
+			const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name);
 
 			const wallet = await this.oasisWalletService.generateWallet(
 				avatarId,
 				providerType,
-				setAsDefault ?? true,
+				setAsDefault ?? true
 			);
 
 			return {
@@ -492,7 +468,7 @@ export class WalletController {
 					message: `Failed to generate wallet: ${error.message}. Make sure your avatar exists (register/login first).`,
 					error: "Wallet generation failed",
 				},
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}

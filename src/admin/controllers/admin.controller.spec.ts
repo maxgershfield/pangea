@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
@@ -16,7 +16,7 @@ import { AdminController } from "./admin.controller.js";
 
 describe("AdminController", () => {
 	let controller: AdminController;
-	let service: AdminService;
+	let _service: AdminService;
 
 	const mockAdminService = {
 		getUsers: vi.fn(),
@@ -89,7 +89,7 @@ describe("AdminController", () => {
 			.compile();
 
 		controller = module.get<AdminController>(AdminController);
-		service = module.get<AdminService>(AdminService);
+		_service = module.get<AdminService>(AdminService);
 
 		vi.clearAllMocks();
 	});
@@ -140,10 +140,7 @@ describe("AdminController", () => {
 			const result = await controller.updateUser(userId, updateDto);
 
 			expect(result).toEqual(updatedUser);
-			expect(mockAdminService.updateUser).toHaveBeenCalledWith(
-				userId,
-				updateDto,
-			);
+			expect(mockAdminService.updateUser).toHaveBeenCalledWith(userId, updateDto);
 		});
 	});
 
@@ -157,10 +154,7 @@ describe("AdminController", () => {
 			const result = await controller.updateKycStatus(userId, dto);
 
 			expect(result).toEqual(updatedUser);
-			expect(mockAdminService.updateUserKycStatus).toHaveBeenCalledWith(
-				userId,
-				dto,
-			);
+			expect(mockAdminService.updateUserKycStatus).toHaveBeenCalledWith(userId, dto);
 		});
 	});
 
@@ -217,7 +211,7 @@ describe("AdminController", () => {
 				totalAssets: 50,
 				totalOrders: 200,
 				totalTrades: 150,
-				totalVolume: 50000,
+				totalVolume: 50_000,
 				totalRevenue: 500,
 			};
 			mockAdminService.getPlatformStatistics.mockResolvedValue(expectedStats);

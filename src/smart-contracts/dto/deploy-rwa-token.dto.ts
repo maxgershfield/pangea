@@ -1,31 +1,23 @@
-import { IsString, IsNumber, IsOptional, IsUrl } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUrl } from "class-validator";
 
 export class DeployRwaTokenDto {
-  @IsString()
-  name: string;
+	@IsString()
+	name: string;
 
-  @IsString()
-  symbol: string;
+	@IsString()
+	symbol: string;
 
-  @IsNumber()
-  totalSupply: number;
+	@IsNumber()
+	totalSupply: number;
 
-  @IsOptional()
-  @IsUrl()
-  metadataUri?: string;
+	@IsOptional()
+	@IsUrl()
+	metadataUri?: string;
 
-  @IsString()
-  issuerWallet: string;
+	@IsString()
+	issuerWallet: string;
 
-  @IsOptional()
-  @IsNumber()
-  decimals?: number;
+	@IsOptional()
+	@IsNumber()
+	decimals?: number;
 }
-
-
-
-
-
-
-
-

@@ -1,15 +1,15 @@
-import { IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from "class-validator";
 
 export enum WalletProviderType {
-  SOLANA = 'SolanaOASIS',
-  ETHEREUM = 'EthereumOASIS',
+	SOLANA = "SolanaOASIS",
+	ETHEREUM = "EthereumOASIS",
 }
 
 export class GenerateWalletDto {
-  @IsEnum(WalletProviderType)
-  providerType: WalletProviderType;
+	@IsEnum(WalletProviderType)
+	providerType: WalletProviderType;
 
-  @IsOptional()
-  @IsBoolean()
-  setAsDefault?: boolean = true;
+	@IsOptional()
+	@IsBoolean()
+	setAsDefault?: boolean = true;
 }

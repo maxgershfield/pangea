@@ -1,6 +1,6 @@
-import * as http from "http";
-import * as https from "https";
-import { URL } from "url";
+import * as http from "node:http";
+import * as https from "node:https";
+import { URL } from "node:url";
 
 /**
  * Helper function to make HTTP requests using Node's native http/https modules
@@ -10,7 +10,7 @@ export async function makeNativeHttpRequest(
 	url: string,
 	method: string,
 	data?: any,
-	headers: Record<string, string> = {},
+	headers: Record<string, string> = {}
 ): Promise<{ statusCode: number; data: string; headers: http.IncomingHttpHeaders }> {
 	return new Promise((resolve, reject) => {
 		const urlObj = new URL(url);
@@ -22,22 +22,22 @@ export async function makeNativeHttpRequest(
 		// Handle port correctly - if port is in URL, use it; otherwise use default
 		let port: number | undefined;
 		if (urlObj.port) {
-			port = parseInt(urlObj.port, 10);
+			port = Number.parseInt(urlObj.port, 10);
 		} else {
 			port = isHttps ? 443 : 80;
 		}
 
 		const options: http.RequestOptions = {
 			hostname: urlObj.hostname,
-			port: port,
+			port,
 			path: urlObj.pathname + urlObj.search,
-			method: method,
+			method,
 			headers: {
 				"Content-Type": "application/json",
 				"Content-Length": Buffer.byteLength(postData),
 				...headers,
 			},
-			timeout: 300000, // 5 minutes timeout
+			timeout: 300_000, // 5 minutes timeout
 		};
 
 		const req = client.request(options, (res) => {
@@ -78,4 +78,3 @@ export async function makeNativeHttpRequest(
 		req.end();
 	});
 }
-

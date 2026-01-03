@@ -15,9 +15,7 @@ import { BetterAuthAccount } from "../entities/better-auth-account.entity.js";
  * because Better-Auth queries for provider='credential'.
  */
 @EventSubscriber()
-export class AccountSubscriber
-	implements EntitySubscriberInterface<BetterAuthAccount>
-{
+export class AccountSubscriber implements EntitySubscriberInterface<BetterAuthAccount> {
 	/**
 	 * Listen to Account entity events
 	 */
@@ -40,9 +38,7 @@ export class AccountSubscriber
 
 			// Log for debugging (only in development)
 			if (process.env.NODE_ENV === "development") {
-				console.log(
-					"[AccountSubscriber] Setting providerId=credential for account with password",
-				);
+				console.log("[AccountSubscriber] Setting providerId=credential for account with password");
 			}
 		}
 
@@ -57,7 +53,9 @@ export class AccountSubscriber
 	async beforeUpdate(event: UpdateEvent<BetterAuthAccount>): Promise<void> {
 		const account = event.entity as BetterAuthAccount;
 
-		if (!account) return;
+		if (!account) {
+			return;
+		}
 
 		// If account has a password but providerId is null, set providerId='credential'
 		// Better-Auth uses 'credential' as the providerId for email/password authentication
@@ -67,7 +65,7 @@ export class AccountSubscriber
 			// Log for debugging (only in development)
 			if (process.env.NODE_ENV === "development") {
 				console.log(
-					"[AccountSubscriber] Setting providerId=credential for account with password (update)",
+					"[AccountSubscriber] Setting providerId=credential for account with password (update)"
 				);
 			}
 		}

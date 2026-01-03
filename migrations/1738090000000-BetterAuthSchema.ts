@@ -1,11 +1,11 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from "typeorm";
 
 export class BetterAuthSchema1738090000000 implements MigrationInterface {
-  name = 'BetterAuthSchema1738090000000';
+	name = "BetterAuthSchema1738090000000";
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    // Create Better-Auth user table
-    await queryRunner.query(`
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		// Create Better-Auth user table
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "user" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "email" VARCHAR(255) NOT NULL,
@@ -19,8 +19,8 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create Better-Auth session table
-    await queryRunner.query(`
+		// Create Better-Auth session table
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "session" (
         "id" VARCHAR(255) NOT NULL,
         "user_id" uuid,
@@ -35,8 +35,8 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create Better-Auth account table (for OAuth)
-    await queryRunner.query(`
+		// Create Better-Auth account table (for OAuth)
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "account" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "user_id" uuid,
@@ -52,8 +52,8 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create Better-Auth verification table (for email verification, password reset, etc.)
-    await queryRunner.query(`
+		// Create Better-Auth verification table (for email verification, password reset, etc.)
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "verification" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "identifier" VARCHAR(255) NOT NULL,
@@ -64,14 +64,22 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create indexes for Better-Auth tables
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_session_user_id" ON "session" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_session_expires_at" ON "session" ("expires_at")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_account_user_id" ON "account" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_verification_identifier" ON "verification" ("identifier")`);
+		// Create indexes for Better-Auth tables
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_session_user_id" ON "session" ("user_id")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_session_expires_at" ON "session" ("expires_at")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_account_user_id" ON "account" ("user_id")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_verification_identifier" ON "verification" ("identifier")`
+		);
 
-    // Create OASIS mapping table
-    await queryRunner.query(`
+		// Create OASIS mapping table
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "user_oasis_mapping" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "user_id" uuid NOT NULL,
@@ -85,8 +93,8 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create Pangea-specific user data table
-    await queryRunner.query(`
+		// Create Pangea-specific user data table
+		await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "pangea_user_data" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "user_id" uuid NOT NULL,
@@ -101,31 +109,38 @@ export class BetterAuthSchema1738090000000 implements MigrationInterface {
       )
     `);
 
-    // Create indexes for mapping tables
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_user_oasis_mapping_user_id" ON "user_oasis_mapping" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_user_oasis_mapping_avatar_id" ON "user_oasis_mapping" ("avatar_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_pangea_user_data_user_id" ON "pangea_user_data" ("user_id")`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_pangea_user_data_role" ON "pangea_user_data" ("role")`);
-  }
+		// Create indexes for mapping tables
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_user_oasis_mapping_user_id" ON "user_oasis_mapping" ("user_id")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_user_oasis_mapping_avatar_id" ON "user_oasis_mapping" ("avatar_id")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_pangea_user_data_user_id" ON "pangea_user_data" ("user_id")`
+		);
+		await queryRunner.query(
+			`CREATE INDEX IF NOT EXISTS "idx_pangea_user_data_role" ON "pangea_user_data" ("role")`
+		);
+	}
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop indexes
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_pangea_user_data_role"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_pangea_user_data_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_user_oasis_mapping_avatar_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_user_oasis_mapping_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_verification_identifier"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_account_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_session_expires_at"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_session_user_id"`);
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		// Drop indexes
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_pangea_user_data_role"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_pangea_user_data_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_user_oasis_mapping_avatar_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_user_oasis_mapping_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_verification_identifier"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_account_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_session_expires_at"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_session_user_id"`);
 
-    // Drop tables (in reverse order of dependencies)
-    await queryRunner.query(`DROP TABLE IF EXISTS "pangea_user_data"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "user_oasis_mapping"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "verification"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "account"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "session"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "user"`);
-  }
+		// Drop tables (in reverse order of dependencies)
+		await queryRunner.query(`DROP TABLE IF EXISTS "pangea_user_data"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "user_oasis_mapping"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "verification"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "account"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "session"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "user"`);
+	}
 }
-

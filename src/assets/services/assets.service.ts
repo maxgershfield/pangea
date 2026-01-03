@@ -1,19 +1,10 @@
-import {
-	BadRequestException,
-	Injectable,
-	Logger,
-	NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
-import type { DataSource, Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { Order } from "../../orders/entities/order.entity.js";
 import { SmartContractService } from "../../smart-contracts/services/smart-contract.service.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
-import type {
-	CreateAssetDto,
-	FindAssetsDto,
-	UpdateAssetDto,
-} from "../dto/index.js";
+import { CreateAssetDto, FindAssetsDto, UpdateAssetDto } from "../dto/index.js";
 import { TokenizedAsset } from "../entities/tokenized-asset.entity.js";
 
 @Injectable()
@@ -21,12 +12,12 @@ export class AssetsService {
 	private readonly logger = new Logger(AssetsService.name);
 
 	constructor(
-    @InjectRepository(TokenizedAsset)
-    private assetRepository: Repository<TokenizedAsset>,
-    @InjectDataSource()
-    private dataSource: DataSource,
-    private smartContractService: SmartContractService,
-  ) {}
+		@InjectRepository(TokenizedAsset)
+		private readonly assetRepository: Repository<TokenizedAsset>,
+		@InjectDataSource()
+		private readonly dataSource: DataSource,
+		private readonly smartContractService: SmartContractService
+	) {}
 
 	private get orderRepository(): Repository<Order> {
 		return this.dataSource.getRepository(Order);
@@ -124,7 +115,7 @@ export class AssetsService {
 		});
 		if (existing) {
 			// Regenerate if collision
-			const newAssetId = this.generateAssetId(dto.symbol + Date.now());
+			const _newAssetId = this.generateAssetId(dto.symbol + Date.now());
 			return this.create({ ...dto }, issuerId);
 		}
 
@@ -155,21 +146,14 @@ export class AssetsService {
 				asset.contractAddress = deployResult.contractAddress;
 				asset.mintAddress = deployResult.contractAddress; // For Solana, mint address is the contract address
 			} catch (error) {
-				this.logger.error(
-					`Failed to deploy contract: ${error.message}`,
-					error.stack,
-				);
-				throw new BadRequestException(
-					`Failed to deploy smart contract: ${error.message}`,
-				);
+				this.logger.error(`Failed to deploy contract: ${error.message}`, error.stack);
+				throw new BadRequestException(`Failed to deploy smart contract: ${error.message}`);
 			}
 		}
 
 		// Calculate price per token if total value is provided
 		if (dto.totalValueUsd && dto.totalSupply) {
-			asset.pricePerTokenUsd = Number(
-				(dto.totalValueUsd / dto.totalSupply).toFixed(2),
-			);
+			asset.pricePerTokenUsd = Number((dto.totalValueUsd / dto.totalSupply).toFixed(2));
 		}
 
 		return this.assetRepository.save(asset);
@@ -186,9 +170,7 @@ export class AssetsService {
 
 		// Recalculate price if total value or supply changed
 		if (dto.totalValueUsd && asset.totalSupply) {
-			asset.pricePerTokenUsd = Number(
-				(dto.totalValueUsd / Number(asset.totalSupply)).toFixed(2),
-			);
+			asset.pricePerTokenUsd = Number((dto.totalValueUsd / Number(asset.totalSupply)).toFixed(2));
 		}
 
 		// Update listed_at if status changes to 'listed'
@@ -255,9 +237,7 @@ export class AssetsService {
 		// Calculate current price (mid-point of bid/ask, or last trade, or null)
 		let price: number | null = null;
 		if (bestBid && bestAsk) {
-			price = Number(
-				((bestBid.pricePerTokenUsd + bestAsk.pricePerTokenUsd) / 2).toFixed(2),
-			);
+			price = Number(((bestBid.pricePerTokenUsd + bestAsk.pricePerTokenUsd) / 2).toFixed(2));
 		} else if (lastTrade) {
 			price = Number(lastTrade.pricePerTokenUsd);
 		}
@@ -333,7 +313,7 @@ export class AssetsService {
 	/**
 	 * Get trade history for an asset
 	 */
-	async getTradeHistory(assetId: string, limit: number = 50): Promise<Trade[]> {
+	async getTradeHistory(assetId: string, limit = 50): Promise<Trade[]> {
 		// Verify asset exists
 		await this.findOne(assetId);
 

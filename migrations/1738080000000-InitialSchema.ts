@@ -1,11 +1,11 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from "typeorm";
 
 export class InitialSchema1738080000000 implements MigrationInterface {
-  name = 'InitialSchema1738080000000';
+	name = "InitialSchema1738080000000";
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    // Create users table
-    await queryRunner.query(`
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		// Create users table
+		await queryRunner.query(`
       CREATE TABLE "users" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "email" VARCHAR(255) NOT NULL,
@@ -28,8 +28,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create tokenized_assets table
-    await queryRunner.query(`
+		// Create tokenized_assets table
+		await queryRunner.query(`
       CREATE TABLE "tokenized_assets" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "asset_id" VARCHAR(100) NOT NULL,
@@ -61,8 +61,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create orders table
-    await queryRunner.query(`
+		// Create orders table
+		await queryRunner.query(`
       CREATE TABLE "orders" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "order_id" VARCHAR(100) NOT NULL,
@@ -88,8 +88,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create trades table
-    await queryRunner.query(`
+		// Create trades table
+		await queryRunner.query(`
       CREATE TABLE "trades" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "trade_id" VARCHAR(100) NOT NULL,
@@ -115,8 +115,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create user_balances table
-    await queryRunner.query(`
+		// Create user_balances table
+		await queryRunner.query(`
       CREATE TABLE "user_balances" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "user_id" uuid NOT NULL,
@@ -133,8 +133,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create transactions table
-    await queryRunner.query(`
+		// Create transactions table
+		await queryRunner.query(`
       CREATE TABLE "transactions" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "transaction_id" VARCHAR(100) NOT NULL,
@@ -157,8 +157,8 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Create order_book_snapshots table
-    await queryRunner.query(`
+		// Create order_book_snapshots table
+		await queryRunner.query(`
       CREATE TABLE "order_book_snapshots" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "asset_id" uuid NOT NULL,
@@ -175,260 +175,270 @@ export class InitialSchema1738080000000 implements MigrationInterface {
       )
     `);
 
-    // Add foreign key constraints
-    await queryRunner.query(`
+		// Add foreign key constraints
+		await queryRunner.query(`
       ALTER TABLE "tokenized_assets"
       ADD CONSTRAINT "FK_tokenized_assets_issuer"
       FOREIGN KEY ("issuer_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "orders"
       ADD CONSTRAINT "FK_orders_user"
       FOREIGN KEY ("user_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "orders"
       ADD CONSTRAINT "FK_orders_asset"
       FOREIGN KEY ("asset_id") REFERENCES "tokenized_assets"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "trades"
       ADD CONSTRAINT "FK_trades_buyer"
       FOREIGN KEY ("buyer_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "trades"
       ADD CONSTRAINT "FK_trades_seller"
       FOREIGN KEY ("seller_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "trades"
       ADD CONSTRAINT "FK_trades_asset"
       FOREIGN KEY ("asset_id") REFERENCES "tokenized_assets"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "trades"
       ADD CONSTRAINT "FK_trades_buy_order"
       FOREIGN KEY ("buy_order_id") REFERENCES "orders"("id")
       ON DELETE SET NULL ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "trades"
       ADD CONSTRAINT "FK_trades_sell_order"
       FOREIGN KEY ("sell_order_id") REFERENCES "orders"("id")
       ON DELETE SET NULL ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "user_balances"
       ADD CONSTRAINT "FK_user_balances_user"
       FOREIGN KEY ("user_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "user_balances"
       ADD CONSTRAINT "FK_user_balances_asset"
       FOREIGN KEY ("asset_id") REFERENCES "tokenized_assets"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "transactions"
       ADD CONSTRAINT "FK_transactions_user"
       FOREIGN KEY ("user_id") REFERENCES "users"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "transactions"
       ADD CONSTRAINT "FK_transactions_asset"
       FOREIGN KEY ("asset_id") REFERENCES "tokenized_assets"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       ALTER TABLE "order_book_snapshots"
       ADD CONSTRAINT "FK_order_book_snapshots_asset"
       FOREIGN KEY ("asset_id") REFERENCES "tokenized_assets"("id")
       ON DELETE NO ACTION ON UPDATE NO ACTION
     `);
 
-    // Create indexes for users table
-    await queryRunner.query(`
+		// Create indexes for users table
+		await queryRunner.query(`
       CREATE INDEX "idx_users_email" ON "users"("email")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_users_wallet_solana" ON "users"("wallet_address_solana")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_users_wallet_ethereum" ON "users"("wallet_address_ethereum")
     `);
 
-    // Create indexes for tokenized_assets table
-    await queryRunner.query(`
+		// Create indexes for tokenized_assets table
+		await queryRunner.query(`
       CREATE INDEX "idx_assets_asset_id" ON "tokenized_assets"("asset_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_assets_status" ON "tokenized_assets"("status")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_assets_blockchain" ON "tokenized_assets"("blockchain")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_assets_contract_address" ON "tokenized_assets"("contract_address")
     `);
 
-    // Create indexes for orders table
-    await queryRunner.query(`
+		// Create indexes for orders table
+		await queryRunner.query(`
       CREATE INDEX "idx_orders_user_id" ON "orders"("user_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_orders_asset_id" ON "orders"("asset_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_orders_status" ON "orders"("order_status")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_orders_type_status" ON "orders"("order_type", "order_status")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_orders_created_at" ON "orders"("created_at" DESC)
     `);
 
-    // Create indexes for trades table
-    await queryRunner.query(`
+		// Create indexes for trades table
+		await queryRunner.query(`
       CREATE INDEX "idx_trades_buyer_id" ON "trades"("buyer_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_trades_seller_id" ON "trades"("seller_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_trades_asset_id" ON "trades"("asset_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_trades_executed_at" ON "trades"("executed_at" DESC)
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_trades_transaction_hash" ON "trades"("transaction_hash")
     `);
 
-    // Create indexes for user_balances table
-    await queryRunner.query(`
+		// Create indexes for user_balances table
+		await queryRunner.query(`
       CREATE INDEX "idx_balances_user_id" ON "user_balances"("user_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_balances_asset_id" ON "user_balances"("asset_id")
     `);
 
-    // Create indexes for transactions table
-    await queryRunner.query(`
+		// Create indexes for transactions table
+		await queryRunner.query(`
       CREATE INDEX "idx_transactions_user_id" ON "transactions"("user_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_transactions_status" ON "transactions"("status")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_transactions_type" ON "transactions"("transaction_type")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_transactions_transaction_hash" ON "transactions"("transaction_hash")
     `);
 
-    // Create indexes for order_book_snapshots table
-    await queryRunner.query(`
+		// Create indexes for order_book_snapshots table
+		await queryRunner.query(`
       CREATE INDEX "idx_orderbook_asset_id" ON "order_book_snapshots"("asset_id")
     `);
 
-    await queryRunner.query(`
+		await queryRunner.query(`
       CREATE INDEX "idx_orderbook_snapshot_at" ON "order_book_snapshots"("snapshot_at" DESC)
     `);
-  }
+	}
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop indexes
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orderbook_snapshot_at"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orderbook_asset_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_transaction_hash"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_type"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_balances_asset_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_balances_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_transaction_hash"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_executed_at"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_asset_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_seller_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_buyer_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_created_at"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_type_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_asset_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_contract_address"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_blockchain"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_status"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_asset_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_wallet_ethereum"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_wallet_solana"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_email"`);
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		// Drop indexes
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orderbook_snapshot_at"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orderbook_asset_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_transaction_hash"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_type"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_status"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_balances_asset_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_balances_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_transaction_hash"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_executed_at"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_asset_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_seller_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_trades_buyer_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_created_at"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_type_status"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_status"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_asset_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_orders_user_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_contract_address"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_blockchain"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_status"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_assets_asset_id"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_wallet_ethereum"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_wallet_solana"`);
+		await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_email"`);
 
-    // Drop foreign key constraints
-    await queryRunner.query(`ALTER TABLE "order_book_snapshots" DROP CONSTRAINT IF EXISTS "FK_order_book_snapshots_asset"`);
-    await queryRunner.query(`ALTER TABLE "transactions" DROP CONSTRAINT IF EXISTS "FK_transactions_asset"`);
-    await queryRunner.query(`ALTER TABLE "transactions" DROP CONSTRAINT IF EXISTS "FK_transactions_user"`);
-    await queryRunner.query(`ALTER TABLE "user_balances" DROP CONSTRAINT IF EXISTS "FK_user_balances_asset"`);
-    await queryRunner.query(`ALTER TABLE "user_balances" DROP CONSTRAINT IF EXISTS "FK_user_balances_user"`);
-    await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_sell_order"`);
-    await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_buy_order"`);
-    await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_asset"`);
-    await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_seller"`);
-    await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_buyer"`);
-    await queryRunner.query(`ALTER TABLE "orders" DROP CONSTRAINT IF EXISTS "FK_orders_asset"`);
-    await queryRunner.query(`ALTER TABLE "orders" DROP CONSTRAINT IF EXISTS "FK_orders_user"`);
-    await queryRunner.query(`ALTER TABLE "tokenized_assets" DROP CONSTRAINT IF EXISTS "FK_tokenized_assets_issuer"`);
+		// Drop foreign key constraints
+		await queryRunner.query(
+			`ALTER TABLE "order_book_snapshots" DROP CONSTRAINT IF EXISTS "FK_order_book_snapshots_asset"`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "transactions" DROP CONSTRAINT IF EXISTS "FK_transactions_asset"`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "transactions" DROP CONSTRAINT IF EXISTS "FK_transactions_user"`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "user_balances" DROP CONSTRAINT IF EXISTS "FK_user_balances_asset"`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "user_balances" DROP CONSTRAINT IF EXISTS "FK_user_balances_user"`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_sell_order"`
+		);
+		await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_buy_order"`);
+		await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_asset"`);
+		await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_seller"`);
+		await queryRunner.query(`ALTER TABLE "trades" DROP CONSTRAINT IF EXISTS "FK_trades_buyer"`);
+		await queryRunner.query(`ALTER TABLE "orders" DROP CONSTRAINT IF EXISTS "FK_orders_asset"`);
+		await queryRunner.query(`ALTER TABLE "orders" DROP CONSTRAINT IF EXISTS "FK_orders_user"`);
+		await queryRunner.query(
+			`ALTER TABLE "tokenized_assets" DROP CONSTRAINT IF EXISTS "FK_tokenized_assets_issuer"`
+		);
 
-    // Drop tables (in reverse order of dependencies)
-    await queryRunner.query(`DROP TABLE IF EXISTS "order_book_snapshots"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "transactions"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "user_balances"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "trades"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "orders"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "tokenized_assets"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
-  }
+		// Drop tables (in reverse order of dependencies)
+		await queryRunner.query(`DROP TABLE IF EXISTS "order_book_snapshots"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "transactions"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "user_balances"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "trades"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "orders"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "tokenized_assets"`);
+		await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
+	}
 }
-
-
-
-

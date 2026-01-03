@@ -1,9 +1,5 @@
 import { randomBytes } from "node:crypto";
-import {
-	type EntitySubscriberInterface,
-	EventSubscriber,
-	type InsertEvent,
-} from "typeorm";
+import { type EntitySubscriberInterface, EventSubscriber, type InsertEvent } from "typeorm";
 import { BetterAuthSession } from "../entities/better-auth-session.entity.js";
 
 /**
@@ -16,9 +12,7 @@ import { BetterAuthSession } from "../entities/better-auth-session.entity.js";
  * Better-Auth generates session IDs as base64-encoded random bytes (32 bytes = 44 chars base64).
  */
 @EventSubscriber()
-export class SessionSubscriber
-	implements EntitySubscriberInterface<BetterAuthSession>
-{
+export class SessionSubscriber implements EntitySubscriberInterface<BetterAuthSession> {
 	/**
 	 * Listen to Session entity events
 	 */

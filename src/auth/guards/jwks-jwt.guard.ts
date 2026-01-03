@@ -49,7 +49,7 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 
 	constructor(
 		private readonly configService: ConfigService,
-		private readonly reflector: Reflector,
+		private readonly reflector: Reflector
 	) {
 		this.frontendUrl =
 			this.configService.get<string>("FRONTEND_URL") ||
@@ -74,12 +74,16 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 			context.getHandler(),
 			context.getClass(),
 		]);
-		if (isPublic) return true;
+		if (isPublic) {
+			return true;
+		}
 
 		const request = context.switchToHttp().getRequest();
 
 		const token = this.extractBearerToken(request);
-		if (!token) throw new UnauthorizedException("Missing Bearer token");
+		if (!token) {
+			throw new UnauthorizedException("Missing Bearer token");
+		}
 
 		if (!this.jwks) {
 			this.logger.error("JWKS not initialized");
@@ -92,7 +96,7 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 			});
 
 			const jwtPayload = payload as BetterAuthJwtPayload;
-			if (!jwtPayload.id || !jwtPayload.email) {
+			if (!(jwtPayload.id && jwtPayload.email)) {
 				throw new UnauthorizedException("Invalid token claims");
 			}
 
@@ -106,14 +110,17 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 
 			return true;
 		} catch (error) {
-			if (error instanceof UnauthorizedException) throw error;
+			if (error instanceof UnauthorizedException) {
+				throw error;
+			}
 
-			const message =
-				error instanceof Error ? error.message : "Token validation failed";
-			if (message.includes("expired"))
+			const message = error instanceof Error ? error.message : "Token validation failed";
+			if (message.includes("expired")) {
 				throw new UnauthorizedException("Token expired");
-			if (message.includes("signature"))
+			}
+			if (message.includes("signature")) {
 				throw new UnauthorizedException("Invalid token signature");
+			}
 
 			this.logger.error(`JWT verification failed: ${message}`);
 			throw new UnauthorizedException("Invalid or expired token");
@@ -123,10 +130,14 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 	/** Return Bearer token from `Authorization`, or `null` if missing/invalid. */
 	private extractBearerToken(request: any): string | null {
 		const authHeader = request.headers?.authorization;
-		if (!authHeader) return null;
+		if (!authHeader) {
+			return null;
+		}
 
 		const [scheme, token] = authHeader.split(" ");
-		if (scheme?.toLowerCase() !== "bearer" || !token) return null;
+		if (scheme?.toLowerCase() !== "bearer" || !token) {
+			return null;
+		}
 
 		return token;
 	}
