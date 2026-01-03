@@ -1,12 +1,15 @@
-import { Controller, Get, HttpCode, HttpStatus, Logger, Post } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Logger, Post, UseGuards } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
+import { AdminGuard } from "../auth/guards/admin.guard.js";
+import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
 
 /**
  * Admin controller to manually trigger migrations
  * This is useful when Railway Shell is not available
  */
 @Controller("admin/migrations")
+@UseGuards(JwksJwtGuard, AdminGuard)
 export class MigrationController {
 	private readonly logger = new Logger(MigrationController.name);
 
@@ -25,8 +28,8 @@ export class MigrationController {
 					try {
 						const result = await queryRunner.query(
 							`SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' 
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
                 AND table_name = $1
               )`,
 							[tableName]
@@ -82,7 +85,7 @@ export class MigrationController {
 
 			// Check if accounts are properly linked to users (join test)
 			const accountUserJoin = await queryRunner.query(`
-        SELECT 
+        SELECT
           a.id as account_id,
           a.user_id,
           a.provider,
@@ -120,14 +123,14 @@ export class MigrationController {
 	@HttpCode(HttpStatus.OK)
 	async runMigrations() {
 		try {
-			this.logger.log("Manually triggering migrations...");
+			this.logger.warn("Admin-triggered database migrations starting...");
 
 			const executedMigrations = await this.dataSource.runMigrations();
 
 			if (executedMigrations && executedMigrations.length > 0) {
-				this.logger.log(`✅ Executed ${executedMigrations.length} migration(s):`);
+				this.logger.warn(`Executed ${executedMigrations.length} migration(s):`);
 				executedMigrations.forEach((migration) => {
-					this.logger.log(`   - ${migration.name}`);
+					this.logger.warn(`   - ${migration.name}`);
 				});
 
 				return {
@@ -154,6 +157,8 @@ export class MigrationController {
 	@Post("fix-provider")
 	async fixProviderValues() {
 		try {
+			this.logger.warn("Admin-triggered provider value fix starting...");
+
 			const queryRunner = this.dataSource.createQueryRunner();
 			await queryRunner.connect();
 
@@ -175,10 +180,13 @@ export class MigrationController {
 
 			await queryRunner.release();
 
+			const updatedCount = Number.parseInt(updated[0].count, 10);
+			this.logger.warn(`Updated ${updatedCount} account provider values`);
+
 			return {
 				success: true,
 				message: `Updated provider values from 'email' to 'credential'`,
-				updatedCount: Number.parseInt(updated[0].count, 10),
+				updatedCount,
 			};
 		} catch (error) {
 			this.logger.error(`Failed to fix provider values: ${error.message}`, error.stack);

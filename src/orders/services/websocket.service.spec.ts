@@ -1,38 +1,49 @@
-import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import { Test, type TestingModule } from "@nestjs/testing";
+import * as jose from "jose";
 import type { Server, Socket } from "socket.io";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { AuthService } from "../../auth/services/auth.service.js";
 import type { Trade } from "../../trades/entities/trade.entity.js";
-import type { User } from "../../users/entities/user.entity.js";
+import type { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import type { Order } from "../entities/order.entity.js";
 import { WebSocketService } from "./websocket.service.js";
 
+// Mock jose module
+vi.mock("jose", () => ({
+	createRemoteJWKSet: vi.fn(() => vi.fn()),
+	jwtVerify: vi.fn(),
+}));
+
 describe("WebSocketService", () => {
 	let service: WebSocketService;
-	let jwtService: JwtService;
 	let authService: AuthService;
+	let configService: ConfigService;
 	let mockServer: Partial<Server>;
 	let mockSocket: Partial<Socket>;
 
-	const mockJwtService = {
-		verify: vi.fn(),
+	const mockConfigService = {
+		get: vi.fn((key: string) => {
+			if (key === "FRONTEND_URL") return "http://localhost:3001";
+			return undefined;
+		}),
 	};
 
 	const mockAuthService = {
-		validateUser: vi.fn(),
+		getProfile: vi.fn(),
 	};
 
-	const mockUser: Partial<User> = {
+	const mockUser: Partial<BetterAuthUser> = {
 		id: "user-123",
 		email: "test@example.com",
 		username: "testuser",
 		avatarId: "avatar-123",
 		role: "user",
-		isActive: true,
 	};
 
 	beforeEach(async () => {
+		vi.clearAllMocks();
+
 		mockSocket = {
 			id: "socket-123",
 			handshake: {
@@ -56,8 +67,8 @@ describe("WebSocketService", () => {
 			providers: [
 				WebSocketService,
 				{
-					provide: JwtService,
-					useValue: mockJwtService,
+					provide: ConfigService,
+					useValue: mockConfigService,
 				},
 				{
 					provide: AuthService,
@@ -67,8 +78,11 @@ describe("WebSocketService", () => {
 		}).compile();
 
 		service = module.get<WebSocketService>(WebSocketService);
-		jwtService = module.get<JwtService>(JwtService);
 		authService = module.get<AuthService>(AuthService);
+		configService = module.get<ConfigService>(ConfigService);
+
+		// Initialize the service (sets up JWKS)
+		service.onModuleInit();
 
 		// Attach mock server
 		(service as any).server = mockServer;
@@ -82,17 +96,27 @@ describe("WebSocketService", () => {
 		expect(service).toBeDefined();
 	});
 
+	describe("onModuleInit", () => {
+		it("should initialize JWKS with frontend URL", () => {
+			expect(jose.createRemoteJWKSet).toHaveBeenCalled();
+		});
+	});
+
 	describe("handleConnection", () => {
 		it("should authenticate user and join user room on valid token", async () => {
 			const token = "valid-token";
-			mockSocket.handshake.auth = { token };
-			mockJwtService.verify.mockReturnValue({ sub: "user-123" });
-			mockAuthService.validateUser.mockResolvedValue(mockUser);
+			mockSocket.handshake!.auth = { token };
+
+			// Mock jwtVerify to return valid payload
+			(jose.jwtVerify as Mock).mockResolvedValue({
+				payload: { id: "user-123", email: "test@example.com" },
+			});
+			mockAuthService.getProfile.mockResolvedValue(mockUser);
 
 			await service.handleConnection(mockSocket as Socket);
 
-			expect(jwtService.verify).toHaveBeenCalledWith(token);
-			expect(authService.validateUser).toHaveBeenCalledWith("user-123");
+			expect(jose.jwtVerify).toHaveBeenCalledWith(token, expect.any(Function));
+			expect(authService.getProfile).toHaveBeenCalledWith("user-123");
 			expect(mockSocket.join).toHaveBeenCalledWith("user:user-123");
 			expect(mockSocket.emit).toHaveBeenCalledWith("connected", {
 				userId: "user-123",
@@ -109,34 +133,40 @@ describe("WebSocketService", () => {
 
 		it("should authenticate with token from Authorization header", async () => {
 			const token = "valid-token";
-			mockSocket.handshake.headers = {
+			mockSocket.handshake!.headers = {
 				authorization: `Bearer ${token}`,
 			} as any;
-			mockJwtService.verify.mockReturnValue({ sub: "user-123" });
-			mockAuthService.validateUser.mockResolvedValue(mockUser);
+
+			(jose.jwtVerify as Mock).mockResolvedValue({
+				payload: { id: "user-123", email: "test@example.com" },
+			});
+			mockAuthService.getProfile.mockResolvedValue(mockUser);
 
 			await service.handleConnection(mockSocket as Socket);
 
-			expect(jwtService.verify).toHaveBeenCalledWith(token);
-			expect(authService.validateUser).toHaveBeenCalledWith("user-123");
+			expect(jose.jwtVerify).toHaveBeenCalledWith(token, expect.any(Function));
+			expect(authService.getProfile).toHaveBeenCalledWith("user-123");
 		});
 
 		it("should authenticate with token from query params", async () => {
 			const token = "valid-token";
-			mockSocket.handshake.query = { token } as any;
-			mockJwtService.verify.mockReturnValue({ sub: "user-123" });
-			mockAuthService.validateUser.mockResolvedValue(mockUser);
+			mockSocket.handshake!.query = { token } as any;
+
+			(jose.jwtVerify as Mock).mockResolvedValue({
+				payload: { id: "user-123", email: "test@example.com" },
+			});
+			mockAuthService.getProfile.mockResolvedValue(mockUser);
 
 			await service.handleConnection(mockSocket as Socket);
 
-			expect(jwtService.verify).toHaveBeenCalledWith(token);
-			expect(authService.validateUser).toHaveBeenCalledWith("user-123");
+			expect(jose.jwtVerify).toHaveBeenCalledWith(token, expect.any(Function));
+			expect(authService.getProfile).toHaveBeenCalledWith("user-123");
 		});
 
 		it("should disconnect client without token", async () => {
-			mockSocket.handshake.auth = {};
-			mockSocket.handshake.headers = {};
-			mockSocket.handshake.query = {};
+			mockSocket.handshake!.auth = {};
+			mockSocket.handshake!.headers = {};
+			mockSocket.handshake!.query = {};
 
 			await service.handleConnection(mockSocket as Socket);
 
@@ -144,15 +174,14 @@ describe("WebSocketService", () => {
 				message: "Authentication required",
 			});
 			expect(mockSocket.disconnect).toHaveBeenCalled();
-			expect(authService.validateUser).not.toHaveBeenCalled();
+			expect(authService.getProfile).not.toHaveBeenCalled();
 		});
 
 		it("should disconnect client with invalid token", async () => {
 			const token = "invalid-token";
-			mockSocket.handshake.auth = { token };
-			mockJwtService.verify.mockImplementation(() => {
-				throw new Error("Invalid token");
-			});
+			mockSocket.handshake!.auth = { token };
+
+			(jose.jwtVerify as Mock).mockRejectedValue(new Error("Invalid token"));
 
 			await service.handleConnection(mockSocket as Socket);
 
@@ -161,22 +190,42 @@ describe("WebSocketService", () => {
 				details: "Invalid token",
 			});
 			expect(mockSocket.disconnect).toHaveBeenCalled();
-			expect(authService.validateUser).not.toHaveBeenCalled();
+			expect(authService.getProfile).not.toHaveBeenCalled();
 		});
 
-		it("should disconnect client with inactive user", async () => {
+		it("should disconnect client when user not found", async () => {
 			const token = "valid-token";
-			mockSocket.handshake.auth = { token };
-			mockJwtService.verify.mockReturnValue({ sub: "user-123" });
-			mockAuthService.validateUser.mockResolvedValue(null);
+			mockSocket.handshake!.auth = { token };
+
+			(jose.jwtVerify as Mock).mockResolvedValue({
+				payload: { id: "user-123", email: "test@example.com" },
+			});
+			mockAuthService.getProfile.mockRejectedValue(new Error("User not found"));
 
 			await service.handleConnection(mockSocket as Socket);
 
 			expect(mockSocket.emit).toHaveBeenCalledWith("error", {
-				message: "Invalid or inactive user",
+				message: "Authentication failed",
+				details: "User not found",
 			});
 			expect(mockSocket.disconnect).toHaveBeenCalled();
-			expect(mockSocket.join).not.toHaveBeenCalled();
+		});
+
+		it("should disconnect client with invalid JWT claims", async () => {
+			const token = "valid-token";
+			mockSocket.handshake!.auth = { token };
+
+			// Missing id or email in payload
+			(jose.jwtVerify as Mock).mockResolvedValue({
+				payload: { sub: "user-123" }, // Missing id and email
+			});
+
+			await service.handleConnection(mockSocket as Socket);
+
+			expect(mockSocket.emit).toHaveBeenCalledWith("error", {
+				message: "Invalid token claims",
+			});
+			expect(mockSocket.disconnect).toHaveBeenCalled();
 		});
 	});
 
