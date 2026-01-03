@@ -1,9 +1,4 @@
-import {
-	HttpException,
-	HttpStatus,
-	Injectable,
-	Logger,
-} from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { BetterAuthUser } from "../entities/better-auth-user.entity.js";
@@ -152,19 +147,13 @@ export class AuthService {
 	 * });
 	 * ```
 	 */
-	private async updateBetterAuthUserWithAvatarId(
-		userId: string,
-		avatarId: string
-	): Promise<void> {
+	private async updateBetterAuthUserWithAvatarId(userId: string, avatarId: string): Promise<void> {
 		const user = await this.betterAuthUserRepository.findOne({
 			where: { id: userId },
 		});
 
 		if (!user) {
-			throw new HttpException(
-				`Better Auth user not found: ${userId}`,
-				HttpStatus.NOT_FOUND
-			);
+			throw new HttpException(`Better Auth user not found: ${userId}`, HttpStatus.NOT_FOUND);
 		}
 
 		user.avatarId = avatarId;

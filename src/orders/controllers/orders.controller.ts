@@ -75,7 +75,8 @@ export class OrdersController {
 
 	@ApiOperation({
 		summary: "List user orders",
-		description: "Returns paginated list of orders for the authenticated user with optional filters",
+		description:
+			"Returns paginated list of orders for the authenticated user with optional filters",
 	})
 	@ApiResponse({
 		status: 200,

@@ -12,7 +12,14 @@ import {
 	Request,
 	UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+	ApiBearerAuth,
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
 import { Public } from "../../auth/decorators/public.decorator.js";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";

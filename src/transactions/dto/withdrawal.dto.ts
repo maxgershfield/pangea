@@ -13,7 +13,7 @@ export class WithdrawalDto {
 	@ApiProperty({
 		description: "Amount to withdraw",
 		example: 50.25,
-		minimum: 0.00000001,
+		minimum: 0.000_000_01,
 	})
 	@IsNumber()
 	@Min(0.000_000_01)

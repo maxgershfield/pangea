@@ -75,7 +75,7 @@ export class CreateAssetDto {
 
 	@ApiProperty({
 		description: "Total token supply",
-		example: 1000000,
+		example: 1_000_000,
 		minimum: 1,
 	})
 	@IsNumber()
@@ -123,7 +123,7 @@ export class CreateAssetDto {
 
 	@ApiPropertyOptional({
 		description: "Total asset value in USD",
-		example: 50000000,
+		example: 50_000_000,
 		minimum: 0,
 	})
 	@IsNumber()

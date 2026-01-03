@@ -57,7 +57,8 @@ export class TradesController {
 	@Get("statistics")
 	@ApiOperation({
 		summary: "Get trade statistics",
-		description: "Retrieve trade statistics for the authenticated user, optionally filtered by asset",
+		description:
+			"Retrieve trade statistics for the authenticated user, optionally filtered by asset",
 	})
 	@ApiQuery({
 		name: "assetId",

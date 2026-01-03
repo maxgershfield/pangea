@@ -13,7 +13,7 @@ export class DepositDto {
 	@ApiProperty({
 		description: "Amount to deposit",
 		example: 100.5,
-		minimum: 0.00000001,
+		minimum: 0.000_000_01,
 	})
 	@IsNumber()
 	@Min(0.000_000_01)

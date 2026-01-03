@@ -18,13 +18,15 @@ vi.mock("jose", () => ({
 describe("WebSocketService", () => {
 	let service: WebSocketService;
 	let authService: AuthService;
-	let configService: ConfigService;
+	let _configService: ConfigService;
 	let mockServer: Partial<Server>;
 	let mockSocket: Partial<Socket>;
 
 	const mockConfigService = {
 		get: vi.fn((key: string) => {
-			if (key === "FRONTEND_URL") return "http://localhost:3001";
+			if (key === "FRONTEND_URL") {
+				return "http://localhost:3001";
+			}
 			return undefined;
 		}),
 	};
@@ -79,7 +81,7 @@ describe("WebSocketService", () => {
 
 		service = module.get<WebSocketService>(WebSocketService);
 		authService = module.get<AuthService>(AuthService);
-		configService = module.get<ConfigService>(ConfigService);
+		_configService = module.get<ConfigService>(ConfigService);
 
 		// Initialize the service (sets up JWKS)
 		service.onModuleInit();

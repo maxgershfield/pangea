@@ -84,7 +84,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 			const userId = payload.id as string;
 			const email = payload.email as string;
 
-			if (!userId || !email) {
+			if (!(userId && email)) {
 				this.logger.warn(`Client ${client.id} connected with invalid JWT claims`);
 				client.emit("error", { message: "Invalid token claims" });
 				client.disconnect();

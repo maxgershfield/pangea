@@ -151,7 +151,7 @@ export class AssetResponseDto {
 
 	@ApiPropertyOptional({
 		description: "Additional metadata",
-		example: { change24h: 2.5, volume: 150000, sparkline: [48, 49, 50, 49.5, 50] },
+		example: { change24h: 2.5, volume: 150_000, sparkline: [48, 49, 50, 49.5, 50] },
 	})
 	metadata?: Record<string, any>;
 }

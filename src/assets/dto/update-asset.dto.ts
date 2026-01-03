@@ -38,7 +38,7 @@ export class UpdateAssetDto extends PartialType(CreateAssetDto) {
 
 	@ApiPropertyOptional({
 		description: "Updated total value in USD",
-		example: 55000000,
+		example: 55_000_000,
 		minimum: 0,
 	})
 	@IsNumber()

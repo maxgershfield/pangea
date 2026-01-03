@@ -1,11 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from "@nestjs/common";
-import {
-	ApiBearerAuth,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiTags,
-} from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
 import { DepositDto } from "../dto/deposit.dto.js";
@@ -109,7 +103,10 @@ export class TransactionsController {
 		description: "Withdrawal initiated successfully",
 		type: WithdrawalResponseDto,
 	})
-	@ApiResponse({ status: 400, description: "Invalid withdrawal parameters or insufficient balance" })
+	@ApiResponse({
+		status: 400,
+		description: "Invalid withdrawal parameters or insufficient balance",
+	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async withdraw(@Request() req, @Body() dto: WithdrawalDto) {
 		return this.transactionsService.initiateWithdrawal(dto, req.user.id);

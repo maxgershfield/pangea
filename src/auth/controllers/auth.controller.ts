@@ -9,10 +9,7 @@ import {
 	UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import {
-	CreateOasisAvatarDto,
-	CreateOasisAvatarResponseDto,
-} from "../dto/index.js";
+import { CreateOasisAvatarDto, CreateOasisAvatarResponseDto } from "../dto/index.js";
 import { JwksJwtGuard } from "../guards/jwks-jwt.guard.js";
 import { AuthService } from "../services/auth.service.js";
 

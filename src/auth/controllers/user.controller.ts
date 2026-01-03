@@ -1,10 +1,5 @@
 import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
-import {
-	ApiBearerAuth,
-	ApiOperation,
-	ApiResponse,
-	ApiTags,
-} from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../decorators/session-auth.decorators.js";
 import { UpdateProfileDto, UserProfileDto } from "../dto/user-profile.dto.js";
 import { BetterAuthUser } from "../entities/better-auth-user.entity.js";
@@ -21,7 +16,8 @@ export class UserController {
 	@Get("profile")
 	@ApiOperation({
 		summary: "Get user profile",
-		description: "Retrieve the profile of the currently authenticated user from the Better Auth user table",
+		description:
+			"Retrieve the profile of the currently authenticated user from the Better Auth user table",
 	})
 	@ApiResponse({
 		status: 200,
@@ -37,7 +33,8 @@ export class UserController {
 	@Put("profile")
 	@ApiOperation({
 		summary: "Update user profile",
-		description: "Update the profile of the currently authenticated user in the Better Auth user table",
+		description:
+			"Update the profile of the currently authenticated user in the Better Auth user table",
 	})
 	@ApiResponse({
 		status: 200,
