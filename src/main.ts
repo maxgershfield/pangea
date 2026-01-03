@@ -1,6 +1,7 @@
-import { webcrypto } from "node:crypto";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { webcrypto } from "node:crypto";
 import { AppModule } from "./app.module.js";
 
 // Polyfill Web Crypto API for Better-Auth (ES module compatibility)
@@ -34,14 +35,26 @@ async function bootstrap() {
 		})
 	);
 
+	// Global prefix for all routes
 	app.setGlobalPrefix("api");
+
+	// Swagger/OpenAPI documentation
+	const config = new DocumentBuilder()
+		.setTitle("Pangea Markets API")
+		.setDescription("RWA Trading Platform Backend API")
+		.setVersion("1.0")
+		.addBearerAuth()
+		.build();
+	const document = SwaggerModule.createDocument(app, config);
+	SwaggerModule.setup("docs", app, document);
+
 	app.enableShutdownHooks();
 
 	const port = process.env.PORT || 3000;
 	// Bind to 0.0.0.0 to accept connections from Railway/external hosts
 	await app.listen(port, "0.0.0.0");
 
-	console.log(`🚀 Pangea Markets Backend is running on: http://0.0.0.0:${port}/api`);
+	console.log(`Pangea Markets Backend is running on: http://0.0.0.0:${port}/api`);
 
 	// Handle graceful shutdown
 	process.on("SIGTERM", async () => {
