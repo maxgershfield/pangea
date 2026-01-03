@@ -1,5 +1,4 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import {
 	ConnectedSocket,
 	MessageBody,
@@ -9,10 +8,20 @@ import {
 	WebSocketGateway,
 	WebSocketServer,
 } from "@nestjs/websockets";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Server, Socket } from "socket.io";
+import { ConfigService } from "@nestjs/config";
 import { AuthService } from "../../auth/services/auth.service.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
 import { Order } from "../entities/order.entity.js";
+
+interface WebSocketUser {
+	id: string;
+	email: string;
+	username?: string | null;
+	avatarId?: string | null;
+	role: string;
+}
 
 @Injectable()
 @WebSocketGateway({
@@ -26,18 +35,32 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 	server: Server;
 
 	private readonly logger = new Logger(WebSocketService.name);
+	private jwks: ReturnType<typeof createRemoteJWKSet>;
 
 	constructor(
-		private readonly jwtService: JwtService,
+		private readonly configService: ConfigService,
 		private readonly authService: AuthService
 	) {}
 
 	onModuleInit() {
+		// Initialize JWKS for Better Auth JWT validation
+		const frontendUrl =
+			this.configService.get<string>("FRONTEND_URL") ||
+			this.configService.get<string>("NEXT_PUBLIC_APP_URL") ||
+			"http://localhost:3001";
+
+		const jwksUrl = new URL("/api/auth/jwks", frontendUrl);
+		this.jwks = createRemoteJWKSet(jwksUrl, {
+			cacheMaxAge: 10 * 60 * 1000, // 10 min cache
+			cooldownDuration: 30 * 1000, // 30s cooldown
+		});
+
 		this.logger.log("WebSocket Gateway initialized on /trading namespace");
+		this.logger.log(`Using JWKS endpoint: ${jwksUrl.toString()}`);
 	}
 
 	/**
-	 * Handle client connection with JWT authentication
+	 * Handle client connection with Better Auth JWT authentication
 	 */
 	async handleConnection(client: Socket) {
 		try {
@@ -45,7 +68,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 			const token =
 				client.handshake.auth?.token ||
 				client.handshake.headers?.authorization?.replace("Bearer ", "") ||
-				client.handshake.query?.token;
+				(client.handshake.query?.token as string);
 
 			if (!token) {
 				this.logger.warn(`Client ${client.id} attempted to connect without token`);
@@ -54,26 +77,32 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 				return;
 			}
 
-			// Verify JWT token
-			const payload = this.jwtService.verify(token);
+			// Verify Better Auth JWT token using JWKS
+			const { payload } = await jwtVerify(token, this.jwks);
 
-			// Validate user exists and is active
-			const user = await this.authService.validateUser(payload.sub);
-			if (!user?.isActive) {
-				this.logger.warn(`Client ${client.id} connected with invalid or inactive user`);
-				client.emit("error", { message: "Invalid or inactive user" });
+			// Extract user info from JWT payload
+			const userId = payload.id as string;
+			const email = payload.email as string;
+
+			if (!userId || !email) {
+				this.logger.warn(`Client ${client.id} connected with invalid JWT claims`);
+				client.emit("error", { message: "Invalid token claims" });
 				client.disconnect();
 				return;
 			}
 
+			// Get full user profile from Better Auth user table
+			const user = await this.authService.getProfile(userId);
+
 			// Attach user info to socket
-			(client as any).user = {
+			const socketUser: WebSocketUser = {
 				id: user.id,
 				email: user.email,
 				username: user.username,
 				avatarId: user.avatarId,
 				role: user.role,
 			};
+			(client as any).user = socketUser;
 
 			// Join user-specific room
 			client.join(`user:${user.id}`);
@@ -85,7 +114,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 				userId: user.id,
 				message: "Successfully connected to trading WebSocket",
 			});
-		} catch (error) {
+		} catch (error: any) {
 			this.logger.error(`Connection error for client ${client.id}: ${error.message}`);
 			client.emit("error", {
 				message: "Authentication failed",
@@ -99,7 +128,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 	 * Handle client disconnection
 	 */
 	handleDisconnect(client: Socket) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (user) {
 			this.logger.log(
 				`Client ${client.id} disconnected (user ${user.id}) - automatically unsubscribed from all rooms`
@@ -117,7 +146,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { assetId: string }
 	) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (!user) {
 			client.emit("error", { message: "Not authenticated" });
 			return { success: false, error: "Not authenticated" };
@@ -150,7 +179,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { assetId: string }
 	) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (!user) {
 			client.emit("error", { message: "Not authenticated" });
 			return { success: false, error: "Not authenticated" };
@@ -180,7 +209,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 	 */
 	@SubscribeMessage("subscribe:user")
 	handleUserSubscribe(@ConnectedSocket() client: Socket) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (!user) {
 			client.emit("error", { message: "Not authenticated" });
 			return { success: false, error: "Not authenticated" };
@@ -208,7 +237,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { assetId: string }
 	) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (!user) {
 			return { success: false, error: "Not authenticated" };
 		}
@@ -233,7 +262,7 @@ export class WebSocketService implements OnGatewayConnection, OnGatewayDisconnec
 		@ConnectedSocket() client: Socket,
 		@MessageBody() data: { assetId: string }
 	) {
-		const user = (client as any).user;
+		const user = (client as any).user as WebSocketUser | undefined;
 		if (!user) {
 			return { success: false, error: "Not authenticated" };
 		}

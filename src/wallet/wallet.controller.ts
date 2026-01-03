@@ -9,6 +9,14 @@ import {
 	Request,
 	UseGuards,
 } from "@nestjs/common";
+import {
+	ApiBearerAuth,
+	ApiExcludeEndpoint,
+	ApiOperation,
+	ApiParam,
+	ApiResponse,
+	ApiTags,
+} from "@nestjs/swagger";
 import { Public } from "../auth/decorators/public.decorator.js";
 import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
 import { OasisLinkService } from "../auth/services/oasis-link.service.js";
@@ -18,7 +26,19 @@ import { WalletConnectionService } from "../services/wallet-connection.service.j
 import { ConnectWalletDto } from "./dto/connect-wallet.dto.js";
 import { GenerateWalletDto } from "./dto/generate-wallet.dto.js";
 import { VerifyWalletDto } from "./dto/verify-wallet.dto.js";
+import {
+	ConnectWalletResponseDto,
+	GenerateWalletResponseDto,
+	GetAssetBalanceResponseDto,
+	GetBalancesResponseDto,
+	GetWalletTransactionsResponseDto,
+	SyncBalancesResponseDto,
+	VerificationMessageResponseDto,
+	VerifyWalletResponseDto,
+} from "./dto/wallet-response.dto.js";
 
+@ApiTags("Wallet")
+@ApiBearerAuth()
 @Controller("wallet")
 @UseGuards(JwksJwtGuard)
 export class WalletController {
@@ -29,32 +49,35 @@ export class WalletController {
 		private readonly oasisLinkService: OasisLinkService
 	) {}
 
-	/**
-	 * Get all balances for the authenticated user
-	 * GET /api/wallet/balance
-	 */
 	@Get("balance")
+	@ApiOperation({
+		summary: "Get all wallet balances",
+		description: "Retrieve all wallet balances for the authenticated user",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Wallet balances retrieved successfully",
+		type: GetBalancesResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async getBalances(@Request() req: any) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name; // Optional: Better-Auth may include name
+		const name = req.user?.name;
 
 		if (!(userId && email)) {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
-			// Ensure OASIS avatar exists (lazy creation)
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
 				name || undefined
 			);
 
-			// Get all wallets from OASIS
 			const wallets = await this.oasisWalletService.getWallets(avatarId);
 
-			// If no wallets exist, return helpful message
 			if (!wallets || wallets.length === 0) {
 				return {
 					success: true,
@@ -64,7 +87,6 @@ export class WalletController {
 				};
 			}
 
-			// Get balances for each wallet
 			const balances = await Promise.all(
 				wallets.map(async (wallet) => {
 					try {
@@ -97,7 +119,6 @@ export class WalletController {
 				hasWallets: true,
 			};
 		} catch (error: any) {
-			// Provide helpful error message
 			if (error.response?.status === 404 || error.message?.includes("not found")) {
 				return {
 					success: true,
@@ -113,21 +134,32 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Get balance for a specific asset
-	 * GET /api/wallet/balance/:assetId
-	 */
 	@Get("balance/:assetId")
+	@ApiOperation({
+		summary: "Get asset balance",
+		description: "Retrieve balance for a specific asset",
+	})
+	@ApiParam({
+		name: "assetId",
+		description: "Asset UUID",
+		example: "550e8400-e29b-41d4-a716-446655440000",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Asset balance retrieved successfully",
+		type: GetAssetBalanceResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
+	@ApiResponse({ status: 404, description: "Balance not found" })
 	async getAssetBalance(@Request() req: any, @Param("assetId") assetId: string) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name; // Optional: Better-Auth may include name
+		const name = req.user?.name;
 
 		if (!(userId && email)) {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
-		// Ensure OASIS avatar exists (lazy creation)
 		const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 			userId,
 			email,
@@ -135,7 +167,6 @@ export class WalletController {
 		);
 
 		try {
-			// Determine provider type from assetId or use default
 			const providerType =
 				assetId.includes("solana") || assetId.includes("SOL") ? "SolanaOASIS" : "EthereumOASIS";
 
@@ -162,25 +193,28 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Generate a new wallet for the authenticated user's avatar
-	 * POST /api/wallet/generate
-	 *
-	 * Note: Avatar must exist first (created during registration/login).
-	 * This endpoint creates a new wallet and assigns it to the avatar.
-	 */
 	@Post("generate")
+	@ApiOperation({
+		summary: "Generate new wallet",
+		description: "Generate a new wallet for the authenticated user's OASIS avatar",
+	})
+	@ApiResponse({
+		status: 201,
+		description: "Wallet generated successfully",
+		type: GenerateWalletResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
+	@ApiResponse({ status: 500, description: "Failed to generate wallet" })
 	async generateWallet(@Request() req: any, @Body() dto: GenerateWalletDto) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name; // Optional: Better-Auth may include name
+		const name = req.user?.name;
 
 		if (!(userId && email)) {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
-			// Ensure OASIS avatar exists (lazy creation)
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
@@ -216,11 +250,18 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Connect wallet (Phantom or MetaMask)
-	 * POST /api/wallet/connect
-	 */
 	@Post("connect")
+	@ApiOperation({
+		summary: "Connect external wallet",
+		description: "Connect an external wallet (Phantom or MetaMask) to the user account",
+	})
+	@ApiResponse({
+		status: 201,
+		description: "Wallet connected successfully",
+		type: ConnectWalletResponseDto,
+	})
+	@ApiResponse({ status: 400, description: "Unsupported blockchain or invalid signature" })
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async connectWallet(@Request() req: any, @Body() dto: ConnectWalletDto) {
 		const userId = req.user?.id;
 
@@ -251,9 +292,6 @@ export class WalletController {
 				);
 			}
 
-			// TODO: Link wallet to user account in database
-			// await this.userService.linkWallet(userId, dto.walletAddress, dto.blockchain);
-
 			return {
 				success: true,
 				message: "Wallet connected successfully",
@@ -270,11 +308,17 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Verify wallet ownership
-	 * POST /api/wallet/verify
-	 */
 	@Post("verify")
+	@ApiOperation({
+		summary: "Verify wallet ownership",
+		description: "Verify ownership of an external wallet by validating a signed message",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Wallet verification result",
+		type: VerifyWalletResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async verifyWallet(@Request() req: any, @Body() dto: VerifyWalletDto) {
 		const userId = req.user?.id;
 
@@ -306,22 +350,27 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Manually trigger balance sync
-	 * POST /api/wallet/sync
-	 */
 	@Post("sync")
+	@ApiOperation({
+		summary: "Sync wallet balances",
+		description: "Manually trigger balance synchronization for all user wallets",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Balances synced successfully",
+		type: SyncBalancesResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async syncBalances(@Request() req: any) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name; // Optional: Better-Auth may include name
+		const name = req.user?.name;
 
 		if (!(userId && email)) {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
-			// Ensure OASIS avatar exists (lazy creation)
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
@@ -343,11 +392,17 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * Get wallet generation message for frontend
-	 * GET /api/wallet/verification-message
-	 */
 	@Get("verification-message")
+	@ApiOperation({
+		summary: "Get verification message",
+		description: "Get a message to be signed by the wallet for verification",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Verification message generated",
+		type: VerificationMessageResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
 	async getVerificationMessage(
 		@Request() req: any,
 		@Body() body: { walletAddress: string; blockchain: string }
@@ -370,29 +425,39 @@ export class WalletController {
 		};
 	}
 
-	/**
-	 * Get transaction history for a wallet
-	 * GET /api/wallet/transactions/:walletId
-	 */
 	@Get("transactions/:walletId")
+	@ApiOperation({
+		summary: "Get wallet transactions",
+		description: "Retrieve transaction history for a specific wallet",
+	})
+	@ApiParam({
+		name: "walletId",
+		description: "Wallet UUID",
+		example: "550e8400-e29b-41d4-a716-446655440000",
+	})
+	@ApiResponse({
+		status: 200,
+		description: "Wallet transactions retrieved successfully",
+		type: GetWalletTransactionsResponseDto,
+	})
+	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
+	@ApiResponse({ status: 404, description: "Wallet not found" })
 	async getTransactions(@Request() req: any, @Param("walletId") walletId: string) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name; // Optional: Better-Auth may include name
+		const name = req.user?.name;
 
 		if (!(userId && email)) {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
 		try {
-			// Ensure OASIS avatar exists (lazy creation)
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
 				name || undefined
 			);
 
-			// Verify wallet belongs to user
 			const wallets = await this.oasisWalletService.getWallets(avatarId);
 			const wallet = wallets.find((w) => w.walletId === walletId);
 
@@ -414,23 +479,9 @@ export class WalletController {
 		}
 	}
 
-	/**
-	 * TEST ENDPOINT: Generate wallet without authentication
-	 * POST /api/wallet/test/generate
-	 *
-	 * This is a temporary endpoint for testing wallet generation.
-	 * TODO: Remove before production deployment.
-	 *
-	 * Body: {
-	 *   providerType: "SolanaOASIS" | "EthereumOASIS",
-	 *   userId: string,
-	 *   email: string,
-	 *   name?: string,
-	 *   setAsDefault?: boolean
-	 * }
-	 */
 	@Public()
 	@Post("test/generate")
+	@ApiExcludeEndpoint()
 	async testGenerateWallet(
 		@Body() dto: GenerateWalletDto & { userId: string; email: string; name?: string }
 	) {
@@ -441,7 +492,6 @@ export class WalletController {
 		}
 
 		try {
-			// Ensure OASIS avatar exists (lazy creation)
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name);
 
 			const wallet = await this.oasisWalletService.generateWallet(

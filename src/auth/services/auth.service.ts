@@ -3,19 +3,23 @@ import {
 	HttpStatus,
 	Injectable,
 	Logger,
-	UnauthorizedException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
-import { User } from "../../users/entities/user.entity.js";
-import { AuthResponseDto, LoginDto, RegisterDto } from "../dto/index.js";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { BetterAuthUser } from "../entities/better-auth-user.entity.js";
 import { OasisAuthService } from "./oasis-auth.service.js";
-import { UserSyncService } from "./user-sync.service.js";
 
 /**
- * Main authentication service
- * Generates Pangea-specific JWT tokens (not OASIS tokens)
- * Based on Shipex Pro pattern
+ * Authentication Service
+ *
+ * This service handles OASIS avatar integration for Better Auth users.
+ * User authentication (login, register, password reset) is handled entirely
+ * by Better Auth in the frontend.
+ *
+ * Responsibilities:
+ * - Create OASIS avatars for Better Auth users
+ * - Link OASIS avatarId to Better Auth user table
+ * - Provide user profile access (reads from Better Auth user table)
  */
 @Injectable()
 export class AuthService {
@@ -23,121 +27,27 @@ export class AuthService {
 
 	constructor(
 		private readonly oasisAuthService: OasisAuthService,
-		private readonly userSyncService: UserSyncService,
-		private readonly jwtService: JwtService,
-		private readonly configService: ConfigService
+		@InjectRepository(BetterAuthUser)
+		private readonly betterAuthUserRepository: Repository<BetterAuthUser>
 	) {}
 
 	/**
-	 * Register a new user
-	 * 1. Register with OASIS Avatar API
-	 * 2. Sync to local database
-	 * 3. Generate Pangea JWT token
+	 * Get user profile from Better Auth user table
 	 */
-	async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-		try {
-			this.logger.log(
-				`Starting registration for email: ${registerDto.email}, username: ${registerDto.username}`
-			);
+	async getProfile(userId: string): Promise<BetterAuthUser> {
+		const user = await this.betterAuthUserRepository.findOne({
+			where: { id: userId },
+		});
 
-			// 1. Register with OASIS
-			const oasisAvatar = await this.oasisAuthService.register({
-				email: registerDto.email,
-				password: registerDto.password,
-				username: registerDto.username,
-				firstName: registerDto.firstName,
-				lastName: registerDto.lastName,
-			});
-
-			this.logger.log(`OASIS registration successful, avatarId: ${oasisAvatar.avatarId}`);
-
-			// 2. Sync to local database
-			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
-
-			this.logger.log(`User synced to local DB, userId: ${user.id}`);
-
-			// 3. Generate Pangea JWT token
-			const token = this.generateJwtToken(user);
-
-			return {
-				user: {
-					id: user.id,
-					email: user.email,
-					username: user.username || "",
-					firstName: user.firstName || undefined,
-					lastName: user.lastName || undefined,
-					avatarId: user.avatarId || "",
-					role: user.role,
-				},
-				token,
-				expiresAt: this.getTokenExpiration(),
-			};
-		} catch (error: any) {
-			this.logger.error(`Registration failed: ${error.message}`);
-			this.logger.error(`Error stack: ${error.stack}`);
-			// Re-throw with proper HTTP exception if it's not already one
-			if (error instanceof HttpException || error.status) {
-				throw error;
-			}
-			throw new HttpException(
-				error.message || "Registration failed",
-				HttpStatus.INTERNAL_SERVER_ERROR
-			);
-		}
-	}
-
-	/**
-	 * Login user
-	 * 1. Authenticate with OASIS Avatar API
-	 * 2. Sync to local database
-	 * 3. Generate Pangea JWT token
-	 */
-	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-		try {
-			// 1. Authenticate with OASIS
-			const oasisAvatar = await this.oasisAuthService.login(loginDto.email, loginDto.password);
-
-			// 2. Sync to local database
-			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
-
-			// 3. Update last login
-			await this.userSyncService.updateLastLogin(user.id);
-
-			// 4. Generate Pangea JWT token
-			const token = this.generateJwtToken(user);
-
-			return {
-				user: {
-					id: user.id,
-					email: user.email,
-					username: user.username || "",
-					firstName: user.firstName || undefined,
-					lastName: user.lastName || undefined,
-					avatarId: user.avatarId || "",
-					role: user.role,
-				},
-				token,
-				expiresAt: this.getTokenExpiration(),
-			};
-		} catch (error: any) {
-			this.logger.error(`Login failed: ${error.message}`);
-			throw new UnauthorizedException("Invalid email or password");
-		}
-	}
-
-	/**
-	 * Get user profile
-	 */
-	async getProfile(userId: string): Promise<User> {
-		const user = await this.userSyncService.getUserById(userId);
 		if (!user) {
-			throw new UnauthorizedException("User not found");
+			throw new HttpException("User not found", HttpStatus.NOT_FOUND);
 		}
+
 		return user;
 	}
 
 	/**
-	 * Update user profile
+	 * Update user profile in Better Auth user table
 	 */
 	async updateProfile(
 		userId: string,
@@ -146,52 +56,38 @@ export class AuthService {
 			lastName?: string;
 			email?: string;
 		}
-	): Promise<User> {
-		const user = await this.userSyncService.getUserById(userId);
+	): Promise<BetterAuthUser> {
+		const user = await this.betterAuthUserRepository.findOne({
+			where: { id: userId },
+		});
+
 		if (!user) {
-			throw new UnauthorizedException("User not found");
+			throw new HttpException("User not found", HttpStatus.NOT_FOUND);
 		}
 
-		if (!user.avatarId) {
-			throw new Error("User avatar ID not found");
+		// Update fields if provided
+		if (updateData.firstName !== undefined) {
+			user.firstName = updateData.firstName;
+		}
+		if (updateData.lastName !== undefined) {
+			user.lastName = updateData.lastName;
+		}
+		if (updateData.email !== undefined) {
+			user.email = updateData.email;
 		}
 
-		// Update in OASIS
-		const updatedOasisAvatar = await this.oasisAuthService.updateUserProfile(
-			user.avatarId,
-			updateData
-		);
-
-		// Sync updated data back to local database
-		return await this.userSyncService.syncOasisUserToLocal(updatedOasisAvatar);
+		return this.betterAuthUserRepository.save(user);
 	}
 
 	/**
-	 * Request password reset
-	 */
-	async forgotPassword(email: string): Promise<void> {
-		await this.oasisAuthService.forgotPassword(email);
-		// Don't reveal if email exists or not
-	}
-
-	/**
-	 * Reset password
-	 */
-	async resetPassword(token: string, newPassword: string): Promise<void> {
-		await this.oasisAuthService.resetPassword(token, newPassword);
-	}
-
-	/**
-	 * Validate user from JWT payload
-	 */
-	async validateUser(userId: string): Promise<User | null> {
-		return this.userSyncService.getUserById(userId);
-	}
-
-	/**
-	 * Create OASIS avatar for Better-Auth user
-	 * Called after Better-Auth registration/login to create OASIS avatar
-	 * and link it to the user.
+	 * Create OASIS avatar for Better Auth user
+	 *
+	 * This method:
+	 * 1. Creates an OASIS avatar via the OASIS API
+	 * 2. Updates the Better Auth user table with the avatarId
+	 *
+	 * @param data User data from Better Auth JWT
+	 * @returns The created OASIS avatarId
 	 */
 	async createOasisAvatarForUser(data: {
 		userId: string;
@@ -202,13 +98,23 @@ export class AuthService {
 	}): Promise<string> {
 		try {
 			this.logger.log(
-				`Creating OASIS avatar for Better-Auth user: ${data.userId}, email: ${data.email}`
+				`Creating OASIS avatar for Better Auth user: ${data.userId}, email: ${data.email}`
 			);
 
-			// 1. Register with OASIS
+			// Check if user already has an OASIS avatar
+			const existingUser = await this.betterAuthUserRepository.findOne({
+				where: { id: data.userId },
+			});
+
+			if (existingUser?.avatarId) {
+				this.logger.log(`User ${data.userId} already has OASIS avatar: ${existingUser.avatarId}`);
+				return existingUser.avatarId;
+			}
+
+			// 1. Create OASIS avatar
 			const oasisAvatar = await this.oasisAuthService.register({
 				email: data.email,
-				password: this.generateRandomPassword(), // Random password - user uses Better-Auth
+				password: this.generateRandomPassword(), // Random password - user authenticates via Better Auth
 				username: data.username || data.email.split("@")[0],
 				firstName: data.firstName || "",
 				lastName: data.lastName || "",
@@ -216,10 +122,10 @@ export class AuthService {
 
 			this.logger.log(`OASIS avatar created: ${oasisAvatar.avatarId}`);
 
-			// 2. Sync to local database (creates/updates user with avatarId)
-			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
+			// 2. Update Better Auth user table with avatarId
+			await this.updateBetterAuthUserWithAvatarId(data.userId, oasisAvatar.avatarId);
 
-			this.logger.log(`OASIS avatar linked to user: ${user.id}`);
+			this.logger.log(`OASIS avatar linked to Better Auth user: ${data.userId}`);
 
 			return oasisAvatar.avatarId;
 		} catch (error: any) {
@@ -233,8 +139,62 @@ export class AuthService {
 	}
 
 	/**
+	 * Update Better Auth user table with OASIS avatarId
+	 *
+	 * TODO: Ensure the frontend schema (packages/auth/src/db/schema.ts) includes
+	 * the avatarId field and run migrations before using this in production.
+	 *
+	 * Required frontend schema change:
+	 * ```typescript
+	 * export const user = pgTable("user", {
+	 *   // ... existing fields ...
+	 *   avatarId: text("avatar_id"),  // Add this field
+	 * });
+	 * ```
+	 */
+	private async updateBetterAuthUserWithAvatarId(
+		userId: string,
+		avatarId: string
+	): Promise<void> {
+		const user = await this.betterAuthUserRepository.findOne({
+			where: { id: userId },
+		});
+
+		if (!user) {
+			throw new HttpException(
+				`Better Auth user not found: ${userId}`,
+				HttpStatus.NOT_FOUND
+			);
+		}
+
+		user.avatarId = avatarId;
+		await this.betterAuthUserRepository.save(user);
+
+		this.logger.log(`Updated Better Auth user ${userId} with avatarId: ${avatarId}`);
+	}
+
+	/**
+	 * Get user's OASIS avatarId from Better Auth user table
+	 */
+	async getAvatarId(userId: string): Promise<string | null> {
+		const user = await this.betterAuthUserRepository.findOne({
+			where: { id: userId },
+		});
+
+		return user?.avatarId || null;
+	}
+
+	/**
+	 * Check if user has an OASIS avatar
+	 */
+	async hasOasisAvatar(userId: string): Promise<boolean> {
+		const avatarId = await this.getAvatarId(userId);
+		return avatarId !== null;
+	}
+
+	/**
 	 * Generate random password for OASIS avatar
-	 * (User won't use this - they authenticate via Better-Auth)
+	 * (User won't use this - they authenticate via Better Auth)
 	 */
 	private generateRandomPassword(): string {
 		return (
@@ -243,43 +203,5 @@ export class AuthService {
 			Math.random().toString(36).slice(-12).toUpperCase() +
 			"!@#"
 		);
-	}
-
-	/**
-	 * Generate Pangea JWT token (not OASIS token)
-	 */
-	private generateJwtToken(user: User): string {
-		const payload = {
-			sub: user.id,
-			email: user.email,
-			username: user.username,
-			avatarId: user.avatarId,
-			role: user.role,
-		};
-
-		return this.jwtService.sign(payload);
-	}
-
-	/**
-	 * Get token expiration date
-	 */
-	private getTokenExpiration(): Date {
-		const expiresIn = this.configService.get<string>("JWT_EXPIRES_IN") || "7d";
-		// Parse expiresIn (e.g., "7d", "24h", "30m")
-		const now = new Date();
-		if (expiresIn.endsWith("d")) {
-			const days = Number.parseInt(expiresIn, 10);
-			now.setDate(now.getDate() + days);
-		} else if (expiresIn.endsWith("h")) {
-			const hours = Number.parseInt(expiresIn, 10);
-			now.setHours(now.getHours() + hours);
-		} else if (expiresIn.endsWith("m")) {
-			const minutes = Number.parseInt(expiresIn, 10);
-			now.setMinutes(now.getMinutes() + minutes);
-		} else {
-			// Default to 7 days
-			now.setDate(now.getDate() + 7);
-		}
-		return now;
 	}
 }

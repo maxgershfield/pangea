@@ -8,100 +8,64 @@ import {
 	Request,
 	UseGuards,
 } from "@nestjs/common";
-import { Public } from "../decorators/public.decorator.js";
-import { AuthResponseDto, LoginDto, RegisterDto } from "../dto/index.js";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+	CreateOasisAvatarDto,
+	CreateOasisAvatarResponseDto,
+} from "../dto/index.js";
 import { JwksJwtGuard } from "../guards/jwks-jwt.guard.js";
 import { AuthService } from "../services/auth.service.js";
 
+/**
+ * Authentication Controller
+ *
+ * IMPORTANT: User authentication (login, register, password reset) is handled
+ * by Better Auth in the frontend. This controller only provides supplementary
+ * endpoints for OASIS integration.
+ *
+ * Auth Flow:
+ * 1. User authenticates via Better Auth (frontend /api/auth/*)
+ * 2. Frontend obtains JWT from Better Auth (/api/auth/token)
+ * 3. Frontend calls backend with JWT in Authorization header
+ * 4. Backend validates JWT via JWKS (/api/auth/jwks)
+ * 5. After first login, frontend calls /auth/create-oasis-avatar to link OASIS identity
+ */
+@ApiTags("Authentication")
 @Controller("auth")
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
 
 	/**
-	 * Register new user
-	 * POST /api/auth/register
-	 */
-	@Public()
-	@Post("register")
-	@HttpCode(HttpStatus.CREATED)
-	async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
-		return this.authService.register(registerDto);
-	}
-
-	/**
-	 * Login user
-	 * POST /api/auth/login
-	 */
-	@Public()
-	@Post("login")
-	@HttpCode(HttpStatus.OK)
-	async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-		return this.authService.login(loginDto);
-	}
-
-	/**
-	 * Request password reset
-	 * POST /api/auth/forgot-password
-	 */
-	@Public()
-	@Post("forgot-password")
-	@HttpCode(HttpStatus.OK)
-	async forgotPassword(@Body() body: { email: string }): Promise<{ message: string }> {
-		await this.authService.forgotPassword(body.email);
-		return { message: "If the email exists, a password reset link has been sent" };
-	}
-
-	/**
-	 * Reset password
-	 * POST /api/auth/reset-password
-	 */
-	@Public()
-	@Post("reset-password")
-	@HttpCode(HttpStatus.OK)
-	async resetPassword(
-		@Body() body: { token: string; newPassword: string }
-	): Promise<{ message: string }> {
-		await this.authService.resetPassword(body.token, body.newPassword);
-		return { message: "Password reset successfully" };
-	}
-
-	/**
-	 * Create OASIS avatar for Better-Auth user
-	 * POST /api/auth/create-oasis-avatar
+	 * Create OASIS avatar for authenticated Better Auth user
 	 *
-	 * This endpoint is called by the frontend after Better-Auth registration/login.
-	 * It creates an OASIS avatar and links it to the authenticated user.
-	 *
-	 * Protected by JwksJwtGuard - requires valid Better-Auth token.
-	 *
-	 * Body (optional - will use token claims if not provided):
-	 * {
-	 *   email?: string,
-	 *   username?: string,
-	 *   firstName?: string,
-	 *   lastName?: string,
-	 *   name?: string (will be split into firstName/lastName)
-	 * }
+	 * This endpoint creates an OASIS avatar and links it to the user's
+	 * Better Auth account. Should be called after first login/registration.
 	 */
-	@UseGuards(JwksJwtGuard)
 	@Post("create-oasis-avatar")
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(JwksJwtGuard)
+	@ApiBearerAuth()
+	@ApiOperation({
+		summary: "Create OASIS avatar",
+		description:
+			"Creates an OASIS avatar for the authenticated Better Auth user. " +
+			"This links the user's account to the OASIS blockchain identity system, " +
+			"enabling wallet and asset management features. Should be called after " +
+			"initial registration or first login.",
+	})
+	@ApiResponse({
+		status: 201,
+		description: "OASIS avatar created and linked successfully",
+		type: CreateOasisAvatarResponseDto,
+	})
+	@ApiResponse({ status: 400, description: "Email is required" })
+	@ApiResponse({ status: 401, description: "Unauthorized - valid JWT required" })
+	@ApiResponse({ status: 409, description: "OASIS avatar already exists for this user" })
 	async createOasisAvatar(
 		@Request() req: { user: import("../guards/jwks-jwt.guard.js").UserContext },
-		@Body() body?: {
-			email?: string;
-			username?: string;
-			firstName?: string;
-			lastName?: string;
-			name?: string;
-		}
-	): Promise<{
-		success: boolean;
-		message: string;
-		avatarId: string;
-		userId: string;
-	}> {
-		// Extract user info from Better-Auth token (populated by JwksJwtGuard)
+		@Body() body?: CreateOasisAvatarDto
+	): Promise<CreateOasisAvatarResponseDto> {
+		// Extract user info from Better Auth token (populated by JwksJwtGuard)
 		const userId = req.user.id;
 		const email = body?.email || req.user.email;
 		const name = body?.name || req.user.name;

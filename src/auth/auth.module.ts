@@ -1,9 +1,7 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtModule } from "@nestjs/jwt";
+import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { OasisModule } from "../services/oasis.module.js";
-import { User } from "../users/entities/user.entity.js";
 import { AuthController } from "./controllers/auth.controller.js";
 import { UserController } from "./controllers/user.controller.js";
 import { KycGuard, RoleGuard } from "./decorators/session-auth.decorators.js";
@@ -15,19 +13,24 @@ import { JwksJwtGuard } from "./guards/jwks-jwt.guard.js";
 import { AuthService } from "./services/auth.service.js";
 import { OasisAuthService } from "./services/oasis-auth.service.js";
 import { OasisLinkService } from "./services/oasis-link.service.js";
-import { UserSyncService } from "./services/user-sync.service.js";
 import { SessionSubscriber } from "./subscribers/session.subscriber.js";
 
 /**
  * Auth Module
  *
- * Provides JWT-based authentication using JWKS verification.
- * Implementation notes:
- * 1. Next.js frontend manages sessions via `better-auth`
- * 2. Frontend obtains JWT from `better-auth` JWT plugin (/api/auth/token)
+ * Provides JWT-based authentication using JWKS verification with Better Auth.
+ *
+ * Architecture:
+ * 1. Frontend handles all user auth via Better Auth (login, register, password reset)
+ * 2. Frontend obtains JWT from Better Auth JWT plugin (/api/auth/token)
  * 3. Frontend forwards JWT to backend via Authorization header
  * 4. Backend validates JWT using JWKS endpoint (/api/auth/jwks)
  * 5. Claims (id, email, role, kycStatus) are attached to request.user
+ *
+ * OASIS Integration:
+ * - After first login, frontend calls /auth/create-oasis-avatar
+ * - This creates an OASIS avatar and links it to the Better Auth user
+ * - The avatarId is stored in the Better Auth user table
  *
  * Guards:
  * - JwksJwtGuard: Validates JWT using JWKS [stateless]
@@ -44,18 +47,7 @@ import { SessionSubscriber } from "./subscribers/session.subscriber.js";
 @Module({
 	imports: [
 		ConfigModule,
-		JwtModule.registerAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
-			useFactory: (configService: ConfigService) => ({
-				secret: configService.get<string>("JWT_SECRET") || "pangea-jwt-secret",
-				signOptions: {
-					expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds
-				},
-			}),
-		}),
 		TypeOrmModule.forFeature([
-			User,
 			BetterAuthUser,
 			BetterAuthSession,
 			BetterAuthAccount,
@@ -67,7 +59,6 @@ import { SessionSubscriber } from "./subscribers/session.subscriber.js";
 	providers: [
 		AuthService,
 		OasisAuthService,
-		UserSyncService,
 		OasisLinkService,
 		SessionSubscriber,
 		JwksJwtGuard,
