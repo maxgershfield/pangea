@@ -10,6 +10,7 @@ import {
 	UseGuards,
 } from "@nestjs/common";
 import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
+import { Public } from "../auth/decorators/public.decorator.js";
 import { OasisLinkService } from "../auth/services/oasis-link.service.js";
 import { BalanceSyncService } from "../services/balance-sync.service.js";
 import { OasisWalletService } from "../services/oasis-wallet.service.js";
@@ -32,11 +33,11 @@ export class WalletController {
 	 * Get all balances for the authenticated user
 	 * GET /api/wallet/balance
 	 */
-	@Get('balance')
+  @Get('balance')
   async getBalances(@Request() req: any) {
     const userId = req.user?.id;
     const email = req.user?.email;
-    const name = req.user?.name;
+    const name = req.user?.name; // Optional: Better-Auth may include name
 
     if (!userId || !email) {
       throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
@@ -44,7 +45,7 @@ export class WalletController {
 
     try {
       // Ensure OASIS avatar exists (lazy creation)
-      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name);
+      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name || undefined);
 
       // Get all wallets from OASIS
       const wallets = await this.oasisWalletService.getWallets(avatarId);
@@ -119,7 +120,7 @@ export class WalletController {
 	) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name;
+		const name = req.user?.name; // Optional: Better-Auth may include name
 
 		if (!userId || !email) {
 			throw new HttpException(
@@ -132,7 +133,7 @@ export class WalletController {
 		const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 			userId,
 			email,
-			name,
+			name || undefined,
 		);
 
 		try {
@@ -176,7 +177,7 @@ export class WalletController {
 	async generateWallet(@Request() req: any, @Body() dto: GenerateWalletDto) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name;
+		const name = req.user?.name; // Optional: Better-Auth may include name
 
 		if (!userId || !email) {
 			throw new HttpException(
@@ -190,7 +191,7 @@ export class WalletController {
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
-				name,
+				name || undefined,
 			);
 
 			const wallet = await this.oasisWalletService.generateWallet(
@@ -322,11 +323,11 @@ export class WalletController {
 	 * Manually trigger balance sync
 	 * POST /api/wallet/sync
 	 */
-	@Post('sync')
+  @Post('sync')
   async syncBalances(@Request() req: any) {
     const userId = req.user?.id;
     const email = req.user?.email;
-    const name = req.user?.name;
+    const name = req.user?.name; // Optional: Better-Auth may include name
 
     if (!userId || !email) {
       throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
@@ -334,7 +335,7 @@ export class WalletController {
 
     try {
       // Ensure OASIS avatar exists (lazy creation)
-      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name);
+      const avatarId = await this.oasisLinkService.ensureOasisAvatar(userId, email, name || undefined);
 
       const balances = await this.balanceSyncService.syncUserBalances(userId, avatarId);
 
@@ -392,7 +393,7 @@ export class WalletController {
 	) {
 		const userId = req.user?.id;
 		const email = req.user?.email;
-		const name = req.user?.name;
+		const name = req.user?.name; // Optional: Better-Auth may include name
 
 		if (!userId || !email) {
 			throw new HttpException(
@@ -406,7 +407,7 @@ export class WalletController {
 			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
 				userId,
 				email,
-				name,
+				name || undefined,
 			);
 
 			// Verify wallet belongs to user
@@ -428,6 +429,70 @@ export class WalletController {
 			throw new HttpException(
 				`Failed to get transactions: ${error.message}`,
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	/**
+	 * TEST ENDPOINT: Generate wallet without authentication
+	 * POST /api/wallet/test/generate
+	 * 
+	 * This is a temporary endpoint for testing wallet generation.
+	 * TODO: Remove before production deployment.
+	 * 
+	 * Body: {
+	 *   providerType: "SolanaOASIS" | "EthereumOASIS",
+	 *   userId: string,
+	 *   email: string,
+	 *   name?: string,
+	 *   setAsDefault?: boolean
+	 * }
+	 */
+	@Public()
+	@Post("test/generate")
+	async testGenerateWallet(@Body() dto: GenerateWalletDto & { userId: string; email: string; name?: string }) {
+		const { userId, email, name, providerType, setAsDefault } = dto;
+
+		if (!userId || !email) {
+			throw new HttpException(
+				"userId and email are required",
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+
+		try {
+			// Ensure OASIS avatar exists (lazy creation)
+			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
+				userId,
+				email,
+				name,
+			);
+
+			const wallet = await this.oasisWalletService.generateWallet(
+				avatarId,
+				providerType,
+				setAsDefault ?? true,
+			);
+
+			return {
+				success: true,
+				message: `Wallet generated successfully for ${providerType}`,
+				wallet: {
+					walletId: wallet.walletId,
+					walletAddress: wallet.walletAddress,
+					providerType: wallet.providerType,
+					isDefaultWallet: wallet.isDefaultWallet,
+					balance: wallet.balance || 0,
+				},
+			};
+		} catch (error: any) {
+			throw new HttpException(
+				{
+					statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+					message: `Failed to generate wallet: ${error.message}. Make sure your avatar exists (register/login first).`,
+					error: "Wallet generation failed",
+				},
+				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
 	}

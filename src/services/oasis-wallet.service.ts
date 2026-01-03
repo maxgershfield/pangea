@@ -56,7 +56,7 @@ export class OasisWalletService {
     private configService: ConfigService,
     private tokenManager: OasisTokenManagerService,
   ) {
-    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'http://api.oasisweb4.com';
+    this.baseUrl = this.configService.get<string>('OASIS_API_URL') || 'https://api.oasisweb4.com';
 
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,

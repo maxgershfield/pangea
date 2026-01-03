@@ -29,7 +29,7 @@ export class OasisTokenManagerService implements OnModuleInit {
   ) {
     this.baseUrl =
       this.configService.get<string>('OASIS_API_URL') ||
-      'http://api.oasisweb4.com';
+      'https://api.oasisweb4.com';
     this.adminUsername =
       this.configService.get<string>('OASIS_ADMIN_USERNAME') ||
       'OASIS_ADMIN';

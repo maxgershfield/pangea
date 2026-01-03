@@ -1,0 +1,1266 @@
+openapi: 3.1.0
+info:
+  title: Pangea Backend API
+  version: 1.0.0
+  description: |
+    The Pangea Backend API provides authentication, user management, and wallet operations
+    integrated with the OASIS platform.
+    
+    **Authentication:**
+    - The API uses Better-Auth tokens for authentication (validated via JWKS)
+    - All protected endpoints require a valid Better-Auth token in the `Authorization` header
+    - The backend validates tokens using the frontend's JWKS endpoint (`/api/auth/jwks`)
+    
+    **Better-Auth Integration Flow:**
+    1. User registers/logs in via Better-Auth (frontend)
+    2. Frontend calls `POST /api/auth/create-oasis-avatar` with Better-Auth token
+    3. Backend creates OASIS avatar and links it to the user
+    4. User can now use wallet and other OASIS features
+    
+    **Getting Started:**
+    - For Better-Auth users: Register with Better-Auth, then call `POST /api/auth/create-oasis-avatar`
+    - For legacy users: Use `POST /api/auth/register` (will be deprecated)
+    - After authentication, use protected endpoints with Bearer token
+  contact:
+    name: Pangea Backend Support
+    email: support@pangea.markets
+  license:
+    name: Proprietary
+  termsOfService: https://pangea.markets/terms
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.pangea.markets
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: Authentication and OASIS avatar management
+  - name: User
+    description: User profile management
+  - name: Wallet
+    description: Wallet operations and balance management
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the API
+      operationId: getHealth
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  service:
+                    type: string
+                    example: "Pangea Markets Backend"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user (Legacy)
+      description: |
+        Register a new user with the backend. This endpoint generates a backend JWT token.
+        
+        **Note:** This is a legacy endpoint. For Better-Auth integration, use Better-Auth registration
+        followed by `POST /api/auth/create-oasis-avatar`.
+        
+        This endpoint:
+        1. Creates an OASIS avatar
+        2. Creates a Pangea user account
+        3. Links the avatar to the user
+        4. Returns a backend JWT token
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              basic:
+                summary: Basic registration
+                value:
+                  email: "user@example.com"
+                  password: "SecurePassword123!"
+                  username: "johndoe"
+                  firstName: "John"
+                  lastName: "Doe"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user (Legacy)
+      description: |
+        Authenticate a user and receive a backend JWT token.
+        
+        **Note:** This is a legacy endpoint. For Better-Auth integration, use Better-Auth login
+        and then call protected endpoints with Better-Auth tokens.
+      operationId: loginUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              basic:
+                summary: Basic login
+                value:
+                  email: "user@example.com"
+                  password: "SecurePassword123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/create-oasis-avatar:
+    post:
+      tags:
+        - Authentication
+      summary: Create OASIS avatar for Better-Auth user
+      description: |
+        Create an OASIS avatar and link it to the authenticated Better-Auth user.
+        
+        This endpoint is called by the frontend after Better-Auth registration/login.
+        It requires a valid Better-Auth token (validated via JWKS).
+        
+        **Flow:**
+        1. Frontend registers/logs in with Better-Auth
+        2. Frontend calls this endpoint with Better-Auth token
+        3. Backend creates OASIS avatar
+        4. Backend links avatar to Pangea user (using Better-Auth user ID)
+        5. User can now use wallet and other OASIS features
+        
+        **Request Body:**
+        All fields are optional. If not provided, the backend will use values from the Better-Auth token:
+        - `email`: Uses token.email if not provided
+        - `name`: Uses token.name if not provided (will be split into firstName/lastName)
+        - `username`: Uses email prefix if not provided
+        
+        **Token Requirements:**
+        The Better-Auth token must include:
+        - `id`: User ID (required)
+        - `email`: User email (required)
+        - `name`: User name (optional, but recommended)
+      operationId: createOasisAvatar
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOasisAvatarRequest'
+            examples:
+              minimal:
+                summary: Minimal request (uses token claims)
+                value: {}
+              withName:
+                summary: With name provided
+                value:
+                  name: "John Doe"
+              withAllFields:
+                summary: With all fields
+                value:
+                  email: "user@example.com"
+                  username: "johndoe"
+                  firstName: "John"
+                  lastName: "Doe"
+                  name: "John Doe"
+      responses:
+        '201':
+          description: OASIS avatar created and linked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOasisAvatarResponse'
+              examples:
+                success:
+                  summary: Successful creation
+                  value:
+                    success: true
+                    message: "OASIS avatar created and linked successfully"
+                    avatarId: "550e8400-e29b-41d4-a716-446655440000"
+                    userId: "123e4567-e89b-12d3-a456-426614174000"
+        '400':
+          description: Bad request (missing email in token and body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (invalid or missing Better-Auth token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Request a password reset link to be sent to the user's email
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Password reset email sent (if email exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "If the email exists, a password reset link has been sent"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Reset user password using a reset token
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  description: Password reset token from email
+                  example: "abc123def456..."
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: "NewSecurePassword123!"
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset successfully"
+        '400':
+          description: Invalid token or password requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/profile:
+    get:
+      tags:
+        - User
+      summary: Get current user profile
+      description: |
+        Get the profile of the authenticated user.
+        
+        Requires a valid Better-Auth token (for Better-Auth users) or backend JWT token (for legacy users).
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - User
+      summary: Update user profile
+      description: |
+        Update the profile of the authenticated user.
+        
+        Requires a valid Better-Auth token (for Better-Auth users) or backend JWT token (for legacy users).
+      operationId: updateUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+            examples:
+              updateName:
+                summary: Update name
+                value:
+                  firstName: "John"
+                  lastName: "Doe"
+              updateEmail:
+                summary: Update email
+                value:
+                  email: "newemail@example.com"
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/balance:
+    get:
+      tags:
+        - Wallet
+      summary: Get all wallet balances
+      description: |
+        Get balances for all wallets associated with the authenticated user's OASIS avatar.
+        
+        If no OASIS avatar exists, one will be created automatically (lazy creation).
+        If no wallets exist, returns an empty array with a helpful message.
+        
+        Requires a valid Better-Auth token.
+      operationId: getWalletBalances
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletBalancesResponse'
+              examples:
+                withWallets:
+                  summary: User has wallets
+                  value:
+                    success: true
+                    balances:
+                      - walletId: "wallet-123"
+                        walletAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                        providerType: "SolanaOASIS"
+                        balance: 100.5
+                        tokenSymbol: "SOL"
+                      - walletId: "wallet-456"
+                        walletAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+                        providerType: "EthereumOASIS"
+                        balance: 0.5
+                        tokenSymbol: "ETH"
+                    hasWallets: true
+                noWallets:
+                  summary: User has no wallets
+                  value:
+                    success: true
+                    balances: []
+                    message: "No wallets found. Generate a wallet first using POST /api/wallet/generate"
+                    hasWallets: false
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/balance/{assetId}:
+    get:
+      tags:
+        - Wallet
+      summary: Get balance for specific asset
+      description: |
+        Get the balance for a specific asset/wallet.
+        
+        The assetId can be used to determine the blockchain (Solana or Ethereum).
+        If no OASIS avatar exists, one will be created automatically (lazy creation).
+        
+        Requires a valid Better-Auth token.
+      operationId: getAssetBalance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: Asset identifier (can include blockchain hint like "solana" or "SOL")
+          schema:
+            type: string
+            example: "solana-mainnet-SOL"
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetBalanceResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Balance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/generate:
+    post:
+      tags:
+        - Wallet
+      summary: Generate new wallet
+      description: |
+        Generate a new cryptocurrency wallet for the authenticated user's OASIS avatar.
+        
+        If no OASIS avatar exists, one will be created automatically (lazy creation).
+        The wallet will be linked to the user's OASIS avatar.
+        
+        Requires a valid Better-Auth token.
+      operationId: generateWallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateWalletRequest'
+            examples:
+              solana:
+                summary: Generate Solana wallet
+                value:
+                  providerType: "SolanaOASIS"
+                  setAsDefault: true
+              ethereum:
+                summary: Generate Ethereum wallet
+                value:
+                  providerType: "EthereumOASIS"
+                  setAsDefault: false
+      responses:
+        '201':
+          description: Wallet generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWalletResponse'
+        '400':
+          description: Invalid provider type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/connect:
+    post:
+      tags:
+        - Wallet
+      summary: Connect external wallet
+      description: |
+        Connect an external wallet (Phantom, MetaMask, etc.) to the user's account.
+        
+        Requires wallet signature verification.
+        
+        Requires a valid Better-Auth token.
+      operationId: connectWallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectWalletRequest'
+      responses:
+        '200':
+          description: Wallet connected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectWalletResponse'
+        '400':
+          description: Invalid request or signature verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/verify:
+    post:
+      tags:
+        - Wallet
+      summary: Verify wallet ownership
+      description: |
+        Verify ownership of a wallet by validating a signature.
+        
+        Requires a valid Better-Auth token.
+      operationId: verifyWallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyWalletRequest'
+      responses:
+        '200':
+          description: Wallet verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyWalletResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/sync:
+    post:
+      tags:
+        - Wallet
+      summary: Sync wallet balances
+      description: |
+        Manually trigger a sync of all wallet balances for the authenticated user.
+        
+        If no OASIS avatar exists, one will be created automatically (lazy creation).
+        
+        Requires a valid Better-Auth token.
+      operationId: syncWalletBalances
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Balances synced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncBalancesResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/transactions/{walletId}:
+    get:
+      tags:
+        - Wallet
+      summary: Get transaction history
+      description: |
+        Get transaction history for a specific wallet.
+        
+        The wallet must belong to the authenticated user's OASIS avatar.
+        
+        Requires a valid Better-Auth token.
+      operationId: getWalletTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Wallet ID
+          schema:
+            type: string
+            example: "wallet-123"
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsResponse'
+        '401':
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Better-Auth JWT token (for Better-Auth users) or backend JWT token (for legacy users).
+        
+        For Better-Auth tokens:
+        - Token is validated via JWKS endpoint at {FRONTEND_URL}/api/auth/jwks
+        - Token must include: id, email (required), name, role, kycStatus (optional)
+        
+        For legacy backend tokens:
+        - Token is validated using backend's JWT secret
+        - Token includes: sub (user ID), email, username, avatarId, role
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - username
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: "SecurePassword123!"
+        username:
+          type: string
+          minLength: 3
+          example: "johndoe"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "SecurePassword123!"
+
+    CreateOasisAvatarRequest:
+      type: object
+      description: |
+        All fields are optional. If not provided, values from the Better-Auth token will be used.
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email (uses token.email if not provided)
+          example: "user@example.com"
+        username:
+          type: string
+          description: Username (uses email prefix if not provided)
+          example: "johndoe"
+        firstName:
+          type: string
+          description: First name (uses name split if name provided)
+          example: "John"
+        lastName:
+          type: string
+          description: Last name (uses name split if name provided)
+          example: "Doe"
+        name:
+          type: string
+          description: Full name (will be split into firstName/lastName if those aren't provided)
+          example: "John Doe"
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: Backend JWT token (legacy only)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresAt:
+          type: string
+          format: date-time
+          description: Token expiration time
+
+    CreateOasisAvatarResponse:
+      type: object
+      required:
+        - success
+        - message
+        - avatarId
+        - userId
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "OASIS avatar created and linked successfully"
+        avatarId:
+          type: string
+          format: uuid
+          description: OASIS avatar ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: string
+          description: Better-Auth user ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        username:
+          type: string
+          nullable: true
+          example: "johndoe"
+        firstName:
+          type: string
+          nullable: true
+          example: "John"
+        lastName:
+          type: string
+          nullable: true
+          example: "Doe"
+        avatarId:
+          type: string
+          format: uuid
+          nullable: true
+          description: OASIS avatar ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        role:
+          type: string
+          enum: [user, admin, moderator]
+          example: "user"
+        kycStatus:
+          type: string
+          enum: [none, pending, verified, rejected]
+          example: "pending"
+        isActive:
+          type: boolean
+          example: true
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "newemail@example.com"
+
+    WalletBalancesResponse:
+      type: object
+      required:
+        - success
+        - balances
+        - hasWallets
+      properties:
+        success:
+          type: boolean
+          example: true
+        balances:
+          type: array
+          items:
+            type: object
+            properties:
+              walletId:
+                type: string
+                example: "wallet-123"
+              walletAddress:
+                type: string
+                example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+              providerType:
+                type: string
+                enum: [SolanaOASIS, EthereumOASIS]
+                example: "SolanaOASIS"
+              balance:
+                type: number
+                example: 100.5
+              tokenSymbol:
+                type: string
+                example: "SOL"
+              error:
+                type: string
+                description: Error message if balance fetch failed
+        hasWallets:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Helpful message when no wallets exist
+          example: "No wallets found. Generate a wallet first using POST /api/wallet/generate"
+
+    AssetBalanceResponse:
+      type: object
+      required:
+        - success
+        - balance
+      properties:
+        success:
+          type: boolean
+          example: true
+        balance:
+          type: object
+          properties:
+            walletId:
+              type: string
+              example: "wallet-123"
+            walletAddress:
+              type: string
+              example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+            assetId:
+              type: string
+              example: "solana-mainnet-SOL"
+            balance:
+              type: number
+              example: 100.5
+            tokenSymbol:
+              type: string
+              example: "SOL"
+            providerType:
+              type: string
+              enum: [SolanaOASIS, EthereumOASIS]
+              example: "SolanaOASIS"
+
+    GenerateWalletRequest:
+      type: object
+      required:
+        - providerType
+      properties:
+        providerType:
+          type: string
+          enum: [SolanaOASIS, EthereumOASIS]
+          description: Blockchain provider type
+          example: "SolanaOASIS"
+        setAsDefault:
+          type: boolean
+          default: true
+          description: Whether to set this wallet as the default wallet
+          example: true
+
+    GenerateWalletResponse:
+      type: object
+      required:
+        - success
+        - message
+        - wallet
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Wallet generated successfully for SolanaOASIS"
+        wallet:
+          type: object
+          properties:
+            walletId:
+              type: string
+              example: "wallet-123"
+            walletAddress:
+              type: string
+              example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+            providerType:
+              type: string
+              enum: [SolanaOASIS, EthereumOASIS]
+              example: "SolanaOASIS"
+            isDefaultWallet:
+              type: boolean
+              example: true
+            balance:
+              type: number
+              example: 0
+
+    ConnectWalletRequest:
+      type: object
+      required:
+        - blockchain
+        - walletAddress
+        - signature
+        - message
+      properties:
+        blockchain:
+          type: string
+          enum: [solana, ethereum]
+          example: "solana"
+        walletAddress:
+          type: string
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        signature:
+          type: string
+          description: Wallet signature for verification
+          example: "0x1234..."
+        message:
+          type: string
+          description: Message that was signed
+          example: "Connect wallet to Pangea"
+
+    ConnectWalletResponse:
+      type: object
+      required:
+        - success
+        - message
+        - wallet
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Wallet connected successfully"
+        wallet:
+          type: object
+          properties:
+            address:
+              type: string
+              example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+            blockchain:
+              type: string
+              enum: [solana, ethereum]
+              example: "solana"
+
+    VerifyWalletRequest:
+      type: object
+      required:
+        - walletAddress
+        - signature
+        - message
+        - blockchain
+      properties:
+        walletAddress:
+          type: string
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        signature:
+          type: string
+          description: Wallet signature
+          example: "0x1234..."
+        message:
+          type: string
+          description: Message that was signed
+          example: "Verify wallet ownership"
+        blockchain:
+          type: string
+          enum: [solana, ethereum]
+          example: "solana"
+
+    VerifyWalletResponse:
+      type: object
+      required:
+        - success
+        - verified
+        - wallet
+      properties:
+        success:
+          type: boolean
+          example: true
+        verified:
+          type: boolean
+          example: true
+        wallet:
+          type: object
+          properties:
+            address:
+              type: string
+              example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+            blockchain:
+              type: string
+              enum: [solana, ethereum]
+              example: "solana"
+
+    SyncBalancesResponse:
+      type: object
+      required:
+        - success
+        - message
+        - balances
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Balances synced successfully"
+        balances:
+          type: array
+          items:
+            type: object
+            description: Balance information for each wallet
+
+    TransactionsResponse:
+      type: object
+      required:
+        - success
+        - transactions
+      properties:
+        success:
+          type: boolean
+          example: true
+        transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              transactionId:
+                type: string
+                example: "tx-123"
+              hash:
+                type: string
+                example: "0xabc123..."
+              from:
+                type: string
+                example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+              to:
+                type: string
+                example: "9wzDvK8vK8vK8vK8vK8vK8vK8vK8vK8vK8vK8vK8vK"
+              amount:
+                type: number
+                example: 10.5
+              tokenSymbol:
+                type: string
+                example: "SOL"
+              timestamp:
+                type: string
+                format: date-time
+              status:
+                type: string
+                enum: [pending, confirmed, failed]
+                example: "confirmed"
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+        error:
+          type: string
+          description: Error type
+          example: "Unauthorized"
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 401
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+

@@ -20,6 +20,7 @@ export interface UserContext {
 	email: string;
 	role: string;
 	kycStatus: string;
+	name?: string; // Optional: Better-Auth may include name in token
 }
 
 /** Expected `better-auth` JWT claim shape. */
@@ -28,6 +29,7 @@ interface BetterAuthJwtPayload extends JWTPayload {
 	email: string;
 	role?: string;
 	kycStatus?: string;
+	name?: string; // Better-Auth typically includes name
 }
 
 /**
@@ -99,6 +101,7 @@ export class JwksJwtGuard implements CanActivate, OnModuleInit {
 				email: jwtPayload.email,
 				role: jwtPayload.role ?? "user",
 				kycStatus: jwtPayload.kycStatus ?? "none",
+				name: jwtPayload.name, // Optional: Better-Auth may include name
 			} satisfies UserContext;
 
 			return true;

@@ -1,38 +1,47 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios, { type AxiosInstance } from "axios";
+import { makeNativeHttpRequest } from "./oasis-auth-helper.js";
 
 /**
  * OASIS Avatar API response structure
+ * OASIS API returns: OASISHttpResponseMessage<T> which contains:
+ * { Result: OASISResult<T> } where T is AvatarResponseDto
+ * OASISResult<T> contains: { Result: T, IsError: boolean, Message: string, ... }
  */
 interface OASISAvatarResponse {
-	result?: {
+	Result?: {
 		Result?: {
-			jwtToken?: string;
-			avatarId?: string;
-			id?: string;
-			username?: string;
-			email?: string;
-			firstName?: string;
-			lastName?: string;
+			Id?: string;
+			AvatarId?: string;
+			Username?: string;
+			Email?: string;
+			FirstName?: string;
+			LastName?: string;
+			FullName?: string;
+			IsActive?: boolean;
+			IsVerified?: boolean;
+			CreatedDate?: string;
+			ModifiedDate?: string;
 		};
-		result?: {
-			jwtToken?: string;
-			avatarId?: string;
-			id?: string;
-			username?: string;
-			email?: string;
-			firstName?: string;
-			lastName?: string;
-		};
-		jwtToken?: string;
-		avatarId?: string;
-		id?: string;
-		username?: string;
-		email?: string;
-		firstName?: string;
-		lastName?: string;
+		IsError?: boolean;
+		isError?: boolean;
+		Message?: string;
+		message?: string;
 	};
+	result?: {
+		result?: {
+			id?: string;
+			avatarId?: string;
+			username?: string;
+			email?: string;
+			firstName?: string;
+			lastName?: string;
+		};
+		isError?: boolean;
+		message?: string;
+	};
+	// Direct properties (fallback)
 	jwtToken?: string;
 	avatarId?: string;
 	id?: string;
@@ -70,22 +79,17 @@ export class OasisAuthService {
 	constructor(private configService: ConfigService) {
 		this.baseUrl =
 			this.configService.get<string>("OASIS_API_URL") ||
-			"http://api.oasisweb4.com";
+			"https://api.oasisweb4.com";
 
 		this.axiosInstance = axios.create({
 			baseURL: this.baseUrl,
-			timeout: 30000,
+			timeout: 300000, // Increased timeout to 300 seconds (5 minutes) for large OASIS API responses
+			maxContentLength: Infinity, // Allow unlimited content length
+			maxBodyLength: Infinity, // Allow unlimited body length
 			headers: {
 				"Content-Type": "application/json",
 				Accept: "application/json",
 			},
-			// Handle self-signed certificates in development
-			httpsAgent:
-				process.env.NODE_ENV === "development"
-					? {
-							rejectUnauthorized: false,
-						}
-					: undefined,
 		});
 	}
 
@@ -101,25 +105,65 @@ export class OasisAuthService {
 	}): Promise<OASISAvatar> {
 		try {
 			this.logger.log(`Registering new avatar: ${data.username}`);
+			this.logger.log(`OASIS API Base URL: ${this.baseUrl}`);
 
-			const response = await this.axiosInstance.post<OASISAvatarResponse>(
-				"/api/avatar/register",
-				{
-					username: data.username,
-					email: data.email,
-					password: data.password,
-					confirmPassword: data.password, // OASIS API requires confirmPassword to match password
-					firstName: data.firstName || "",
-					lastName: data.lastName || "",
-					avatarType: "User",
-					acceptTerms: true,
-				},
+			// Use native HTTP module to avoid axios stream abort issues with large responses
+			// OASIS API expects: Title, FirstName, LastName, Email, Username, Password, ConfirmPassword, AvatarType, AcceptTerms
+			const requestData = {
+				title: "", // Optional
+				firstName: data.firstName || "",
+				lastName: data.lastName || "",
+				email: data.email,
+				username: data.username,
+				password: data.password,
+				confirmPassword: data.password, // OASIS API requires confirmPassword to match password
+				avatarType: "User", // Required, must be a valid AvatarType enum value
+				acceptTerms: true, // Required, must be true
+			};
+
+			const fullUrl = `${this.baseUrl}/api/avatar/register`;
+			this.logger.log(`Making request to: ${fullUrl}`);
+			const response = await makeNativeHttpRequest(
+				fullUrl,
+				"POST",
+				requestData,
 			);
+			this.logger.log(`Response received: status ${response.statusCode}, data length: ${response.data.length}`);
+
+			// Parse the response
+			let responseData: any;
+			try {
+				responseData = JSON.parse(response.data);
+			} catch (e) {
+				this.logger.error(`Failed to parse OASIS response as JSON: ${e.message}`);
+				this.logger.error(`Response data length: ${response.data?.length || 0}`);
+				this.logger.error(`Response status: ${response.statusCode}`);
+				throw new Error('Invalid response format from OASIS API');
+			}
 
 			this.logger.debug(
-				`OASIS registration response: ${JSON.stringify(response.data, null, 2)}`,
+				`OASIS registration response received (size: ${JSON.stringify(responseData).length} chars)`,
 			);
-			return this.extractAvatarFromResponse(response.data);
+			
+			// Check if response indicates an error
+			// OASIS API returns: { Result: { IsError: true/false, Message: "...", Result: {...} } }
+			const result = responseData?.Result || responseData?.result;
+			if (result?.IsError === true || result?.isError === true) {
+				const errorMessage = result.Message || result.message || "Registration failed";
+				this.logger.warn(`OASIS registration returned error: ${errorMessage}`);
+				// If it's just a verification warning but avatar was created, try to extract avatar anyway
+				if (errorMessage.includes("verification") || errorMessage.includes("email")) {
+					this.logger.warn("Email verification warning - attempting to extract avatar anyway");
+					try {
+						return this.extractAvatarFromResponse(responseData);
+					} catch (extractError) {
+						throw new Error(`Registration completed but avatar extraction failed: ${errorMessage}`);
+					}
+				}
+				throw new Error(errorMessage);
+			}
+			
+			return this.extractAvatarFromResponse(responseData);
 		} catch (error: any) {
 			this.logger.error(`OASIS registration failed: ${error.message}`);
 			this.logger.error(`Error stack: ${error.stack}`);
@@ -145,15 +189,48 @@ export class OasisAuthService {
 		try {
 			this.logger.log(`Authenticating avatar: ${email}`);
 
-			const response = await this.axiosInstance.post<OASISAvatarResponse>(
-				"/api/avatar/authenticate",
+			// Use native HTTP module to avoid axios stream abort issues with large responses
+			// OASIS API expects: { Username: string, Password: string }
+			// Username can be email or username
+			const response = await makeNativeHttpRequest(
+				`${this.baseUrl}/api/avatar/authenticate`,
+				"POST",
 				{
 					username: email, // OASIS accepts email as username
 					password: password,
 				},
 			);
 
-			return this.extractAvatarFromResponse(response.data);
+			// Parse the response
+			let responseData: any;
+			try {
+				responseData = JSON.parse(response.data);
+			} catch (e) {
+				this.logger.error(`Failed to parse OASIS response as JSON: ${e.message}`);
+				this.logger.error(`Response data length: ${response.data?.length || 0}`);
+				this.logger.error(`Response status: ${response.statusCode}`);
+				throw new Error('Invalid response format from OASIS API');
+			}
+
+			// Check if response indicates an error
+			// OASIS API returns: { Result: { IsError: true/false, Message: "...", Result: {...} } }
+			const result = responseData?.Result || responseData?.result;
+			if (result?.IsError === true || result?.isError === true) {
+				const errorMessage = result.Message || result.message || "Authentication failed";
+				this.logger.warn(`OASIS authentication returned error: ${errorMessage}`);
+				// If it's just a verification warning but authentication succeeded, try to extract avatar anyway
+				if (errorMessage.includes("verification") || errorMessage.includes("email")) {
+					this.logger.warn("Email verification warning - attempting to extract avatar anyway");
+					try {
+						return this.extractAvatarFromResponse(responseData);
+					} catch (extractError) {
+						throw new Error(`Authentication completed but avatar extraction failed: ${errorMessage}`);
+					}
+				}
+				throw new Error(errorMessage);
+			}
+
+			return this.extractAvatarFromResponse(responseData);
 		} catch (error: any) {
 			this.logger.error(`OASIS authentication failed: ${error.message}`);
 			if (error.response?.data) {
@@ -174,11 +251,17 @@ export class OasisAuthService {
 		try {
 			this.logger.log(`Fetching avatar profile: ${avatarId}`);
 
-			const response = await this.axiosInstance.get<OASISAvatarResponse>(
+			const response = await this.axiosInstance.get(
 				`/api/avatar/${avatarId}`,
+				{
+					responseType: 'text',
+					maxContentLength: Infinity,
+					maxBodyLength: Infinity,
+				},
 			);
-
-			return this.extractAvatarFromResponse(response.data);
+			
+			const responseData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+			return this.extractAvatarFromResponse(responseData);
 		} catch (error: any) {
 			this.logger.error(`Failed to fetch avatar profile: ${error.message}`);
 			throw new Error("Failed to fetch user profile from OASIS");
@@ -199,12 +282,18 @@ export class OasisAuthService {
 		try {
 			this.logger.log(`Updating avatar profile: ${avatarId}`);
 
-			const response = await this.axiosInstance.put<OASISAvatarResponse>(
+			const response = await this.axiosInstance.put(
 				`/api/avatar/${avatarId}`,
 				data,
+				{
+					responseType: 'text',
+					maxContentLength: Infinity,
+					maxBodyLength: Infinity,
+				},
 			);
-
-			return this.extractAvatarFromResponse(response.data);
+			
+			const responseData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+			return this.extractAvatarFromResponse(responseData);
 		} catch (error: any) {
 			this.logger.error(`Failed to update avatar profile: ${error.message}`);
 			throw new Error("Failed to update user profile in OASIS");
@@ -269,41 +358,73 @@ export class OasisAuthService {
 
 	/**
 	 * Extract avatar object from OASIS API response
-	 * Handles nested response structures (Result.result, result.Result, etc.)
+	 * Handles nested response structures from OASIS API
+	 * Response structure: { Result: { Result: { ...AvatarResponseDto... } } }
+	 * or: { result: { result: { ...AvatarResponseDto... } } }
 	 */
 	private extractAvatarFromResponse(data: OASISAvatarResponse): OASISAvatar {
 		try {
-			// Handle nested structures - registration response has result.result structure
-			const result: any = data.result || data;
-			const avatar = (result as any).Result || result.result || result || data;
+			this.logger.debug(`Extracting avatar from response structure`);
+			
+			// OASIS API response structure: OASISHttpResponseMessage<AvatarResponseDto>
+			// Which contains: { Result: OASISResult<AvatarResponseDto> }
+			// Which contains: { Result: AvatarResponseDto }
+			// AvatarResponseDto has: Id, AvatarId, Username, Email, FirstName, LastName, etc.
+			
+			// Try to find the avatar data in various nested structures
+			let avatar: any = null;
+			const dataAny = data as any;
+			
+			// Check for Result.Result.Result (OASISHttpResponseMessage -> OASISResult -> AvatarResponseDto)
+			if (dataAny.Result?.Result?.Result) {
+				avatar = dataAny.Result.Result.Result;
+			}
+			// Check for Result.Result (OASISResult -> AvatarResponseDto)
+			else if (dataAny.Result?.Result) {
+				avatar = dataAny.Result.Result;
+			}
+			// Check for result.result (lowercase)
+			else if (data.result?.result) {
+				avatar = data.result.result;
+			}
+			// Check for Result at top level
+			else if (dataAny.Result) {
+				avatar = dataAny.Result;
+			}
+			// Check for result at top level
+			else if (data.result) {
+				avatar = data.result;
+			}
+			// Fallback to data itself
+			else {
+				avatar = data;
+			}
 
-			// Extract avatar ID (can be avatarId, id, or AvatarId)
+			// Extract avatar ID - AvatarResponseDto has both Id and AvatarId
 			const avatarId =
-				avatar?.avatarId ||
-				avatar?.AvatarId ||
-				avatar?.id ||
-				avatar?.Id ||
-				result?.avatarId ||
-				result?.id;
+				avatar?.AvatarId || // AvatarResponseDto.AvatarId (Guid)
+				avatar?.avatarId || // lowercase variant
+				avatar?.Id || // AvatarResponseDto.Id (Guid)
+				avatar?.id; // lowercase variant
 
 			if (!avatarId) {
 				this.logger.error("Invalid response structure - missing avatarId");
 				this.logger.error("Full response:", JSON.stringify(data, null, 2));
-				this.logger.error("Result object:", JSON.stringify(result, null, 2));
-				this.logger.error("Avatar object:", JSON.stringify(avatar, null, 2));
+				this.logger.error("Extracted avatar object:", JSON.stringify(avatar, null, 2));
 				throw new Error(
-					"Invalid response structure from OASIS API: missing avatarId",
+					"Invalid response structure from OASIS API: missing avatarId or Id",
 				);
 			}
 
+			// Extract other fields from AvatarResponseDto
 			const extracted: OASISAvatar = {
 				avatarId: avatarId.toString(),
 				id: avatarId.toString(),
-				username: avatar?.username || avatar?.Username || "",
-				email: avatar?.email || avatar?.Email || "",
-				firstName: avatar?.firstName || avatar?.FirstName,
-				lastName: avatar?.lastName || avatar?.LastName,
-				jwtToken: avatar?.jwtToken || avatar?.JwtToken,
+				username: avatar?.Username || avatar?.username || "",
+				email: avatar?.Email || avatar?.email || "",
+				firstName: avatar?.FirstName || avatar?.firstName,
+				lastName: avatar?.LastName || avatar?.lastName,
+				jwtToken: avatar?.JwtToken || avatar?.jwtToken,
 			};
 
 			// Validate required fields
@@ -325,6 +446,7 @@ export class OasisAuthService {
 			this.logger.error(
 				`Failed to extract avatar from response: ${error.message}`,
 			);
+			this.logger.error(`Response data: ${JSON.stringify(data, null, 2)}`);
 			throw error;
 		}
 	}

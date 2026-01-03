@@ -25,11 +25,11 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
     const databaseUrl = this.configService.get<string>('DATABASE_URL');
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     
+    // Disable migrations in development to avoid module loading issues
     // In production, migrations are compiled to dist/migrations (relative to dist/config)
-    // In development, use source migrations from project root
     const migrationsPath = isProduction
       ? __dirname + '/../migrations/*.js'
-      : __dirname + '/../../migrations/*{.ts,.js}';
+      : undefined;
 
     // Base entities pattern - auto-discover all entities
     const entitiesPattern = [__dirname + '/../**/*.entity{.ts,.js}'];
@@ -52,9 +52,10 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
         type: 'postgres',
         url: databaseUrl,
         entities: [...explicitEntities, ...entitiesPattern],
-        migrations: [migrationsPath],
+        migrations: migrationsPath ? [migrationsPath] : [], // Empty array in development
+        migrationsRun: false, // Never auto-run migrations
         subscribers, // Register subscribers
-        synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
+        synchronize: false, // Explicitly disable auto-sync
         logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
       };
     }
@@ -68,9 +69,10 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       password: this.configService.get<string>('DB_PASSWORD', 'password'),
       database: this.configService.get<string>('DB_DATABASE', 'pangea'),
       entities: [...explicitEntities, ...entitiesPattern],
-      migrations: [migrationsPath],
+      migrations: migrationsPath ? [migrationsPath] : [], // Empty array in development
+      migrationsRun: false, // Never auto-run migrations
       subscribers, // Register subscribers
-      synchronize: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
+      synchronize: false, // Explicitly disable auto-sync
       logging: !isProduction && this.configService.get<string>('NODE_ENV') === 'development',
     };
   }

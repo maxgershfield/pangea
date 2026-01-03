@@ -194,6 +194,67 @@ export class AuthService {
 	}
 
 	/**
+	 * Create OASIS avatar for Better-Auth user
+	 * Called after Better-Auth registration/login to create OASIS avatar
+	 * and link it to the user.
+	 */
+	async createOasisAvatarForUser(data: {
+		userId: string;
+		email: string;
+		username?: string;
+		firstName?: string;
+		lastName?: string;
+	}): Promise<string> {
+		try {
+			this.logger.log(
+				`Creating OASIS avatar for Better-Auth user: ${data.userId}, email: ${data.email}`,
+			);
+
+			// 1. Register with OASIS
+			const oasisAvatar = await this.oasisAuthService.register({
+				email: data.email,
+				password: this.generateRandomPassword(), // Random password - user uses Better-Auth
+				username: data.username || data.email.split('@')[0],
+				firstName: data.firstName || '',
+				lastName: data.lastName || '',
+			});
+
+			this.logger.log(
+				`OASIS avatar created: ${oasisAvatar.avatarId}`,
+			);
+
+			// 2. Sync to local database (creates/updates user with avatarId)
+			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
+
+			this.logger.log(
+				`OASIS avatar linked to user: ${user.id}`,
+			);
+
+			return oasisAvatar.avatarId;
+		} catch (error: any) {
+			this.logger.error(`Failed to create OASIS avatar: ${error.message}`);
+			this.logger.error(`Error stack: ${error.stack}`);
+			throw new HttpException(
+				error.message || 'Failed to create OASIS avatar',
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	/**
+	 * Generate random password for OASIS avatar
+	 * (User won't use this - they authenticate via Better-Auth)
+	 */
+	private generateRandomPassword(): string {
+		return (
+			Math.random().toString(36).slice(-12) +
+			Math.random().toString(36).slice(-12) +
+			Math.random().toString(36).slice(-12).toUpperCase() +
+			'!@#'
+		);
+	}
+
+	/**
 	 * Generate Pangea JWT token (not OASIS token)
 	 */
 	private generateJwtToken(user: User): string {
