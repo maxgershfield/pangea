@@ -27,8 +27,7 @@ try {
 		walletAddress = keypair.publicKey;
 	} else if (Array.isArray(keypair) && keypair.length > 0) {
 		// Solana keypair is often an array of numbers
-		const { PublicKey } = require("@solana/web3.js");
-		// This would require @solana/web3.js to be installed
+		// TODO: Derive public key from keypair array using @solana/web3.js if needed
 		console.log("⚠️  Keypair format detected. Wallet address will be derived during deployment.");
 	}
 } catch (error) {

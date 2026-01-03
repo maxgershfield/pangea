@@ -1,22 +1,9 @@
-import {
-    Body,
-    Controller,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Post,
-    UseGuards,
-} from "@nestjs/common";
-import {
-    ApiBearerAuth,
-    ApiOperation,
-    ApiResponse,
-    ApiTags,
-} from "@nestjs/swagger";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
 import { DeployRwaTokenDto } from "../dto/deploy-rwa-token.dto.js";
-import  { SmartContractService } from "../services/smart-contract.service.js";
+import { SmartContractService } from "../services/smart-contract.service.js";
 
 @ApiTags("Smart Contracts")
 @ApiBearerAuth()
@@ -25,30 +12,30 @@ import  { SmartContractService } from "../services/smart-contract.service.js";
 export class SmartContractsController {
 	constructor(private readonly smartContractService: SmartContractService) {}
 
-	@ApiOperation({ summary: 'Deploy RWA token contract' })
-  @ApiResponse({ status: 200, description: 'RWA token deployed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  @Post('deploy-rwa-token')
-  @HttpCode(HttpStatus.OK)
-  async deployRwaToken(@Body() dto: DeployRwaTokenDto) {
-    const result = await this.smartContractService.generateRwaToken({
-      name: dto.name,
-      symbol: dto.symbol,
-      totalSupply: dto.totalSupply,
-      metadataUri: dto.metadataUri || '',
-      issuerWallet: dto.issuerWallet,
-      decimals: dto.decimals,
-    });
+	@ApiOperation({ summary: "Deploy RWA token contract" })
+	@ApiResponse({ status: 200, description: "RWA token deployed successfully" })
+	@ApiResponse({ status: 401, description: "Unauthorized" })
+	@ApiResponse({ status: 403, description: "Forbidden - Admin access required" })
+	@Post("deploy-rwa-token")
+	@HttpCode(HttpStatus.OK)
+	async deployRwaToken(@Body() dto: DeployRwaTokenDto) {
+		const result = await this.smartContractService.generateRwaToken({
+			name: dto.name,
+			symbol: dto.symbol,
+			totalSupply: dto.totalSupply,
+			metadataUri: dto.metadataUri || "",
+			issuerWallet: dto.issuerWallet,
+			decimals: dto.decimals,
+		});
 
-    return {
-      success: true,
-      contractAddress: result.contractAddress,
-      transactionHash: result.transactionHash,
-      programId: result.programId,
-      message: 'RWA Token contract deployed successfully',
-    };
-  }
+		return {
+			success: true,
+			contractAddress: result.contractAddress,
+			transactionHash: result.transactionHash,
+			programId: result.programId,
+			message: "RWA Token contract deployed successfully",
+		};
+	}
 
 	@ApiOperation({ summary: "Deploy order book contract" })
 	@ApiResponse({ status: 200, description: "Order book deployed successfully" })

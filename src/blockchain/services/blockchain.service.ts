@@ -101,7 +101,7 @@ export class BlockchainService {
 		toAddress: string;
 		blockchain: string;
 	}): Promise<string> {
-		const { user, asset, amount, toAddress, blockchain } = params;
+		const { asset, amount, toAddress, blockchain } = params;
 
 		this.logger.log(
 			`Executing withdrawal on ${blockchain}: asset ${asset}, amount ${amount}, to ${toAddress}`

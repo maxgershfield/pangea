@@ -18,14 +18,6 @@ const OASIS_API_URL = process.env.OASIS_API_URL || "https://api.oasisplatform.wo
 const USERNAME = "OASIS_ADMIN";
 const PASSWORD = "Uppermall1!";
 
-interface OASISWallet {
-	id: string;
-	address: string;
-	providerType: string;
-	privateKey?: string;
-	keypair?: any;
-}
-
 async function authenticateAndGetWallets() {
 	logger.log("🔐 Authenticating OASIS_ADMIN avatar...");
 
@@ -264,7 +256,7 @@ async function deployContracts(keypairPath: string | null, walletAddress: string
 async function main() {
 	try {
 		// Step 1: Authenticate and get wallets
-		const { token, avatarId, wallet, keypairPath } = await authenticateAndGetWallets();
+		const { avatarId, wallet, keypairPath } = await authenticateAndGetWallets();
 
 		logger.log(`\n${"=".repeat(50)}`);
 		logger.log("Authentication Summary:");

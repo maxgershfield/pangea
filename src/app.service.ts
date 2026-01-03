@@ -24,7 +24,7 @@ export class AppService {
 
 		if (checks.checks.database.status !== "ok" || checks.checks.redis.status !== "ok") {
 			checks.status = "degraded";
-    }
+		}
 
 		return checks;
 	}

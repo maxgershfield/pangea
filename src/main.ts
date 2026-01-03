@@ -1,6 +1,6 @@
+import { webcrypto } from "node:crypto";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { webcrypto } from "node:crypto";
 import { AppModule } from "./app.module.js";
 
 // Polyfill Web Crypto API for Better-Auth (ES module compatibility)
