@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { TransactionsService } from '../services/transactions.service.js';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { TransactionsService } from "../services/transactions.service.js";
 
 /**
  * Background job to monitor blockchain for deposits
@@ -8,28 +8,18 @@ import { TransactionsService } from '../services/transactions.service.js';
  */
 @Injectable()
 export class DepositMonitoringJob {
-  private readonly logger = new Logger(DepositMonitoringJob.name);
+	private readonly logger = new Logger(DepositMonitoringJob.name);
 
-  constructor(private transactionsService: TransactionsService) {}
+	constructor(private readonly transactionsService: TransactionsService) {}
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  async handleCron() {
-    this.logger.log('Running deposit monitoring job...');
-    try {
-      await this.transactionsService.monitorDeposits();
-      this.logger.log('Deposit monitoring job completed');
-    } catch (error) {
-      this.logger.error(
-        `Deposit monitoring job failed: ${error.message}`,
-        error.stack,
-      );
-    }
-  }
+	@Cron(CronExpression.EVERY_5_MINUTES)
+	async handleCron() {
+		this.logger.log("Running deposit monitoring job...");
+		try {
+			await this.transactionsService.monitorDeposits();
+			this.logger.log("Deposit monitoring job completed");
+		} catch (error) {
+			this.logger.error(`Deposit monitoring job failed: ${error.message}`, error.stack);
+		}
+	}
 }
-
-
-
-
-
-
-

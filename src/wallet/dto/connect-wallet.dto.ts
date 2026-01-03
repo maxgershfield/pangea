@@ -1,34 +1,24 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 
 export enum BlockchainType {
-  SOLANA = 'solana',
-  ETHEREUM = 'ethereum',
+	SOLANA = "solana",
+	ETHEREUM = "ethereum",
 }
 
 export class ConnectWalletDto {
-  @IsString()
-  @IsNotEmpty()
-  walletAddress: string;
+	@IsString()
+	@IsNotEmpty()
+	walletAddress: string;
 
-  @IsString()
-  @IsNotEmpty()
-  signature: string;
+	@IsString()
+	@IsNotEmpty()
+	signature: string;
 
-  @IsString()
-  @IsNotEmpty()
-  message: string;
+	@IsString()
+	@IsNotEmpty()
+	message: string;
 
-  @IsEnum(BlockchainType)
-  @IsNotEmpty()
-  blockchain: BlockchainType;
+	@IsEnum(BlockchainType)
+	@IsNotEmpty()
+	blockchain: BlockchainType;
 }
-
-
-
-
-
-
-
-
-
-

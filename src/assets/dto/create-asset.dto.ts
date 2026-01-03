@@ -1,4 +1,3 @@
-import { Type } from "class-transformer";
 import {
 	IsBoolean,
 	IsEnum,
@@ -9,7 +8,6 @@ import {
 	IsUrl,
 	Max,
 	Min,
-	ValidateNested,
 } from "class-validator";
 
 export enum AssetClass {

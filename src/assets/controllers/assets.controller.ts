@@ -15,11 +15,7 @@ import {
 import { Public } from "../../auth/decorators/public.decorator.js";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
-import type {
-	CreateAssetDto,
-	FindAssetsDto,
-	UpdateAssetDto,
-} from "../dto/index.js";
+import { CreateAssetDto, FindAssetsDto, UpdateAssetDto } from "../dto/index.js";
 import { AssetsService } from "../services/assets.service.js";
 
 @Controller("assets")
@@ -32,32 +28,32 @@ export class AssetsController {
 	 * Public endpoint
 	 */
 	@Get()
-  @Public()
-  async findAll(@Query() query: FindAssetsDto) {
-    return this.assetsService.findAll(query);
-  }
+	@Public()
+	async findAll(@Query() query: FindAssetsDto) {
+		return this.assetsService.findAll(query);
+	}
 
 	/**
 	 * GET /api/assets/:assetId
 	 * Get asset details
 	 * Public endpoint
 	 */
-	@Get(':assetId')
-  @Public()
-  async findOne(@Param('assetId') assetId: string) {
-    return this.assetsService.findOne(assetId);
-  }
+	@Get(":assetId")
+	@Public()
+	async findOne(@Param("assetId") assetId: string) {
+		return this.assetsService.findOne(assetId);
+	}
 
 	/**
 	 * GET /api/assets/:assetId/orders
 	 * Get order book for asset
 	 * Public endpoint
 	 */
-	@Get(':assetId/orders')
-  @Public()
-  async getOrderBook(@Param('assetId') assetId: string) {
-    return this.assetsService.getOrderBook(assetId);
-  }
+	@Get(":assetId/orders")
+	@Public()
+	async getOrderBook(@Param("assetId") assetId: string) {
+		return this.assetsService.getOrderBook(assetId);
+	}
 
 	/**
 	 * GET /api/assets/:assetId/trades
@@ -66,10 +62,7 @@ export class AssetsController {
 	 */
 	@Get(":assetId/trades")
 	@Public()
-	async getTradeHistory(
-		@Param('assetId') assetId: string,
-		@Query('limit') limit?: number,
-	) {
+	async getTradeHistory(@Param("assetId") assetId: string, @Query("limit") limit?: number) {
 		return this.assetsService.getTradeHistory(assetId, limit);
 	}
 
@@ -78,22 +71,22 @@ export class AssetsController {
 	 * Get current price for asset
 	 * Public endpoint
 	 */
-	@Get(':assetId/price')
-  @Public()
-  async getCurrentPrice(@Param('assetId') assetId: string) {
-    return this.assetsService.getCurrentPrice(assetId);
-  }
+	@Get(":assetId/price")
+	@Public()
+	async getCurrentPrice(@Param("assetId") assetId: string) {
+		return this.assetsService.getCurrentPrice(assetId);
+	}
 
 	/**
 	 * GET /api/assets/search
 	 * Search assets by name, symbol, or description
 	 * Public endpoint
 	 */
-	@Get('search')
-  @Public()
-  async search(@Query('q') query: string) {
-    return this.assetsService.search(query);
-  }
+	@Get("search")
+	@Public()
+	async search(@Query("q") query: string) {
+		return this.assetsService.search(query);
+	}
 
 	/**
 	 * POST /api/assets
@@ -111,7 +104,7 @@ export class AssetsController {
 	 */
 	@Put(":assetId")
 	@UseGuards(JwksJwtGuard, AdminGuard)
-	async update(@Param('assetId') assetId: string, @Body() dto: UpdateAssetDto) {
+	async update(@Param("assetId") assetId: string, @Body() dto: UpdateAssetDto) {
 		return this.assetsService.update(assetId, dto);
 	}
 
@@ -120,10 +113,10 @@ export class AssetsController {
 	 * Delete asset (admin only)
 	 * Note: Soft delete - marks asset as 'closed'
 	 */
-	@Delete(':assetId')
-  @UseGuards(JwksJwtGuard, AdminGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('assetId') assetId: string) {
-    await this.assetsService.delete(assetId);
-  }
+	@Delete(":assetId")
+	@UseGuards(JwksJwtGuard, AdminGuard)
+	@HttpCode(HttpStatus.NO_CONTENT)
+	async delete(@Param("assetId") assetId: string) {
+		await this.assetsService.delete(assetId);
+	}
 }

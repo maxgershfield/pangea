@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import type { Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { User } from "../../users/entities/user.entity.js";
-import type { OASISAvatar } from "./oasis-auth.service.js";
+import { OASISAvatar } from "./oasis-auth.service.js";
 
 /**
  * Service for syncing OASIS Avatar data to local User database
@@ -13,9 +13,9 @@ export class UserSyncService {
 	private readonly logger = new Logger(UserSyncService.name);
 
 	constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-  ) {}
+		@InjectRepository(User)
+		private readonly userRepository: Repository<User>
+	) {}
 
 	/**
 	 * Sync OASIS Avatar to local User database
@@ -32,7 +32,7 @@ export class UserSyncService {
 			}
 
 			this.logger.log(
-				`Syncing OASIS avatar to local DB: ${oasisAvatar.avatarId}, email: ${oasisAvatar.email}`,
+				`Syncing OASIS avatar to local DB: ${oasisAvatar.avatarId}, email: ${oasisAvatar.email}`
 			);
 
 			// Try to find existing user by avatarId
@@ -58,9 +58,7 @@ export class UserSyncService {
 				user.lastLogin = new Date();
 			} else {
 				// Create new user
-				this.logger.log(
-					`Creating new user for avatar: ${oasisAvatar.avatarId}`,
-				);
+				this.logger.log(`Creating new user for avatar: ${oasisAvatar.avatarId}`);
 				const userData = {
 					email: oasisAvatar.email,
 					username: oasisAvatar.username || null,
@@ -72,9 +70,7 @@ export class UserSyncService {
 					isActive: true,
 					lastLogin: new Date(),
 				};
-				this.logger.debug(
-					`User data to create: ${JSON.stringify(userData, null, 2)}`,
-				);
+				this.logger.debug(`User data to create: ${JSON.stringify(userData, null, 2)}`);
 				user = this.userRepository.create(userData);
 			}
 
@@ -90,9 +86,7 @@ export class UserSyncService {
 			if (error.detail) {
 				this.logger.error(`Database error detail: ${error.detail}`);
 			}
-			throw new Error(
-				`Failed to sync user to local database: ${error.message}`,
-			);
+			throw new Error(`Failed to sync user to local database: ${error.message}`);
 		}
 	}
 

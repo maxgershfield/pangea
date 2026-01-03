@@ -15,11 +15,11 @@ import { AdminService } from "./admin.service.js";
 
 describe("AdminService", () => {
 	let service: AdminService;
-	let userRepository: Repository<User>;
-	let assetRepository: Repository<TokenizedAsset>;
-	let orderRepository: Repository<Order>;
-	let tradeRepository: Repository<Trade>;
-	let transactionRepository: Repository<Transaction>;
+	let _userRepository: Repository<User>;
+	let _assetRepository: Repository<TokenizedAsset>;
+	let _orderRepository: Repository<Order>;
+	let _tradeRepository: Repository<Trade>;
+	let _transactionRepository: Repository<Transaction>;
 
 	const mockUserRepository = {
 		createQueryBuilder: vi.fn(),
@@ -105,15 +105,11 @@ describe("AdminService", () => {
 		}).compile();
 
 		service = module.get<AdminService>(AdminService);
-		userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-		assetRepository = module.get<Repository<TokenizedAsset>>(
-			getRepositoryToken(TokenizedAsset),
-		);
-		orderRepository = module.get<Repository<Order>>(getRepositoryToken(Order));
-		tradeRepository = module.get<Repository<Trade>>(getRepositoryToken(Trade));
-		transactionRepository = module.get<Repository<Transaction>>(
-			getRepositoryToken(Transaction),
-		);
+		_userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+		_assetRepository = module.get<Repository<TokenizedAsset>>(getRepositoryToken(TokenizedAsset));
+		_orderRepository = module.get<Repository<Order>>(getRepositoryToken(Order));
+		_tradeRepository = module.get<Repository<Trade>>(getRepositoryToken(Trade));
+		_transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
 
 		// Reset mocks
 		vi.clearAllMocks();
@@ -121,9 +117,7 @@ describe("AdminService", () => {
 		mockAssetRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 		mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 		mockTradeRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-		mockTransactionRepository.createQueryBuilder.mockReturnValue(
-			mockQueryBuilder,
-		);
+		mockTransactionRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 	});
 
 	it("should be defined", () => {
@@ -154,10 +148,9 @@ describe("AdminService", () => {
 
 			await service.getUsers(filters);
 
-			expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-				"user.kycStatus = :kycStatus",
-				{ kycStatus: "pending" },
-			);
+			expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith("user.kycStatus = :kycStatus", {
+				kycStatus: "pending",
+			});
 		});
 	});
 
@@ -253,9 +246,7 @@ describe("AdminService", () => {
 		it("should throw NotFoundException if asset not found", async () => {
 			mockAssetRepository.findOne.mockResolvedValue(null);
 
-			await expect(service.getAssetStatistics("123")).rejects.toThrow(
-				NotFoundException,
-			);
+			await expect(service.getAssetStatistics("123")).rejects.toThrow(NotFoundException);
 		});
 	});
 
@@ -288,9 +279,7 @@ describe("AdminService", () => {
 
 			mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
-			await expect(service.cancelOrder(orderId)).rejects.toThrow(
-				BadRequestException,
-			);
+			await expect(service.cancelOrder(orderId)).rejects.toThrow(BadRequestException);
 		});
 	});
 
@@ -313,7 +302,7 @@ describe("AdminService", () => {
 			expect(result.totalAssets).toBe(50);
 			expect(result.totalOrders).toBe(200);
 			expect(result.totalTrades).toBe(150);
-			expect(result.totalVolume).toBe(50000);
+			expect(result.totalVolume).toBe(50_000);
 			expect(result.totalRevenue).toBe(500);
 		});
 	});
@@ -350,9 +339,7 @@ describe("AdminService", () => {
 
 			mockTransactionRepository.findOne.mockResolvedValue(mockTransaction);
 
-			await expect(service.approveWithdrawal(transactionId)).rejects.toThrow(
-				BadRequestException,
-			);
+			await expect(service.approveWithdrawal(transactionId)).rejects.toThrow(BadRequestException);
 		});
 	});
 });

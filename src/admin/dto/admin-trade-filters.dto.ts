@@ -1,13 +1,5 @@
 import { Type } from "class-transformer";
-import {
-	IsDateString,
-	IsEnum,
-	IsInt,
-	IsOptional,
-	IsString,
-	IsUUID,
-	Min,
-} from "class-validator";
+import { IsDateString, IsEnum, IsInt, IsOptional, IsUUID, Min } from "class-validator";
 
 export enum TradeStatus {
 	PENDING = "pending",

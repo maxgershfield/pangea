@@ -7,8 +7,8 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import type { User } from "../../users/entities/user.entity.js";
-import type { AuthResponseDto, LoginDto, RegisterDto } from "../dto/index.js";
+import { User } from "../../users/entities/user.entity.js";
+import { AuthResponseDto, LoginDto, RegisterDto } from "../dto/index.js";
 import { OasisAuthService } from "./oasis-auth.service.js";
 import { UserSyncService } from "./user-sync.service.js";
 
@@ -22,10 +22,10 @@ export class AuthService {
 	private readonly logger = new Logger(AuthService.name);
 
 	constructor(
-		private oasisAuthService: OasisAuthService,
-		private userSyncService: UserSyncService,
-		private jwtService: JwtService,
-		private configService: ConfigService,
+		private readonly oasisAuthService: OasisAuthService,
+		private readonly userSyncService: UserSyncService,
+		private readonly jwtService: JwtService,
+		private readonly configService: ConfigService
 	) {}
 
 	/**
@@ -37,7 +37,7 @@ export class AuthService {
 	async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
 		try {
 			this.logger.log(
-				`Starting registration for email: ${registerDto.email}, username: ${registerDto.username}`,
+				`Starting registration for email: ${registerDto.email}, username: ${registerDto.username}`
 			);
 
 			// 1. Register with OASIS
@@ -49,9 +49,7 @@ export class AuthService {
 				lastName: registerDto.lastName,
 			});
 
-			this.logger.log(
-				`OASIS registration successful, avatarId: ${oasisAvatar.avatarId}`,
-			);
+			this.logger.log(`OASIS registration successful, avatarId: ${oasisAvatar.avatarId}`);
 
 			// 2. Sync to local database
 			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
@@ -83,7 +81,7 @@ export class AuthService {
 			}
 			throw new HttpException(
 				error.message || "Registration failed",
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -97,10 +95,7 @@ export class AuthService {
 	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 		try {
 			// 1. Authenticate with OASIS
-			const oasisAvatar = await this.oasisAuthService.login(
-				loginDto.email,
-				loginDto.password,
-			);
+			const oasisAvatar = await this.oasisAuthService.login(loginDto.email, loginDto.password);
 
 			// 2. Sync to local database
 			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
@@ -150,7 +145,7 @@ export class AuthService {
 			firstName?: string;
 			lastName?: string;
 			email?: string;
-		},
+		}
 	): Promise<User> {
 		const user = await this.userSyncService.getUserById(userId);
 		if (!user) {
@@ -164,7 +159,7 @@ export class AuthService {
 		// Update in OASIS
 		const updatedOasisAvatar = await this.oasisAuthService.updateUserProfile(
 			user.avatarId,
-			updateData,
+			updateData
 		);
 
 		// Sync updated data back to local database
@@ -207,36 +202,32 @@ export class AuthService {
 	}): Promise<string> {
 		try {
 			this.logger.log(
-				`Creating OASIS avatar for Better-Auth user: ${data.userId}, email: ${data.email}`,
+				`Creating OASIS avatar for Better-Auth user: ${data.userId}, email: ${data.email}`
 			);
 
 			// 1. Register with OASIS
 			const oasisAvatar = await this.oasisAuthService.register({
 				email: data.email,
 				password: this.generateRandomPassword(), // Random password - user uses Better-Auth
-				username: data.username || data.email.split('@')[0],
-				firstName: data.firstName || '',
-				lastName: data.lastName || '',
+				username: data.username || data.email.split("@")[0],
+				firstName: data.firstName || "",
+				lastName: data.lastName || "",
 			});
 
-			this.logger.log(
-				`OASIS avatar created: ${oasisAvatar.avatarId}`,
-			);
+			this.logger.log(`OASIS avatar created: ${oasisAvatar.avatarId}`);
 
 			// 2. Sync to local database (creates/updates user with avatarId)
 			const user = await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
 
-			this.logger.log(
-				`OASIS avatar linked to user: ${user.id}`,
-			);
+			this.logger.log(`OASIS avatar linked to user: ${user.id}`);
 
 			return oasisAvatar.avatarId;
 		} catch (error: any) {
 			this.logger.error(`Failed to create OASIS avatar: ${error.message}`);
 			this.logger.error(`Error stack: ${error.stack}`);
 			throw new HttpException(
-				error.message || 'Failed to create OASIS avatar',
-				HttpStatus.INTERNAL_SERVER_ERROR,
+				error.message || "Failed to create OASIS avatar",
+				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
 	}
@@ -250,7 +241,7 @@ export class AuthService {
 			Math.random().toString(36).slice(-12) +
 			Math.random().toString(36).slice(-12) +
 			Math.random().toString(36).slice(-12).toUpperCase() +
-			'!@#'
+			"!@#"
 		);
 	}
 
@@ -277,13 +268,13 @@ export class AuthService {
 		// Parse expiresIn (e.g., "7d", "24h", "30m")
 		const now = new Date();
 		if (expiresIn.endsWith("d")) {
-			const days = parseInt(expiresIn);
+			const days = Number.parseInt(expiresIn, 10);
 			now.setDate(now.getDate() + days);
 		} else if (expiresIn.endsWith("h")) {
-			const hours = parseInt(expiresIn);
+			const hours = Number.parseInt(expiresIn, 10);
 			now.setHours(now.getHours() + hours);
 		} else if (expiresIn.endsWith("m")) {
-			const minutes = parseInt(expiresIn);
+			const minutes = Number.parseInt(expiresIn, 10);
 			now.setMinutes(now.getMinutes() + minutes);
 		} else {
 			// Default to 7 days

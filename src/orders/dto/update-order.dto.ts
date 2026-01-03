@@ -1,34 +1,20 @@
-import {
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsDateString,
-  Min,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
+import { IsDateString, IsNumber, IsOptional, Min } from "class-validator";
 
 export class UpdateOrderDto {
-  @IsOptional()
-  @IsNumber()
-  @Min(0.01)
-  @Type(() => Number)
-  pricePerTokenUsd?: number;
+	@IsOptional()
+	@IsNumber()
+	@Min(0.01)
+	@Type(() => Number)
+	pricePerTokenUsd?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  quantity?: number;
+	@IsOptional()
+	@IsNumber()
+	@Min(1)
+	@Type(() => Number)
+	quantity?: number;
 
-  @IsOptional()
-  @IsDateString()
-  expiresAt?: string;
+	@IsOptional()
+	@IsDateString()
+	expiresAt?: string;
 }
-
-
-
-
-
-
-
-

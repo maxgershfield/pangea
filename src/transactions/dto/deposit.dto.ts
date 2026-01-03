@@ -1,32 +1,19 @@
-import {
-  IsUUID,
-  IsString,
-  IsNumber,
-  Min,
-  IsOptional,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type } from "class-transformer";
+import { IsNumber, IsOptional, IsString, IsUUID, Min } from "class-validator";
 
 export class DepositDto {
-  @IsUUID()
-  assetId: string;
+	@IsUUID()
+	assetId: string;
 
-  @IsNumber()
-  @Min(0.00000001) // Minimum amount
-  @Type(() => Number)
-  amount: number;
+	@IsNumber()
+	@Min(0.000_000_01) // Minimum amount
+	@Type(() => Number)
+	amount: number;
 
-  @IsString()
-  blockchain: string; // 'solana' | 'ethereum'
+	@IsString()
+	blockchain: string; // 'solana' | 'ethereum'
 
-  @IsOptional()
-  @IsString()
-  fromAddress?: string; // User's wallet address (optional, can be inferred from user)
+	@IsOptional()
+	@IsString()
+	fromAddress?: string; // User's wallet address (optional, can be inferred from user)
 }
-
-
-
-
-
-
-

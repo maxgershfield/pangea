@@ -7,8 +7,8 @@ import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 import { AssetsModule } from "./assets/assets.module.js";
 import { DatabaseConfig } from "./config/database.config.js";
-import { MigrationController } from "./config/migration.controller.js";
 import { MigrationRunnerService } from "./config/migration-runner.service.js";
+import { MigrationController } from "./config/migration.controller.js";
 import { RedisModule } from "./config/redis.module.js";
 import { OrdersModule } from "./orders/orders.module.js";
 import { OasisModule } from "./services/oasis.module.js";
@@ -19,10 +19,9 @@ import { WalletModule } from "./wallet/wallet.module.js";
 
 @Module({
 	imports: [
-		// Configuration module
 		ConfigModule.forRoot({
 			isGlobal: true,
-			envFilePath: ".env",
+			envFilePath: [".env.local", ".env"],
 		}),
 
 		// Database module

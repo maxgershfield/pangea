@@ -1,15 +1,15 @@
 import {
-    applyDecorators,
-    CanActivate,
-    createParamDecorator,
-    ExecutionContext,
-    ForbiddenException,
-    Injectable,
-    SetMetadata,
-    UseGuards,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard.js';
+	applyDecorators,
+	type CanActivate,
+	createParamDecorator,
+	type ExecutionContext,
+	ForbiddenException,
+	Injectable,
+	SetMetadata,
+	UseGuards,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { JwksJwtGuard, type UserContext } from "../guards/jwks-jwt.guard.js";
 
 /**
  * Require JWT authentication, validated via JWKS.
@@ -17,7 +17,7 @@ import { JwksJwtGuard, UserContext } from '../guards/jwks-jwt.guard.js';
  * Used on routes/controllers that must have an authenticated user.
  */
 export function RequireAuth() {
-  return applyDecorators(UseGuards(JwksJwtGuard));
+	return applyDecorators(UseGuards(JwksJwtGuard));
 }
 
 /**
@@ -32,16 +32,18 @@ export function RequireAuth() {
  * ```
  */
 export const CurrentUser = createParamDecorator(
-  (data: keyof UserContext | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    const user = request.user as UserContext | undefined;
-    if (!user) return null;
-    return data ? user[data] : user;
-  },
+	(data: keyof UserContext | undefined, ctx: ExecutionContext) => {
+		const request = ctx.switchToHttp().getRequest();
+		const user = request.user as UserContext | undefined;
+		if (!user) {
+			return null;
+		}
+		return data ? user[data] : user;
+	}
 );
 
 /** Metadata key for role requirements */
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = "roles";
 
 /** Declare which roles are required to access given route/controller */
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
@@ -52,38 +54,42 @@ export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
  * Roles are treated as OR (any matching role passes)
  */
 export function RequireRole(...roles: string[]) {
-  return applyDecorators(SetMetadata(ROLES_KEY, roles), UseGuards(JwksJwtGuard, RoleGuard));
+	return applyDecorators(SetMetadata(ROLES_KEY, roles), UseGuards(JwksJwtGuard, RoleGuard));
 }
 
 /** Enforces `@RequireRole()` role metadata after authentication */
 @Injectable()
 export class RoleGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+	constructor(private readonly reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+	canActivate(context: ExecutionContext): boolean {
+		const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+			context.getHandler(),
+			context.getClass(),
+		]);
 
-    if (!requiredRoles?.length) return true;
+		if (!requiredRoles?.length) {
+			return true;
+		}
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as UserContext | undefined;
-    if (!user) throw new ForbiddenException('User not authenticated');
+		const request = context.switchToHttp().getRequest();
+		const user = request.user as UserContext | undefined;
+		if (!user) {
+			throw new ForbiddenException("User not authenticated");
+		}
 
-    if (!user.role || !requiredRoles.includes(user.role)) {
-      throw new ForbiddenException(
-        `Insufficient role (required: ${requiredRoles.join(' | ')}, got: ${user.role ?? 'none'})`,
-      );
-    }
+		if (!(user.role && requiredRoles.includes(user.role))) {
+			throw new ForbiddenException(
+				`Insufficient role (required: ${requiredRoles.join(" | ")}, got: ${user.role ?? "none"})`
+			);
+		}
 
-    return true;
-  }
+		return true;
+	}
 }
 
 /** Metadata key for KYC requirements */
-export const KYC_STATUS_KEY = 'kyc_status';
+export const KYC_STATUS_KEY = "kyc_status";
 
 /**
  * Require authentication + a specific KYC status.
@@ -93,33 +99,37 @@ export const KYC_STATUS_KEY = 'kyc_status';
  * @RequireKyc('verified')
  * ```
  */
-export function RequireKyc(status: 'none' | 'pending' | 'verified' | 'rejected') {
-  return applyDecorators(SetMetadata(KYC_STATUS_KEY, status), UseGuards(JwksJwtGuard, KycGuard));
+export function RequireKyc(status: "none" | "pending" | "verified" | "rejected") {
+	return applyDecorators(SetMetadata(KYC_STATUS_KEY, status), UseGuards(JwksJwtGuard, KycGuard));
 }
 
 /** Enforces `@RequireKyc()` metadata after authentication */
 @Injectable()
 export class KycGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+	constructor(private readonly reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const requiredStatus = this.reflector.getAllAndOverride<string>(KYC_STATUS_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+	canActivate(context: ExecutionContext): boolean {
+		const requiredStatus = this.reflector.getAllAndOverride<string>(KYC_STATUS_KEY, [
+			context.getHandler(),
+			context.getClass(),
+		]);
 
-    if (!requiredStatus) return true;
+		if (!requiredStatus) {
+			return true;
+		}
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as UserContext | undefined;
-    if (!user) throw new ForbiddenException('User not authenticated');
+		const request = context.switchToHttp().getRequest();
+		const user = request.user as UserContext | undefined;
+		if (!user) {
+			throw new ForbiddenException("User not authenticated");
+		}
 
-    if (user.kycStatus !== requiredStatus) {
-      throw new ForbiddenException(
-        `Invalid KYC status (required: ${requiredStatus}, got: ${user.kycStatus ?? 'none'})`,
-      );
-    }
+		if (user.kycStatus !== requiredStatus) {
+			throw new ForbiddenException(
+				`Invalid KYC status (required: ${requiredStatus}, got: ${user.kycStatus ?? "none"})`
+			);
+		}
 
-    return true;
-  }
+		return true;
+	}
 }

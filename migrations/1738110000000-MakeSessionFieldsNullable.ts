@@ -1,32 +1,32 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from "typeorm";
 
 export class MakeSessionFieldsNullable1738110000000 implements MigrationInterface {
-  name = 'MakeSessionFieldsNullable1738110000000';
+	name = "MakeSessionFieldsNullable1738110000000";
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    // Make session table fields nullable to support Better-Auth TypeORM adapter
-    // The adapter may not always provide all fields immediately
-    // Note: id remains NOT NULL as it's the primary key
-    
-    // Create a function to generate random session IDs as fallback
-    // This is used both as a default value and by the trigger
-    await queryRunner.query(`
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		// Make session table fields nullable to support Better-Auth TypeORM adapter
+		// The adapter may not always provide all fields immediately
+		// Note: id remains NOT NULL as it's the primary key
+
+		// Create a function to generate random session IDs as fallback
+		// This is used both as a default value and by the trigger
+		await queryRunner.query(`
       CREATE OR REPLACE FUNCTION generate_session_id() RETURNS TEXT AS $$
       BEGIN
         RETURN encode(gen_random_bytes(32), 'base64');
       END;
       $$ LANGUAGE plpgsql;
     `);
-    
-    // Add default value for id column (fallback if adapter doesn't set it)
-    await queryRunner.query(`
+
+		// Add default value for id column (fallback if adapter doesn't set it)
+		await queryRunner.query(`
       ALTER TABLE "session" 
       ALTER COLUMN "id" SET DEFAULT generate_session_id()
     `);
-    
-    // Create a trigger to ensure ID is always set, even if adapter bypasses defaults
-    // This is a safety net in case the TypeORM adapter uses raw queries
-    await queryRunner.query(`
+
+		// Create a trigger to ensure ID is always set, even if adapter bypasses defaults
+		// This is a safety net in case the TypeORM adapter uses raw queries
+		await queryRunner.query(`
       CREATE OR REPLACE FUNCTION ensure_session_id()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -38,56 +38,55 @@ export class MakeSessionFieldsNullable1738110000000 implements MigrationInterfac
       END;
       $$ LANGUAGE plpgsql;
     `);
-    
-    await queryRunner.query(`
+
+		await queryRunner.query(`
       DROP TRIGGER IF EXISTS trigger_ensure_session_id ON "session";
     `);
-    
-    await queryRunner.query(`
+
+		await queryRunner.query(`
       CREATE TRIGGER trigger_ensure_session_id
       BEFORE INSERT ON "session"
       FOR EACH ROW
       EXECUTE FUNCTION ensure_session_id();
     `);
-    
-    await queryRunner.query(`
+
+		await queryRunner.query(`
       ALTER TABLE "session" 
       ALTER COLUMN "user_id" DROP NOT NULL,
       ALTER COLUMN "expires_at" DROP NOT NULL,
       ALTER COLUMN "token" DROP NOT NULL
     `);
-    
-    // Update unique constraint on token to allow nulls
-    await queryRunner.query(`
+
+		// Update unique constraint on token to allow nulls
+		await queryRunner.query(`
       ALTER TABLE "session" 
       DROP CONSTRAINT IF EXISTS "UQ_session_token"
     `);
-    
-    await queryRunner.query(`
+
+		await queryRunner.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS "UQ_session_token" 
       ON "session" ("token") 
       WHERE "token" IS NOT NULL
     `);
-  }
+	}
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop trigger first
-    await queryRunner.query(`
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		// Drop trigger first
+		await queryRunner.query(`
       DROP TRIGGER IF EXISTS trigger_ensure_session_id ON "session";
     `);
-    
-    // Drop functions
-    await queryRunner.query(`DROP FUNCTION IF EXISTS ensure_session_id()`);
-    await queryRunner.query(`DROP FUNCTION IF EXISTS generate_session_id()`);
-    
-    // Restore NOT NULL constraints
-    await queryRunner.query(`
+
+		// Drop functions
+		await queryRunner.query("DROP FUNCTION IF EXISTS ensure_session_id()");
+		await queryRunner.query("DROP FUNCTION IF EXISTS generate_session_id()");
+
+		// Restore NOT NULL constraints
+		await queryRunner.query(`
       ALTER TABLE "session" 
       ALTER COLUMN "id" DROP DEFAULT,
       ALTER COLUMN "user_id" SET NOT NULL,
       ALTER COLUMN "expires_at" SET NOT NULL,
       ALTER COLUMN "token" SET NOT NULL
     `);
-  }
+	}
 }
-

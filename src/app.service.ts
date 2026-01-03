@@ -1,13 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { InjectDataSource } from "@nestjs/typeorm";
-import type { Redis } from "ioredis";
-import type { DataSource } from "typeorm";
+import { Redis } from "ioredis";
+import { DataSource } from "typeorm";
 
 @Injectable()
 export class AppService {
 	constructor(
-		@InjectDataSource() private dataSource: DataSource,
-		@Inject("REDIS_CLIENT") private redis: Redis,
+		@InjectDataSource() private readonly dataSource: DataSource,
+		@Inject("REDIS_CLIENT") private readonly redis: Redis
 	) {}
 
 	async getHealth() {
@@ -22,11 +22,7 @@ export class AppService {
 			},
 		};
 
-		// If any check fails, set status to degraded
-		if (
-			checks.checks.database.status !== "ok" ||
-			checks.checks.redis.status !== "ok"
-		) {
+		if (checks.checks.database.status !== "ok" || checks.checks.redis.status !== "ok") {
 			checks.status = "degraded";
 		}
 

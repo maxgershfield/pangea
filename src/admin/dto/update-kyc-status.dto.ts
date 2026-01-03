@@ -1,11 +1,11 @@
-import { IsEnum, IsString, IsOptional } from 'class-validator';
-import { KycStatus } from './admin-user-filters.dto.js';
+import { IsEnum, IsOptional, IsString } from "class-validator";
+import { KycStatus } from "./admin-user-filters.dto.js";
 
 export class UpdateKycStatusDto {
-  @IsEnum(KycStatus)
-  status: KycStatus;
+	@IsEnum(KycStatus)
+	status: KycStatus;
 
-  @IsOptional()
-  @IsString()
-  reason?: string; // Optional reason for rejection
+	@IsOptional()
+	@IsString()
+	reason?: string; // Optional reason for rejection
 }
