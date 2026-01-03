@@ -19,6 +19,13 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
   "linter": {
     "rules": {
       "style": {
