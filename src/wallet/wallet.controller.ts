@@ -1,21 +1,21 @@
 import {
-	Body,
-	Controller,
-	Get,
-	HttpException,
-	HttpStatus,
-	Param,
-	Post,
-	Request,
-	UseGuards,
+    Body,
+    Controller,
+    Get,
+    HttpException,
+    HttpStatus,
+    Param,
+    Post,
+    Request,
+    UseGuards,
 } from "@nestjs/common";
 import {
-	ApiBearerAuth,
-	ApiExcludeEndpoint,
-	ApiOperation,
-	ApiParam,
-	ApiResponse,
-	ApiTags,
+    ApiBearerAuth,
+    ApiExcludeEndpoint,
+    ApiOperation,
+    ApiParam,
+    ApiResponse,
+    ApiTags,
 } from "@nestjs/swagger";
 import { Public } from "../auth/decorators/public.decorator.js";
 import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
@@ -27,14 +27,14 @@ import { ConnectWalletDto } from "./dto/connect-wallet.dto.js";
 import { GenerateWalletDto } from "./dto/generate-wallet.dto.js";
 import { VerifyWalletDto } from "./dto/verify-wallet.dto.js";
 import {
-	ConnectWalletResponseDto,
-	GenerateWalletResponseDto,
-	GetAssetBalanceResponseDto,
-	GetBalancesResponseDto,
-	GetWalletTransactionsResponseDto,
-	SyncBalancesResponseDto,
-	VerificationMessageResponseDto,
-	VerifyWalletResponseDto,
+    ConnectWalletResponseDto,
+    GenerateWalletResponseDto,
+    GetAssetBalanceResponseDto,
+    GetBalancesResponseDto,
+    GetWalletTransactionsResponseDto,
+    SyncBalancesResponseDto,
+    VerificationMessageResponseDto,
+    VerifyWalletResponseDto,
 } from "./dto/wallet-response.dto.js";
 
 @ApiTags("Wallet")
