@@ -1,14 +1,14 @@
 import {
-	Column,
-	CreateDateColumn,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	PrimaryGeneratedColumn,
-	UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from "typeorm";
-import { User } from "../../users/entities/user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 
 @Entity("tokenized_assets")
 export class TokenizedAsset {
@@ -93,11 +93,11 @@ export class TokenizedAsset {
 	status: string; // 'draft', 'listed', 'trading', 'closed'
 
 	// Issuer relationship
-	@ManyToOne(() => User)
+	@ManyToOne(() => BetterAuthUser)
 	@JoinColumn({ name: "issuer_id" })
-	issuer: User;
+	issuer: BetterAuthUser;
 
-	@Column({ name: "issuer_id", type: "uuid" })
+	@Column({ name: "issuer_id", type: "text" })
 	issuerId: string;
 
 	// Timestamps

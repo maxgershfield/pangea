@@ -4,13 +4,13 @@ import { JwtModule } from "@nestjs/jwt";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AssetsModule } from "../assets/assets.module.js";
 import { AuthModule } from "../auth/auth.module.js";
+import { BetterAuthUser } from "../auth/entities/better-auth-user.entity.js";
 import { BlockchainModule } from "../blockchain/blockchain.module.js";
 import { TradesModule } from "../trades/trades.module.js";
-import { User } from "../users/entities/user.entity.js";
 import { UserBalance } from "../users/entities/user-balance.entity.js";
 import { OrdersController } from "./controllers/orders.controller.js";
-import { Order } from "./entities/order.entity.js";
 import { OrderBookSnapshot } from "./entities/order-book-snapshot.entity.js";
+import { Order } from "./entities/order.entity.js";
 import { OrderMatchingJob } from "./jobs/order-matching.job.js";
 import { BalanceService } from "./services/balance.service.js";
 import { OrderMatchingService } from "./services/order-matching.service.js";
@@ -19,7 +19,7 @@ import { WebSocketService } from "./services/websocket.service.js";
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Order, OrderBookSnapshot, UserBalance, User]),
+		TypeOrmModule.forFeature([Order, OrderBookSnapshot, UserBalance, BetterAuthUser]),
 		TradesModule,
 		BlockchainModule,
 		AssetsModule,

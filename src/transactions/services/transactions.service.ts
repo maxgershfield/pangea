@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, FindOptionsWhere, Repository } from "typeorm";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { BlockchainService } from "../../blockchain/services/blockchain.service.js";
 import { BalanceService } from "../../orders/services/balance.service.js";
 import { WebSocketService } from "../../orders/services/websocket.service.js";
 import { OasisWalletService } from "../../services/oasis-wallet.service.js";
-import { User } from "../../users/entities/user.entity.js";
 import { DepositDto } from "../dto/deposit.dto.js";
 import { TransactionFilters } from "../dto/transaction-filters.dto.js";
 import { WithdrawalDto } from "../dto/withdrawal.dto.js";
@@ -19,8 +19,8 @@ export class TransactionsService {
 	constructor(
 		@InjectRepository(Transaction)
 		private readonly transactionRepository: Repository<Transaction>,
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>,
 		private readonly balanceService: BalanceService,
 		private readonly webSocketService: WebSocketService,
 		private readonly blockchainService: BlockchainService,

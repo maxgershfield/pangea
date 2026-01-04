@@ -5,11 +5,11 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { BlockchainService } from "../../blockchain/services/blockchain.service.js";
 import { BalanceService } from "../../orders/services/balance.service.js";
 import { WebSocketService } from "../../orders/services/websocket.service.js";
 import { OasisWalletService } from "../../services/oasis-wallet.service.js";
-import { User } from "../../users/entities/user.entity.js";
 import { Transaction } from "../entities/transaction.entity.js";
 import { TransactionsService } from "./transactions.service.js";
 import { VaultService } from "./vault.service.js";
@@ -17,7 +17,7 @@ import { VaultService } from "./vault.service.js";
 describe("TransactionsService", () => {
 	let service: TransactionsService;
 	let _transactionRepository: Repository<Transaction>;
-	let _userRepository: Repository<User>;
+	let _userRepository: Repository<BetterAuthUser>;
 	let _balanceService: BalanceService;
 	let _blockchainService: BlockchainService;
 	let _vaultService: VaultService;
@@ -72,7 +72,7 @@ describe("TransactionsService", () => {
 					useValue: mockTransactionRepository,
 				},
 				{
-					provide: getRepositoryToken(User),
+					provide: getRepositoryToken(BetterAuthUser),
 					useValue: mockUserRepository,
 				},
 				{
@@ -100,7 +100,9 @@ describe("TransactionsService", () => {
 
 		service = module.get<TransactionsService>(TransactionsService);
 		_transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
-		_userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+		_userRepository = module.get<Repository<BetterAuthUser>>(
+			getRepositoryToken(BetterAuthUser)
+		);
 		_balanceService = module.get<BalanceService>(BalanceService);
 		_blockchainService = module.get<BlockchainService>(BlockchainService);
 		_vaultService = module.get<VaultService>(VaultService);

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { InjectDataSource } from "@nestjs/typeorm";
-import { DataSource } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { BetterAuthUser } from "../entities/better-auth-user.entity.js";
 import { OasisAuthService } from "./oasis-auth.service.js";
 
 @Injectable()
@@ -8,27 +9,35 @@ export class OasisLinkService {
 	private readonly logger = new Logger(OasisLinkService.name);
 
 	constructor(
-		@InjectDataSource()
-		private readonly dataSource: DataSource,
-		private readonly oasisAuthService: OasisAuthService
+		private readonly oasisAuthService: OasisAuthService,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>
 	) {}
 
 	/**
 	 * Get OASIS avatar ID for Better-Auth user (if exists)
 	 */
 	async getAvatarId(userId: string): Promise<string | null> {
-		const result = await this.dataSource.query(
-			"SELECT avatar_id FROM user_oasis_mapping WHERE user_id = $1",
-			[userId]
-		);
+		const user = await this.userRepository.findOne({
+			where: { id: userId },
+		});
 
-		return result.length > 0 ? result[0].avatar_id : null;
+		return user?.avatarId ?? null;
 	}
 
 	/**
 	 * Create OASIS avatar and link to Better-Auth user
 	 */
-	async createAndLinkAvatar(userId: string, email: string, name?: string): Promise<string> {
+	async createAndLinkAvatar(params: {
+		userId: string;
+		email: string;
+		username?: string;
+		firstName?: string;
+		lastName?: string;
+		name?: string;
+	}): Promise<string> {
+		const { userId, email, username, firstName, lastName, name } = params;
+
 		// Check if already linked
 		const existing = await this.getAvatarId(userId);
 		if (existing) {
@@ -38,28 +47,31 @@ export class OasisLinkService {
 		// Generate random password (user won't use it - they use Better-Auth)
 		const randomPassword = this.generateRandomPassword();
 
-		// Split name into first/last (if provided)
+		// Split name into first/last (if provided and explicit values missing)
 		const nameParts = name?.split(" ") || [];
-		const firstName = nameParts[0] || "";
-		const lastName = nameParts.slice(1).join(" ") || "";
+		const resolvedFirstName = firstName ?? nameParts[0] ?? "";
+		const resolvedLastName = lastName ?? nameParts.slice(1).join(" ") ?? "";
 
 		try {
 			// Create OASIS avatar
 			const oasisAvatar = await this.oasisAuthService.register({
 				email,
 				password: randomPassword,
-				username: email.split("@")[0],
-				firstName,
-				lastName,
+				username: username || email.split("@")[0],
+				firstName: resolvedFirstName,
+				lastName: resolvedLastName,
 			});
 
-			// Store mapping
-			await this.dataSource.query(
-				`INSERT INTO user_oasis_mapping (user_id, avatar_id)
-         VALUES ($1, $2)
-         ON CONFLICT (user_id) DO NOTHING`,
-				[userId, oasisAvatar.avatarId]
-			);
+			const user = await this.userRepository.findOne({
+				where: { id: userId },
+			});
+
+			if (!user) {
+				throw new Error(`Better Auth user not found: ${userId}`);
+			}
+
+			user.avatarId = oasisAvatar.avatarId;
+			await this.userRepository.save(user);
 
 			this.logger.log(`Created and linked OASIS avatar ${oasisAvatar.avatarId} for user ${userId}`);
 			return oasisAvatar.avatarId;
@@ -77,7 +89,7 @@ export class OasisLinkService {
 		let avatarId = await this.getAvatarId(userId);
 
 		if (!avatarId) {
-			avatarId = await this.createAndLinkAvatar(userId, email, name);
+			avatarId = await this.createAndLinkAvatar({ userId, email, name });
 		}
 
 		return avatarId;

@@ -55,9 +55,14 @@ export class BetterAuthUser {
 	walletAddressEthereum: string | null;
 
 	// OASIS integration field
-	// NOTE: This field needs to be added to the frontend schema as well
 	@Column({ name: "avatar_id", type: "text", nullable: true })
 	avatarId: string | null;
+
+	@Column({ name: "last_login", type: "timestamp", nullable: true })
+	lastLogin: Date | null;
+
+	@Column({ name: "is_active", type: "boolean", default: true })
+	isActive: boolean;
 
 	@CreateDateColumn({ name: "created_at" })
 	createdAt: Date;

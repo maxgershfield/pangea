@@ -15,31 +15,31 @@ This document describes the complete database schema for Pangea Markets, includi
 
 ## Table Structure
 
-### 1. Users Table (`users`)
+### 1. User Table (`user`)
 
-Stores user accounts and authentication information.
+Stores Better Auth user accounts and profile metadata. `user.id` is the canonical user ID.
 
 **Columns:**
-- `id` (UUID, Primary Key) - Unique identifier
-- `email` (VARCHAR(255), UNIQUE, NOT NULL, INDEXED) - User email address
-- `password_hash` (VARCHAR(255), NULLABLE) - Hashed password (nullable if using OASIS auth only)
-- `username` (VARCHAR(255), NULLABLE) - Username
-- `firstName` (VARCHAR(255), NULLABLE) - First name
-- `lastName` (VARCHAR(255), NULLABLE) - Last name
-- `avatar_id` (VARCHAR(255), UNIQUE, NULLABLE) - Link to OASIS Avatar ID
-- `wallet_address_solana` (VARCHAR(44), NULLABLE, INDEXED) - Solana wallet address
-- `wallet_address_ethereum` (VARCHAR(42), NULLABLE, INDEXED) - Ethereum wallet address
-- `role` (VARCHAR(20), DEFAULT 'user') - User role: 'user', 'admin', 'moderator'
-- `kyc_status` (VARCHAR(20), DEFAULT 'pending') - KYC status: 'pending', 'approved', 'rejected'
+- `id` (TEXT, Primary Key) - Canonical user identifier
+- `email` (TEXT, UNIQUE, NOT NULL) - User email address
+- `email_verified` (BOOLEAN, DEFAULT false) - Email verification status
+- `name` (TEXT, NULLABLE) - Display name
+- `image` (TEXT, NULLABLE) - Profile image URL
+- `username` (TEXT, NULLABLE) - Username
+- `first_name` (TEXT, NULLABLE) - First name
+- `last_name` (TEXT, NULLABLE) - Last name
+- `avatar_id` (TEXT, NULLABLE) - OASIS Avatar ID
+- `wallet_address_solana` (TEXT, NULLABLE) - Solana wallet address
+- `wallet_address_ethereum` (TEXT, NULLABLE) - Ethereum wallet address
+- `role` (TEXT, DEFAULT 'user') - User role
+- `kyc_status` (TEXT, DEFAULT 'none') - KYC status: 'none', 'pending', 'verified', 'rejected'
 - `created_at` (TIMESTAMP, DEFAULT NOW()) - Account creation timestamp
 - `updated_at` (TIMESTAMP, DEFAULT NOW()) - Last update timestamp
 - `last_login` (TIMESTAMP, NULLABLE) - Last login timestamp
 - `is_active` (BOOLEAN, DEFAULT true) - Account active status
 
 **Indexes:**
-- `idx_users_email` on `email`
-- `idx_users_wallet_solana` on `wallet_address_solana`
-- `idx_users_wallet_ethereum` on `wallet_address_ethereum`
+- Unique index on `email`
 
 **Relationships:**
 - One-to-Many with `tokenized_assets` (as issuer)
@@ -75,7 +75,7 @@ Stores tokenized Real World Assets (RWA) with metadata and blockchain informatio
 - `image_uri` (TEXT, NULLABLE) - Asset image URI
 - `legal_documents_uri` (TEXT, NULLABLE) - Legal documents URI
 - `status` (VARCHAR(20), DEFAULT 'draft', INDEXED) - Status: 'draft', 'listed', 'trading', 'closed'
-- `issuer_id` (UUID, NOT NULL, Foreign Key) - Reference to users table (issuer)
+- `issuer_id` (TEXT, NOT NULL, Foreign Key) - Reference to user table (issuer)
 - `created_at` (TIMESTAMP, DEFAULT NOW()) - Creation timestamp
 - `updated_at` (TIMESTAMP, DEFAULT NOW()) - Last update timestamp
 - `listed_at` (TIMESTAMP, NULLABLE) - Listing timestamp
@@ -88,7 +88,7 @@ Stores tokenized Real World Assets (RWA) with metadata and blockchain informatio
 - `idx_assets_contract_address` on `contract_address`
 
 **Relationships:**
-- Many-to-One with `users` (issuer)
+- Many-to-One with `user` (issuer)
 - One-to-Many with `orders`
 - One-to-Many with `trades`
 - One-to-Many with `user_balances`
@@ -104,7 +104,7 @@ Stores buy and sell orders for tokenized assets.
 **Columns:**
 - `id` (UUID, Primary Key) - Unique identifier
 - `order_id` (VARCHAR(100), UNIQUE, NOT NULL) - Order identifier
-- `user_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to users table
+- `user_id` (TEXT, NOT NULL, Foreign Key, INDEXED) - Reference to user table
 - `asset_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to tokenized_assets table
 - `order_type` (VARCHAR(20), NOT NULL) - Order type: 'buy', 'sell'
 - `order_status` (VARCHAR(20), DEFAULT 'pending', INDEXED) - Status: 'pending', 'open', 'filled', 'cancelled', 'expired'
@@ -130,7 +130,7 @@ Stores buy and sell orders for tokenized assets.
 - `idx_orders_created_at` on `created_at` (DESC)
 
 **Relationships:**
-- Many-to-One with `users`
+- Many-to-One with `user`
 - Many-to-One with `tokenized_assets`
 - One-to-Many with `trades` (as buy_order_id and sell_order_id)
 
@@ -143,8 +143,8 @@ Stores executed trades between orders.
 **Columns:**
 - `id` (UUID, Primary Key) - Unique identifier
 - `trade_id` (VARCHAR(100), UNIQUE, NOT NULL) - Trade identifier
-- `buyer_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to users table (buyer)
-- `seller_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to users table (seller)
+- `buyer_id` (TEXT, NOT NULL, Foreign Key, INDEXED) - Reference to user table (buyer)
+- `seller_id` (TEXT, NOT NULL, Foreign Key, INDEXED) - Reference to user table (seller)
 - `asset_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to tokenized_assets table
 - `buy_order_id` (UUID, NULLABLE, Foreign Key) - Reference to orders table (buy order)
 - `sell_order_id` (UUID, NULLABLE, Foreign Key) - Reference to orders table (sell order)
@@ -169,8 +169,8 @@ Stores executed trades between orders.
 - `idx_trades_transaction_hash` on `transaction_hash`
 
 **Relationships:**
-- Many-to-One with `users` (as buyer)
-- Many-to-One with `users` (as seller)
+- Many-to-One with `user` (as buyer)
+- Many-to-One with `user` (as seller)
 - Many-to-One with `tokenized_assets`
 - Many-to-One with `orders` (as buy_order)
 - Many-to-One with `orders` (as sell_order)
@@ -183,7 +183,7 @@ Stores token balances per user per asset.
 
 **Columns:**
 - `id` (UUID, Primary Key) - Unique identifier
-- `user_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to users table
+- `user_id` (TEXT, NOT NULL, Foreign Key, INDEXED) - Reference to user table
 - `asset_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to tokenized_assets table
 - `balance` (BIGINT, DEFAULT 0) - Total token balance (raw units)
 - `available_balance` (BIGINT, DEFAULT 0) - Available balance for trading
@@ -201,7 +201,7 @@ Stores token balances per user per asset.
 - `idx_balances_asset_id` on `asset_id`
 
 **Relationships:**
-- Many-to-One with `users`
+- Many-to-One with `user`
 - Many-to-One with `tokenized_assets`
 
 ---
@@ -213,7 +213,7 @@ Stores deposit and withdrawal transactions.
 **Columns:**
 - `id` (UUID, Primary Key) - Unique identifier
 - `transaction_id` (VARCHAR(100), UNIQUE, NOT NULL) - Transaction identifier
-- `user_id` (UUID, NOT NULL, Foreign Key, INDEXED) - Reference to users table
+- `user_id` (TEXT, NOT NULL, Foreign Key, INDEXED) - Reference to user table
 - `asset_id` (UUID, NOT NULL, Foreign Key) - Reference to tokenized_assets table
 - `transaction_type` (VARCHAR(20), NOT NULL, INDEXED) - Type: 'deposit', 'withdrawal'
 - `status` (VARCHAR(20), DEFAULT 'pending', INDEXED) - Status: 'pending', 'processing', 'completed', 'failed'
@@ -235,7 +235,7 @@ Stores deposit and withdrawal transactions.
 - `idx_transactions_transaction_hash` on `transaction_hash`
 
 **Relationships:**
-- Many-to-One with `users`
+- Many-to-One with `user`
 - Many-to-One with `tokenized_assets`
 
 ---
@@ -269,7 +269,7 @@ Stores real-time order book snapshots for market data.
 ## Entity Relationship Diagram
 
 ```
-users
+user
   ├── tokenized_assets (issuer_id)
   ├── orders (user_id)
   ├── trades (buyer_id, seller_id)
@@ -291,8 +291,9 @@ orders
 
 ## Data Types and Constraints
 
-### UUID Primary Keys
-All tables use UUID primary keys generated with `gen_random_uuid()` for better distributed system support.
+### Primary Keys
+- Better Auth tables (`user`, `session`, `account`, `verification`, `jwks`) use TEXT primary keys.
+- Domain tables use UUID primary keys generated with `gen_random_uuid()` for better distributed system support.
 
 ### Decimal Precision
 - USD amounts: `DECIMAL(18, 2)` - 18 total digits, 2 decimal places
@@ -314,8 +315,7 @@ Flexible metadata storage using PostgreSQL's JSONB type for efficient querying a
 All foreign key relationships are enforced with constraints, ensuring referential integrity.
 
 ### Unique Constraints
-- `users.email` - Unique email addresses
-- `users.avatar_id` - Unique OASIS Avatar IDs
+- `user.email` - Unique email addresses
 - `tokenized_assets.asset_id` - Unique asset identifiers
 - `orders.order_id` - Unique order identifiers
 - `trades.trade_id` - Unique trade identifiers
@@ -362,7 +362,10 @@ The initial migration (`1738080000000-InitialSchema.ts`) creates all tables, ind
 ## TypeORM Entities
 
 All entities are located in their respective module directories:
-- `src/users/entities/user.entity.ts`
+- `src/auth/entities/better-auth-user.entity.ts`
+- `src/auth/entities/better-auth-session.entity.ts`
+- `src/auth/entities/better-auth-account.entity.ts`
+- `src/auth/entities/better-auth-verification.entity.ts`
 - `src/users/entities/user-balance.entity.ts`
 - `src/assets/entities/tokenized-asset.entity.ts`
 - `src/orders/entities/order.entity.ts`
@@ -374,7 +377,7 @@ All entities are located in their respective module directories:
 
 ## Notes
 
-1. **Password Hash:** The `password_hash` field in the users table is nullable to support OASIS authentication integration. If using OASIS auth exclusively, this field may remain null.
+1. **Password Hash:** Password hashes live in `account.password` for `provider_id='credential'` (Better Auth email/password).
 
 2. **Balance Tracking:** The `user_balances` table maintains both on-chain and off-chain balances. The `on_chain_balance` field should be synced periodically with blockchain state.
 

@@ -9,10 +9,11 @@
  *   ADMIN_EMAIL=user@example.com ADMIN_PASSWORD=password npx ts-node scripts/create-admin-account.ts
  */
 
-import * as path from "node:path";
 import { config } from "dotenv";
+import * as path from "node:path";
+import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "../src/users/entities/user.entity";
+import { BetterAuthUser } from "../src/auth/entities/better-auth-user.entity.js";
 
 // Load environment variables
 config({ path: path.resolve(__dirname, "../.env") });
@@ -37,7 +38,7 @@ async function createAdminAccount() {
 	const databaseUrl = process.env.DATABASE_URL;
 	if (!databaseUrl) {
 		console.error("❌ Error: DATABASE_URL environment variable is required");
-		console.log("\nGet it from Railway dashboard → PostgreSQL service → Variables → DATABASE_URL");
+		console.log("\nGet it from Neon dashboard or your deployment environment variables.");
 		process.exit(1);
 	}
 
@@ -45,7 +46,7 @@ async function createAdminAccount() {
 	const dataSource = new DataSource({
 		type: "postgres",
 		url: databaseUrl,
-		entities: [User],
+		entities: [BetterAuthUser],
 		synchronize: false,
 		logging: false,
 	});
@@ -56,7 +57,7 @@ async function createAdminAccount() {
 		console.log("✅ Connected to database\n");
 
 		// Find user by email
-		const userRepository = dataSource.getRepository(User);
+		const userRepository = dataSource.getRepository(BetterAuthUser);
 		const user = await userRepository.findOne({
 			where: { email: ADMIN_EMAIL },
 		});

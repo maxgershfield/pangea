@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { BetterAuthUser } from "../entities/better-auth-user.entity.js";
-import { OasisAuthService } from "./oasis-auth.service.js";
+import { OasisLinkService } from "./oasis-link.service.js";
 
 /**
  * Authentication Service
@@ -21,7 +21,7 @@ export class AuthService {
 	private readonly logger = new Logger(AuthService.name);
 
 	constructor(
-		private readonly oasisAuthService: OasisAuthService,
+		private readonly oasisLinkService: OasisLinkService,
 		@InjectRepository(BetterAuthUser)
 		private readonly betterAuthUserRepository: Repository<BetterAuthUser>
 	) {}
@@ -106,23 +106,17 @@ export class AuthService {
 				return existingUser.avatarId;
 			}
 
-			// 1. Create OASIS avatar
-			const oasisAvatar = await this.oasisAuthService.register({
+			const avatarId = await this.oasisLinkService.createAndLinkAvatar({
+				userId: data.userId,
 				email: data.email,
-				password: this.generateRandomPassword(), // Random password - user authenticates via Better Auth
-				username: data.username || data.email.split("@")[0],
-				firstName: data.firstName || "",
-				lastName: data.lastName || "",
+				username: data.username,
+				firstName: data.firstName,
+				lastName: data.lastName,
 			});
-
-			this.logger.log(`OASIS avatar created: ${oasisAvatar.avatarId}`);
-
-			// 2. Update Better Auth user table with avatarId
-			await this.updateBetterAuthUserWithAvatarId(data.userId, oasisAvatar.avatarId);
 
 			this.logger.log(`OASIS avatar linked to Better Auth user: ${data.userId}`);
 
-			return oasisAvatar.avatarId;
+			return avatarId;
 		} catch (error: any) {
 			this.logger.error(`Failed to create OASIS avatar: ${error.message}`);
 			this.logger.error(`Error stack: ${error.stack}`);
@@ -134,43 +128,10 @@ export class AuthService {
 	}
 
 	/**
-	 * Update Better Auth user table with OASIS avatarId
-	 *
-	 * TODO: Ensure the frontend schema (packages/auth/src/db/schema.ts) includes
-	 * the avatarId field and run migrations before using this in production.
-	 *
-	 * Required frontend schema change:
-	 * ```typescript
-	 * export const user = pgTable("user", {
-	 *   // ... existing fields ...
-	 *   avatarId: text("avatar_id"),  // Add this field
-	 * });
-	 * ```
-	 */
-	private async updateBetterAuthUserWithAvatarId(userId: string, avatarId: string): Promise<void> {
-		const user = await this.betterAuthUserRepository.findOne({
-			where: { id: userId },
-		});
-
-		if (!user) {
-			throw new HttpException(`Better Auth user not found: ${userId}`, HttpStatus.NOT_FOUND);
-		}
-
-		user.avatarId = avatarId;
-		await this.betterAuthUserRepository.save(user);
-
-		this.logger.log(`Updated Better Auth user ${userId} with avatarId: ${avatarId}`);
-	}
-
-	/**
 	 * Get user's OASIS avatarId from Better Auth user table
 	 */
 	async getAvatarId(userId: string): Promise<string | null> {
-		const user = await this.betterAuthUserRepository.findOne({
-			where: { id: userId },
-		});
-
-		return user?.avatarId || null;
+		return this.oasisLinkService.getAvatarId(userId);
 	}
 
 	/**
@@ -179,18 +140,5 @@ export class AuthService {
 	async hasOasisAvatar(userId: string): Promise<boolean> {
 		const avatarId = await this.getAvatarId(userId);
 		return avatarId !== null;
-	}
-
-	/**
-	 * Generate random password for OASIS avatar
-	 * (User won't use this - they authenticate via Better Auth)
-	 */
-	private generateRandomPassword(): string {
-		return (
-			Math.random().toString(36).slice(-12) +
-			Math.random().toString(36).slice(-12) +
-			Math.random().toString(36).slice(-12).toUpperCase() +
-			"!@#"
-		);
 	}
 }

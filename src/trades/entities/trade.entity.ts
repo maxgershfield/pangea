@@ -1,15 +1,15 @@
 import {
-	Column,
-	CreateDateColumn,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
 } from "typeorm";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { Order } from "../../orders/entities/order.entity.js";
-import { User } from "../../users/entities/user.entity.js";
 
 @Entity("trades")
 export class Trade {
@@ -19,20 +19,20 @@ export class Trade {
 	@Column({ unique: true, name: "trade_id" })
 	tradeId: string;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => BetterAuthUser)
 	@JoinColumn({ name: "buyer_id" })
 	@Index("idx_trades_buyer_id")
-	buyer: User;
+	buyer: BetterAuthUser;
 
-	@Column({ name: "buyer_id", type: "uuid" })
+	@Column({ name: "buyer_id", type: "text" })
 	buyerId: string;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => BetterAuthUser)
 	@JoinColumn({ name: "seller_id" })
 	@Index("idx_trades_seller_id")
-	seller: User;
+	seller: BetterAuthUser;
 
-	@Column({ name: "seller_id", type: "uuid" })
+	@Column({ name: "seller_id", type: "text" })
 	sellerId: string;
 
 	@ManyToOne(() => TokenizedAsset)

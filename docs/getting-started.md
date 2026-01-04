@@ -89,6 +89,7 @@ NODE_ENV=development
 PORT=3000
 
 # Database
+# Use Neon in shared environments; local Postgres is fine for isolated dev.
 DATABASE_URL=postgresql://user:password@localhost:5432/pangea
 
 # Redis
@@ -202,4 +203,5 @@ pangea-backend/
 
 - [API Reference](./api-reference.md) - Endpoint documentation
 - [Architecture Overview](./architecture-overview.md) - System design
-- [Deployment Guide](./deployment-railway.md) - Railway deployment
+- [Deployment Guide](./deployment-railway.md) - Railway deployment (Neon DB)
+- [Neon Connection Check](./NEON_CONNECTION_CHECK.md) - Neon database setup and validation

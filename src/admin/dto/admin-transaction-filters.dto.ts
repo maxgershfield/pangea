@@ -1,5 +1,13 @@
 import { Type } from "class-transformer";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsUUID, Min } from "class-validator";
+import {
+    IsDateString,
+    IsEnum,
+    IsInt,
+    IsOptional,
+    IsString,
+    IsUUID,
+    Min,
+} from "class-validator";
 
 export enum TransactionType {
 	DEPOSIT = "deposit",
@@ -23,7 +31,7 @@ export class AdminTransactionFiltersDto {
 	status?: TransactionStatus;
 
 	@IsOptional()
-	@IsUUID()
+	@IsString()
 	userId?: string;
 
 	@IsOptional()

@@ -23,14 +23,14 @@
 **Key Methods:**
 - `register()` - Lines 37-89: **Main registration flow**
   - Step 1: Calls `oasisAuthService.register()` → Creates OASIS avatar
-  - Step 2: Calls `userSyncService.syncOasisUserToLocal()` → **Creates the link**
+  - Step 2: Calls `userSyncService.createAndLinkAvatar()` → **Creates the link**
   - Step 3: Calls `generateJwtToken()` → Includes avatarId in token
   
 - `login()` - Lines 97-131: Login flow (same pattern)
 - `createOasisAvatarForUser()` - Lines 197-247: **NEW** - For Better-Auth integration
 
 **Critical Line:**
-- Line 57: `userSyncService.syncOasisUserToLocal(oasisAvatar)` - **This creates the link**
+- Line 57: `userSyncService.createAndLinkAvatar(oasisAvatar)` - **This creates the link**
 
 ---
 
@@ -51,10 +51,10 @@
 ---
 
 ### 4. ⭐ CRITICAL LINKING POINT
-**File**: `src/auth/services/user-sync.service.ts`
+**File**: `src/auth/services/oasis-link.service.ts`
 
 **Key Method:**
-- `syncOasisUserToLocal()` - Lines 24-97: **THIS IS WHERE THE LINK IS CREATED**
+- `createAndLinkAvatar()` - Lines 24-97: **THIS IS WHERE THE LINK IS CREATED**
 
 **What it does:**
 ```typescript
@@ -71,7 +71,7 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
 ```
 
 **Database:**
-- Stores link in: `users.avatar_id` column
+- Stores link in: `user.avatar_id` column
 - Links: Pangea User ID ↔ OASIS Avatar ID
 
 ---
@@ -87,7 +87,7 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
   ```
 
 **Database Column:**
-- `users.avatar_id` - UUID linking to OASIS Avatar
+- `user.avatar_id` - UUID linking to OASIS Avatar
 - Unique constraint ensures one-to-one relationship
 
 ---
@@ -142,7 +142,7 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
    ↓
 2. auth.service.ts (register)
    ├─→ oasis-auth.service.ts (register) → Creates OASIS avatar
-   ├─→ user-sync.service.ts (syncOasisUserToLocal) → ⭐ CREATES LINK
+   ├─→ oasis-link.service.ts (createAndLinkAvatar) → ⭐ CREATES LINK
    └─→ generateJwtToken() → Includes avatarId in token
    ↓
 3. Response with JWT containing avatarId
@@ -153,10 +153,10 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
 ## 🔗 The Link
 
 **Where it's created:**
-- `src/auth/services/user-sync.service.ts` - Line 57 (update) or Line 69 (create)
+- `src/auth/services/oasis-link.service.ts` - Line 57 (update) or Line 69 (create)
 
 **Where it's stored:**
-- Database: `users.avatar_id` column
+- Database: `user.avatar_id` column
 - JWT Token: `avatarId` claim
 
 **Where it's used:**
@@ -173,7 +173,7 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
 | `auth.controller.ts` | HTTP endpoints | `register()`, `login()` |
 | `auth.service.ts` | Orchestrates flow | `register()` - calls sync |
 | `oasis-auth.service.ts` | OASIS API calls | `register()` - creates avatar |
-| `user-sync.service.ts` | **⭐ Creates link** | `syncOasisUserToLocal()` |
+| `oasis-link.service.ts` | **⭐ Creates link** | `createAndLinkAvatar()` |
 | `user.entity.ts` | Database schema | `avatarId` property |
 | `oasis-wallet.service.ts` | Uses avatarId | `getWallets(avatarId)` |
 | `oasis-link.service.ts` | Lazy creation | `ensureOasisAvatar()` |
@@ -182,7 +182,7 @@ avatarId: oasisAvatar.avatarId,  // ← LINK ESTABLISHED HERE
 
 ## 🎯 The Critical Line
 
-**File**: `src/auth/services/user-sync.service.ts`
+**File**: `src/auth/services/oasis-link.service.ts`
 **Line**: 57 (for updates) or 69 (for new users)
 
 ```typescript
@@ -193,5 +193,5 @@ This single line establishes the connection between:
 - Pangea User ID (`user.id`)
 - OASIS Avatar ID (`oasisAvatar.avatarId`)
 
-And it's stored in the database as `users.avatar_id`.
+And it's stored in the database as `user.avatar_id`.
 

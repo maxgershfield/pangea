@@ -1,9 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { OasisWalletService } from "../../services/oasis-wallet.service.js";
 import { TokenizedAsset as TokenizedAssetEntity } from "../../assets/entities/tokenized-asset.entity.js";
-import { User } from "../../users/entities/user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
+import { OasisWalletService } from "../../services/oasis-wallet.service.js";
 
 // Placeholder interface for TokenizedAsset (kept for backward compatibility)
 export interface TokenizedAsset {
@@ -15,8 +15,8 @@ export interface TokenizedAsset {
 }
 
 export interface ExecuteTradeParams {
-	buyer: User;
-	seller: User;
+	buyer: BetterAuthUser;
+	seller: BetterAuthUser;
 	asset: TokenizedAsset;
 	quantity: number;
 	price: number;
@@ -28,8 +28,8 @@ export class BlockchainService {
 
 	constructor(
 		private readonly oasisWalletService: OasisWalletService,
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>,
 		@InjectRepository(TokenizedAssetEntity)
 		private readonly assetRepository: Repository<TokenizedAssetEntity>
 	) {}
@@ -151,7 +151,7 @@ export class BlockchainService {
 
 	/**
 	 * Execute withdrawal on blockchain
-	 * 
+	 *
 	 * Note: This implementation uses OASIS API which may only support avatar-to-avatar transfers.
 	 * If OASIS API doesn't support external addresses, this will fail and we'll need to implement
 	 * direct blockchain SDK calls (Option B from the implementation plan).
@@ -195,7 +195,7 @@ export class BlockchainService {
 			// Note: getDefaultWallet may return any provider type, so we need to check
 			const wallets = await this.oasisWalletService.getWallets(user.avatarId, providerType);
 			const matchingWallet = wallets.find((w) => w.providerType === providerType);
-			
+
 			if (!matchingWallet) {
 				throw new Error(`User ${userId} missing ${providerType} wallet`);
 			}
@@ -240,7 +240,7 @@ export class BlockchainService {
 			return result.transactionHash;
 		} catch (error: any) {
 			this.logger.error(`Failed to execute withdrawal: ${error.message}`, error.stack);
-			
+
 			// If error suggests OASIS doesn't support external addresses, log a helpful message
 			if (
 				error.message?.includes("avatar") ||
@@ -251,7 +251,7 @@ export class BlockchainService {
 					"OASIS API may not support external address withdrawals. Consider implementing direct blockchain SDK calls (Option B from implementation plan)."
 				);
 			}
-			
+
 			throw error;
 		}
 	}
