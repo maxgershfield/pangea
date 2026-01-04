@@ -44,6 +44,9 @@ importers:
       '@nestjs/websockets':
         specifier: 11.1.11
         version: 11.1.11(@nestjs/common@11.1.11(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11)(@nestjs/platform-socket.io@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       axios:
         specifier: ^1.6.5
         version: 1.13.2
@@ -56,6 +59,9 @@ importers:
       class-validator:
         specifier: ^0.14.0
         version: 0.14.3
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
       ethers:
         specifier: ^5.7.2
         version: 5.8.0
@@ -89,6 +95,9 @@ importers:
       typeorm:
         specifier: ^0.3.17
         version: 0.3.28(better-sqlite3@12.5.0)(ioredis@5.8.2)(pg@8.16.3)(redis@4.7.1)(ts-node@10.9.2(@swc/core@1.15.8)(@types/node@25.0.3)(typescript@5.9.3))
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.11
@@ -102,18 +111,12 @@ importers:
       '@swc/core':
         specifier: ^1.15.8
         version: 1.15.8
-      '@types/express':
-        specifier: ^5.0.6
-        version: 5.0.6
       '@types/node':
         specifier: 25.0.3
         version: 25.0.3
       '@vitest/coverage-v8':
         specifier: 4.0.16
         version: 4.0.16(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
       knip:
         specifier: ^5.78.0
         version: 5.78.0(@types/node@25.0.3)(typescript@5.9.3)
@@ -123,9 +126,6 @@ importers:
       tsx:
         specifier: ^4.7.0
         version: 4.21.0
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
       ultracite:
         specifier: ^7.0.5
         version: 7.0.5(typescript@5.9.3)
