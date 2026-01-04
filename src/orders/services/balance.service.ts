@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { OasisWalletService } from "../../services/oasis-wallet.service.js";
-import { User } from "../../users/entities/user.entity.js";
 import { UserBalance } from "../../users/entities/user-balance.entity.js";
 
 @Injectable()
@@ -12,8 +12,8 @@ export class BalanceService {
 	constructor(
 		@InjectRepository(UserBalance)
 		private readonly balanceRepository: Repository<UserBalance>,
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>,
 		private readonly oasisWalletService: OasisWalletService
 	) {}
 
@@ -122,7 +122,7 @@ export class BalanceService {
 	 * to place buy orders. The balance is returned in the smallest unit (lamports for Solana,
 	 * wei for Ethereum) as a BigInt for precision with large numbers.
 	 *
-	 * @param {string} userId - The UUID of the user whose balance to retrieve
+	 * @param {string} userId - The Better Auth user ID whose balance to retrieve
 	 * @param {string} blockchain - The blockchain type: "solana" or "ethereum"
 	 *
 	 * @returns {Promise<bigint>} The payment token balance in smallest units:

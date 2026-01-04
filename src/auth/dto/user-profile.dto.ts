@@ -95,6 +95,19 @@ export class UserProfileDto {
 	})
 	createdAt: Date;
 
+	@ApiPropertyOptional({
+		description: "Last login timestamp",
+		example: "2024-02-10T08:15:00.000Z",
+	})
+	lastLogin?: Date | null;
+
+	@ApiProperty({
+		description: "Whether the account is active",
+		example: true,
+		default: true,
+	})
+	isActive: boolean;
+
 	@ApiProperty({
 		description: "Last update timestamp",
 		example: "2024-01-15T10:30:00.000Z",

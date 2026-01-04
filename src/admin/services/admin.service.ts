@@ -4,20 +4,20 @@ import { DataSource, Repository } from "typeorm";
 import { CreateAssetDto } from "../../assets/dto/create-asset.dto.js";
 import { UpdateAssetDto } from "../../assets/dto/update-asset.dto.js";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { Order } from "../../orders/entities/order.entity.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
 import { Transaction } from "../../transactions/entities/transaction.entity.js";
-import { User } from "../../users/entities/user.entity.js";
 import {
-	AdminAssetFiltersDto,
-	AdminOrderFiltersDto,
-	AdminTradeFiltersDto,
-	AdminTransactionFiltersDto,
-	AdminUserFiltersDto,
-	AnalyticsFiltersDto,
-	AnalyticsPeriod,
-	UpdateKycStatusDto,
-	UpdateUserDto,
+    AdminAssetFiltersDto,
+    AdminOrderFiltersDto,
+    AdminTradeFiltersDto,
+    AdminTransactionFiltersDto,
+    AdminUserFiltersDto,
+    AnalyticsFiltersDto,
+    AnalyticsPeriod,
+    UpdateKycStatusDto,
+    UpdateUserDto,
 } from "../dto/index.js";
 
 @Injectable()
@@ -25,8 +25,8 @@ export class AdminService {
 	private readonly logger = new Logger(AdminService.name);
 
 	constructor(
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>,
 		@InjectRepository(TokenizedAsset)
 		private readonly assetRepository: Repository<TokenizedAsset>,
 		@InjectRepository(Order)
@@ -80,7 +80,7 @@ export class AdminService {
 	/**
 	 * Get user by ID
 	 */
-	async getUser(userId: string): Promise<User> {
+	async getUser(userId: string): Promise<BetterAuthUser> {
 		const user = await this.userRepository.findOne({
 			where: { id: userId },
 		});
@@ -95,7 +95,7 @@ export class AdminService {
 	/**
 	 * Update user information
 	 */
-	async updateUser(userId: string, dto: UpdateUserDto): Promise<User> {
+	async updateUser(userId: string, dto: UpdateUserDto): Promise<BetterAuthUser> {
 		const user = await this.getUser(userId);
 
 		Object.assign(user, dto);
@@ -108,7 +108,7 @@ export class AdminService {
 	/**
 	 * Update user KYC status
 	 */
-	async updateUserKycStatus(userId: string, dto: UpdateKycStatusDto): Promise<User> {
+	async updateUserKycStatus(userId: string, dto: UpdateKycStatusDto): Promise<BetterAuthUser> {
 		const user = await this.getUser(userId);
 
 		user.kycStatus = dto.status;

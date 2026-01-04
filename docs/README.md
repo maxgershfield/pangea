@@ -39,7 +39,9 @@ Welcome to the Pangea Markets backend documentation.
 
 | Document | Description |
 |---------|-------------|
-| [Railway Deployment](./deployment-railway.md) | Complete deployment guide for Railway platform |
+| [Railway Deployment](./deployment-railway.md) | Complete deployment guide for Railway platform (Neon DB) |
+| [Neon Connection Check](./NEON_CONNECTION_CHECK.md) | Connection validation for the shared Neon database |
+| [Railway Postgres Decommission](./decommission-railway-postgres.md) | Runbook for removing the legacy Railway database |
 
 ---
 

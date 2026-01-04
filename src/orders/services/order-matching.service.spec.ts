@@ -5,9 +5,9 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { BlockchainService } from "../../blockchain/services/blockchain.service.js";
 import { TradesService } from "../../trades/trades.service.js";
-import type { User } from "../../users/entities/user.entity.js";
 import { Order } from "../entities/order.entity.js";
 import { BalanceService } from "./balance.service.js";
 import { OrderMatchingService } from "./order-matching.service.js";
@@ -166,7 +166,7 @@ describe("OrderMatchingService", () => {
 				orderStatus: "pending",
 				remainingQuantity: BigInt(10),
 				filledQuantity: BigInt(0),
-				user: { id: "user-1" } as User,
+				user: { id: "user-1" } as BetterAuthUser,
 			};
 
 			const mockQueryBuilder = {
@@ -198,7 +198,7 @@ describe("OrderMatchingService", () => {
 				remainingQuantity: BigInt(10),
 				filledQuantity: BigInt(0),
 				blockchain: "solana",
-				user: { id: "buyer-1" } as User,
+				user: { id: "buyer-1" } as BetterAuthUser,
 			};
 
 			const sellOrder: Partial<Order> = {
@@ -211,7 +211,7 @@ describe("OrderMatchingService", () => {
 				remainingQuantity: BigInt(5),
 				filledQuantity: BigInt(0),
 				blockchain: "solana",
-				user: { id: "seller-1" } as User,
+				user: { id: "seller-1" } as BetterAuthUser,
 			};
 
 			const mockQueryBuilder = {
@@ -252,7 +252,7 @@ describe("OrderMatchingService", () => {
 				orderType: "buy",
 				assetId: "asset-1",
 				blockchain: "solana",
-				user: { id: "buyer-1" } as User,
+				user: { id: "buyer-1" } as BetterAuthUser,
 			};
 
 			const sellOrder: Partial<Order> = {
@@ -260,7 +260,7 @@ describe("OrderMatchingService", () => {
 				orderType: "sell",
 				assetId: "asset-1",
 				pricePerTokenUsd: 100,
-				user: { id: "seller-1" } as User,
+				user: { id: "seller-1" } as BetterAuthUser,
 			};
 
 			mockBalanceService.getBalance.mockResolvedValue({
@@ -278,7 +278,7 @@ describe("OrderMatchingService", () => {
 				orderType: "buy",
 				assetId: "asset-1",
 				blockchain: "solana",
-				user: { id: "buyer-1" } as User,
+				user: { id: "buyer-1" } as BetterAuthUser,
 			};
 
 			const sellOrder: Partial<Order> = {
@@ -286,7 +286,7 @@ describe("OrderMatchingService", () => {
 				orderType: "sell",
 				assetId: "asset-1",
 				pricePerTokenUsd: 100,
-				user: { id: "seller-1" } as User,
+				user: { id: "seller-1" } as BetterAuthUser,
 			};
 
 			mockBalanceService.getBalance.mockResolvedValue({

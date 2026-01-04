@@ -175,7 +175,7 @@ async createOasisAvatar(
   });
   
   // Link to Pangea user
-  await this.userSyncService.syncOasisUserToLocal(oasisAvatar);
+  await this.userSyncService.createAndLinkAvatar(oasisAvatar);
   
   return { success: true, avatarId: oasisAvatar.avatarId };
 }

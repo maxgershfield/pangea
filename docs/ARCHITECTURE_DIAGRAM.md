@@ -76,18 +76,18 @@
 │  src/auth/services/auth.service.ts                                          │
 │                                                                              │
 │  Step 2: Sync to Local Database                                            │
-│  userSyncService.syncOasisUserToLocal(oasisAvatar)                          │
+│  userSyncService.createAndLinkAvatar(oasisAvatar)                          │
 └──────┬──────────────────────────────────────────────────────────────────────┘
        │
-       │ 7. syncOasisUserToLocal()
+       │ 7. createAndLinkAvatar()
        │
        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  UserSyncService                                                            │
-│  src/auth/services/user-sync.service.ts                                     │
+│  OasisLinkService                                                            │
+│  src/auth/services/oasis-link.service.ts                                     │
 │                                                                              │
 │  • Find or create user in PostgreSQL                                        │
-│  • Link: users.avatar_id = OASIS avatarId                                   │
+│  • Link: user.avatar_id = OASIS avatarId                                   │
 │  • Store: email, username, firstName, lastName                              │
 │  • Return: User entity with avatarId                                       │
 └──────┬──────────────────────────────────────────────────────────────────────┘
@@ -144,18 +144,18 @@
 The link between Pangea User ID and OASIS Avatar ID is established in:
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  UserSyncService.syncOasisUserToLocal()                                     │
-│  src/auth/services/user-sync.service.ts (lines 24-97)                      │
+│  OasisLinkService.createAndLinkAvatar()                                     │
+│  src/auth/services/oasis-link.service.ts (lines 24-97)                      │
 │                                                                              │
 │  1. Receives OASIS Avatar data: { avatarId, email, ... }                    │
 │  2. Creates/updates User in PostgreSQL:                                     │
-│     users.id = <Pangea User ID>                                             │
-│     users.avatar_id = <OASIS Avatar ID>  ← LINK ESTABLISHED HERE           │
+│     user.id = <Pangea User ID>                                             │
+│     user.avatar_id = <OASIS Avatar ID>  ← LINK ESTABLISHED HERE           │
 │  3. Returns User entity with both IDs                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 This link is then:
-- ✅ Stored in database (users.avatar_id column)
+- ✅ Stored in database (user.avatar_id column)
 - ✅ Included in JWT token (avatarId claim)
 - ✅ Used for all OASIS operations (wallets, NFTs, etc.)
 
@@ -171,7 +171,7 @@ Registration Flow Files:
 ├── src/auth/services/auth.service.ts
 │   ├── register() → orchestrates the flow
 │   ├── Calls: oasisAuthService.register()
-│   ├── Calls: userSyncService.syncOasisUserToLocal()
+│   ├── Calls: userSyncService.createAndLinkAvatar()
 │   └── Calls: generateJwtToken()
 │
 ├── src/auth/services/oasis-auth.service.ts
@@ -179,9 +179,9 @@ Registration Flow Files:
 │   ├── POST https://api.oasisweb4.com/api/avatar/register
 │   └── Extracts avatar data from nested response
 │
-├── src/auth/services/user-sync.service.ts
-│   ├── syncOasisUserToLocal() → creates/updates user
-│   ├── Links: users.avatar_id = OASIS avatarId
+├── src/auth/services/oasis-link.service.ts
+│   ├── createAndLinkAvatar() → creates/updates user
+│   ├── Links: user.avatar_id = OASIS avatarId
 │   └── Returns User entity with link
 │
 └── src/auth/services/auth.service.ts (JWT generation)
@@ -254,7 +254,7 @@ PostgreSQL Table: users
 └─────────────┴──────────────┴─────────────────────────────────────────────┘
 
 The avatar_id column is the critical link between:
-- Pangea User (users.id)
+- Pangea User (user.id)
 - OASIS Avatar (OASIS Avatar ID)
 
 
@@ -311,19 +311,19 @@ OASIS API Endpoints Used:
 
 Key Points:
 1. User registers → Backend creates OASIS avatar → Links to Pangea user
-2. Link stored in: users.avatar_id column (PostgreSQL)
+2. Link stored in: user.avatar_id column (PostgreSQL)
 3. Link included in: JWT token (avatarId claim)
 4. Link used for: All OASIS operations (wallets, NFTs, etc.)
 5. OASIS API: Remote (https://api.oasisweb4.com) - tested and working
 
 Critical Files:
-- src/auth/services/user-sync.service.ts - Creates the link
+- src/auth/services/oasis-link.service.ts - Creates the link
 - src/auth/services/auth.service.ts - Orchestrates registration
 - src/auth/services/oasis-auth.service.ts - OASIS API integration
 - src/services/oasis-wallet.service.ts - Uses avatarId for wallet ops
 
 Database:
-- users.avatar_id = OASIS Avatar ID (the link)
+- user.avatar_id = OASIS Avatar ID (the link)
 
 Token:
 - JWT contains avatarId (allows direct OASIS access)

@@ -3,8 +3,9 @@ import { IsEnum, IsInt, IsOptional, IsString, Min } from "class-validator";
 import { UserRole } from "./update-user.dto.js";
 
 export enum KycStatus {
+	NONE = "none",
 	PENDING = "pending",
-	APPROVED = "approved",
+	VERIFIED = "verified",
 	REJECTED = "rejected",
 }
 

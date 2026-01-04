@@ -1,11 +1,11 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
 /**
  * Better-Auth Verification Entity (for email verification, password reset, etc.)
  */
 @Entity("verification")
 export class BetterAuthVerification {
-	@PrimaryGeneratedColumn("uuid")
+	@PrimaryColumn({ type: "text" })
 	id: string;
 
 	@Column({ type: "varchar", length: 255 })
@@ -15,8 +15,11 @@ export class BetterAuthVerification {
 	value: string;
 
 	@Column({ type: "timestamp", name: "expires_at" })
-	expires_at: Date;
+	expiresAt: Date;
 
 	@CreateDateColumn({ name: "created_at" })
-	created_at: Date;
+	createdAt: Date;
+
+	@UpdateDateColumn({ name: "updated_at" })
+	updatedAt: Date;
 }

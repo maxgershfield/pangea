@@ -22,7 +22,7 @@ OASIS Architecture/.../AvatarManager-Private.cs
 pangea-repo/src/auth/services/
 ├── auth.service.ts          → Main orchestration
 ├── oasis-auth.service.ts    → OASIS API client
-└── user-sync.service.ts     → User synchronization
+└── oasis-link.service.ts     → User synchronization
 ```
 
 ## 🔄 Flow Summary
@@ -89,7 +89,7 @@ if (!result.Result.IsVerified &&
 │   ↓                                                      │
 │ oasis-auth.service.ts (OASIS Client)                    │
 │   ↓                                                      │
-│ user-sync.service.ts (Sync)                             │
+│ oasis-link.service.ts (Sync)                             │
 │   ↓                                                      │
 │ user.entity.ts (Database Model)                         │
 └─────────────────────────────────────────────────────────┘

@@ -1,5 +1,7 @@
 # Email Verification Bypass - Architecture Diagram
 
+> Note: This diagram documents the legacy OASIS-first flow. Better Auth now owns registration; the backend only links OASIS avatars to existing Better Auth users in the `user` table.
+
 ## System Architecture Flow
 
 ```mermaid
@@ -12,8 +14,8 @@ graph TB
         AC[AuthController<br/>POST /api/auth/register<br/>POST /api/auth/login]
         AS[AuthService<br/>auth.service.ts]
         OAS[OasisAuthService<br/>oasis-auth.service.ts]
-        USS[UserSyncService<br/>user-sync.service.ts]
-        DB[(Pangea Database<br/>users table)]
+        USS[OasisLinkService<br/>oasis-link.service.ts]
+        DB[(Pangea Database<br/>user table)]
     end
     
     subgraph "OASIS API"
@@ -34,7 +36,7 @@ graph TB
     AM -->|8. AvatarResponseDto| OAC
     OAC -->|9. JSON Response| OAS
     OAS -->|10. OASISAvatar| AS
-    AS -->|11. syncOasisUserToLocal()| USS
+    AS -->|11. createAndLinkAvatar()| USS
     USS -->|12. Save User<br/>Link avatarId| DB
     DB -->|13. User + avatarId| AS
     AS -->|14. Generate JWT| AC
@@ -56,7 +58,7 @@ graph TB
     AM -->|29. IAvatar with JWT| OAC
     OAC -->|30. JSON Response| OAS
     OAS -->|31. OASISAvatar| AS
-    AS -->|32. syncOasisUserToLocal()| USS
+    AS -->|32. createAndLinkAvatar()| USS
     USS -->|33. Update User| DB
     DB -->|34. User Data| AS
     AS -->|35. Generate JWT| AC
@@ -90,7 +92,7 @@ graph LR
     subgraph "Pangea Backend - Services"
         AUTH_SVC[auth.service.ts<br/>pangea-repo/src/auth/services/<br/><br/>Main auth orchestration]
         OASIS_SVC[oasis-auth.service.ts<br/>pangea-repo/src/auth/services/<br/><br/>OASIS API client]
-        USER_SYNC[user-sync.service.ts<br/>pangea-repo/src/auth/services/<br/><br/>User synchronization]
+        USER_SYNC[oasis-link.service.ts<br/>pangea-repo/src/auth/services/<br/><br/>Avatar linking]
     end
     
     subgraph "Pangea Backend - Controllers"
@@ -98,7 +100,7 @@ graph LR
     end
     
     subgraph "Pangea Backend - Database"
-        USER_ENTITY[user.entity.ts<br/>pangea-repo/src/users/entities/<br/><br/>User model with avatarId]
+        USER_ENTITY[better-auth-user.entity.ts<br/>pangea-repo/src/auth/entities/<br/><br/>User model with avatarId]
     end
     
     DNA_JSON --> DNA_CS
@@ -128,7 +130,7 @@ sequenceDiagram
     participant AuthController
     participant AuthService
     participant OasisAuthService
-    participant UserSyncService
+    participant OasisLinkService
     participant PangeaDB
     participant OASISController
     participant AvatarManager
@@ -148,10 +150,10 @@ sequenceDiagram
     AvatarManager-->>OASISController: 9. AvatarResponseDto
     OASISController-->>OasisAuthService: 10. JSON Response
     OasisAuthService-->>AuthService: 11. OASISAvatar
-    AuthService->>UserSyncService: 12. syncOasisUserToLocal(avatar)
-    UserSyncService->>PangeaDB: 13. Save User + avatarId
-    PangeaDB-->>UserSyncService: 14. User Saved
-    UserSyncService-->>AuthService: 15. User
+    AuthService->>OasisLinkService: 12. createAndLinkAvatar(avatar)
+    OasisLinkService->>PangeaDB: 13. Save User + avatarId
+    PangeaDB-->>OasisLinkService: 14. User Saved
+    OasisLinkService-->>AuthService: 15. User
     AuthService-->>AuthController: 16. AuthResponseDto (user + token)
     AuthController-->>PangeaFrontend: 17. User + JWT Token
     PangeaFrontend-->>User: 18. Registration Complete
@@ -175,10 +177,10 @@ sequenceDiagram
     AvatarManager-->>OASISController: 34. IAvatar with JWT
     OASISController-->>OasisAuthService: 35. JSON Response
     OasisAuthService-->>AuthService: 36. OASISAvatar
-    AuthService->>UserSyncService: 37. syncOasisUserToLocal(avatar)
-    UserSyncService->>PangeaDB: 38. Update User
-    PangeaDB-->>UserSyncService: 39. User Updated
-    UserSyncService-->>AuthService: 40. User
+    AuthService->>OasisLinkService: 37. createAndLinkAvatar(avatar)
+    OasisLinkService->>PangeaDB: 38. Update User
+    PangeaDB-->>OasisLinkService: 39. User Updated
+    OasisLinkService-->>AuthService: 40. User
     AuthService-->>AuthController: 41. AuthResponseDto (user + token)
     AuthController-->>PangeaFrontend: 42. User + JWT Token
     PangeaFrontend-->>User: 43. Login Complete
@@ -234,8 +236,8 @@ flowchart TD
 | **auth.controller.ts** | `pangea-repo/src/auth/auth.controller.ts` | HTTP endpoints for registration/login |
 | **auth.service.ts** | `pangea-repo/src/auth/services/auth.service.ts` | Main authentication orchestration |
 | **oasis-auth.service.ts** | `pangea-repo/src/auth/services/oasis-auth.service.ts` | OASIS API client - makes HTTP requests |
-| **user-sync.service.ts** | `pangea-repo/src/auth/services/user-sync.service.ts` | Syncs OASIS avatars to Pangea database |
-| **user.entity.ts** | `pangea-repo/src/users/entities/user.entity.ts` | User model with `avatarId` field |
+| **oasis-link.service.ts** | `pangea-repo/src/auth/services/oasis-link.service.ts` | Links OASIS avatars to Better Auth users |
+| **better-auth-user.entity.ts** | `pangea-repo/src/auth/entities/better-auth-user.entity.ts` | User model with `avatarId` field |
 
 ## Data Flow
 
@@ -317,7 +319,7 @@ graph TD
 4. **Integration Layer (Pangea)**
    - `oasis-auth.service.ts` - OASIS API client
    - `auth.service.ts` - Authentication orchestration
-   - `user-sync.service.ts` - User synchronization
+   - `oasis-link.service.ts` - User synchronization
 
 5. **Data Layer**
    - OASIS Database - Avatar storage
@@ -335,5 +337,3 @@ The bypass logic is executed in:
 
 **Last Updated:** 2025-01-02  
 **Diagram Format:** Mermaid (compatible with GitHub, GitLab, and most markdown viewers)
-
-

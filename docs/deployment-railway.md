@@ -8,7 +8,7 @@ Complete guide for deploying the Pangea backend to Railway.
 
 | Platform    | Recommendation  | Reason                                                |
 | ----------- | --------------- | ----------------------------------------------------- |
-| **Railway** | Recommended     | WebSockets, managed Postgres/Redis, simple Git deploy |
+| **Railway** | Recommended     | WebSockets, simple Git deploy; use Neon for Postgres |
 | **Vercel**  | Not Recommended | Serverless only, no WebSocket support, timeout limits |
 
 ---
@@ -21,9 +21,10 @@ Go to https://railway.app and sign up with GitHub.
 ### 2. Add Services
 
 In your Railway project, add:
-1. **PostgreSQL**: Click "+ New" → "Database" → "PostgreSQL"
-2. **Redis**: Click "+ New" → "Database" → "Redis"
-3. **Backend**: Click "+ New" → "GitHub Repo" → Select your repo
+1. **Redis**: Click "+ New" → "Database" → "Redis"
+2. **Backend**: Click "+ New" → "GitHub Repo" → Select your repo
+
+Postgres is hosted on **Neon**, so no Railway Postgres service is required.
 
 ### 3. Configure Backend Service
 
@@ -40,10 +41,10 @@ NODE_ENV=production
 PORT=3000
 
 # Auto-provided by Railway:
-DATABASE_URL=${{Postgres.DATABASE_URL}}
 REDIS_URL=${{Redis.REDIS_URL}}
 
 # Add manually:
+DATABASE_URL=postgresql://user:password@host/db?sslmode=require
 JWT_SECRET=<generate-32-char-random-string>
 JWT_EXPIRES_IN=7d
 OASIS_API_URL=https://api.oasisweb4.com
@@ -62,7 +63,7 @@ openssl rand -hex 32
 npm i -g @railway/cli
 railway login
 railway link
-railway run npm run migration:run
+railway run npm run migration:run:neon
 ```
 
 ### 5. Get Your URL
@@ -87,7 +88,7 @@ curl https://your-app.up.railway.app/api/health
 ### Environment Variables
 - [ ] `NODE_ENV=production`
 - [ ] `JWT_SECRET` is strong (32+ chars, random)
-- [ ] `DATABASE_URL` references Postgres service
+- [ ] `DATABASE_URL` references Neon
 - [ ] `REDIS_URL` references Redis service
 - [ ] `OASIS_API_URL` and `OASIS_API_KEY` set
 - [ ] `CORS_ORIGIN` includes frontend URL
@@ -185,9 +186,8 @@ railway logs --tail   # Stream logs in real-time
 
 ### Database
 ```bash
-railway connect postgres              # Open database shell
-railway run npm run migration:run     # Run migrations
-railway run npm run migration:revert  # Revert last migration
+psql "$DATABASE_URL"                  # Open database shell (Neon)
+railway run npm run migration:run:neon
 ```
 
 ### Environment Variables
@@ -215,10 +215,9 @@ Railway dashboard → Deployments → Failed deployment → View Logs
 | TypeScript errors         | Fix locally first with `npm run build`    |
 
 ### Database Connection Fails
-1. Verify `DATABASE_URL` is set (use Railway reference: `${{Postgres.DATABASE_URL}}`)
-2. Check PostgreSQL service is running
-3. Run migrations: `railway run npm run migration:run`
-4. Test connection: `railway connect postgres`
+1. Verify `DATABASE_URL` is set (Neon connection string)
+2. Run migrations: `railway run npm run migration:run:neon`
+3. Test connection: `psql "$DATABASE_URL"`
 
 ### Redis Connection Fails
 1. Verify `REDIS_URL` is set (use Railway reference: `${{Redis.REDIS_URL}}`)
