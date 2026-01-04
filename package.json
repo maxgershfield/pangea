@@ -30,6 +30,7 @@
     "knip:fix": "knip --fix"
   },
   "dependencies": {
+    "@nestjs/cli": "11.0.14",
     "@nestjs/common": "11.1.11",
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "11.1.11",
@@ -59,7 +60,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",
-    "@nestjs/cli": "11.0.14",
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "11.1.11",
     "@swc/core": "^1.15.8",
