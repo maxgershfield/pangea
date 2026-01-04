@@ -1,0 +1,1213 @@
+openapi: 3.1.0
+info:
+  title: WEB4 OASIS API
+  version: 1.0.0
+  description: |
+    The WEB4 OASIS API provides the core infrastructure for the OASIS ecosystem, bridging Web2 and Web3.
+    
+    This API includes:
+    - Identity & Authentication (Avatar, Keys, Karma management)
+    - Data & Storage (Universal data management across Web2/Web3)
+    - Blockchain Integration (Multi-chain wallet, NFT, and transaction support)
+    - Network Operations (ONET protocol and HyperDrive functionality)
+    - Core Services (Search, Stats, Settings, Messaging, and more)
+    
+    **Getting Started:**
+    - Avatar registration (`POST /api/avatar/register`) is the first step and is required before using wallet, NFT, karma, and data management features.
+    - After registration, authenticate (`POST /api/avatar/authenticate`) to obtain a JWT token for protected endpoints.
+    - Third-party integrations can register avatars for their users without email verification when configured (see email verification bypass feature).
+  contact:
+    name: OASIS Platform Support
+    email: support@oasisplatform.world
+    url: https://docs.oasisplatform.world
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://oasisplatform.world/terms
+
+servers:
+  - url: https://api.oasisweb4.com
+    description: Production server
+  - url: https://localhost:5000
+    description: Development server
+
+tags:
+  - name: Avatar
+    description: Avatar registration, authentication, and management
+  - name: Authentication
+    description: Authentication and authorization operations
+  - name: Data
+    description: Data storage and retrieval operations
+  - name: Wallet
+    description: Wallet and cryptocurrency operations
+  - name: NFT
+    description: NFT operations and management
+  - name: Karma
+    description: Karma system operations
+  - name: ONODE
+    description: ONODE status and configuration
+  - name: ONET
+    description: ONET network operations
+  - name: HyperDrive
+    description: HyperDrive performance and optimization
+  - name: Search
+    description: Search operations
+  - name: Files
+    description: File upload and management
+  - name: Settings
+    description: System and user settings
+
+paths:
+  /api/avatar/register:
+    post:
+      tags:
+        - Avatar
+        - Authentication
+      summary: Register new avatar
+      description: |
+        Register a new avatar (user) in the OASIS system. This is a public endpoint that does not require authentication.
+        
+        **Prerequisites:** None (public endpoint)
+        
+        **Use Cases:**
+        - User onboarding and account creation
+        - Third-party integrations (e.g., Pangea backend creating OASIS avatars for their users)
+        - Required before: wallet creation, NFT minting, karma operations, and data storage operations
+        
+        **Note:** Avatar registration is required before using wallet, NFT, karma, and data management features.
+      operationId: registerAvatar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAvatarRequest'
+            examples:
+              basic:
+                summary: Basic registration
+                value:
+                  username: "johndoe"
+                  email: "john@example.com"
+                  password: "SecurePassword123!"
+                  firstName: "John"
+                  lastName: "Doe"
+              thirdPartyIntegration:
+                summary: Third-party integration (no email verification required when configured)
+                value:
+                  username: "pangea_user_123"
+                  email: "user@pangea.example.com"
+                  password: "SecurePassword123!"
+                  confirmPassword: "SecurePassword123!"
+                  firstName: "Jane"
+                  lastName: "Smith"
+                  avatarType: "User"
+                  acceptTerms: true
+      responses:
+        '200':
+          description: Avatar registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OASISResponse'
+              examples:
+                success:
+                  summary: Successful registration
+                  value:
+                    result:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      username: "johndoe"
+                      email: "john@example.com"
+                      firstName: "John"
+                      lastName: "Doe"
+                      isActive: true
+                      isVerified: true
+                      createdDate: "2024-01-15T10:30:00Z"
+                    isError: false
+                    message: "Avatar registered successfully"
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingRequiredFields:
+                  summary: Missing required fields
+                  value:
+                    isError: true
+                    message: "Username, email, and password are required"
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    isError: true
+                    message: "The email is not valid."
+                passwordTooShort:
+                  summary: Password too short
+                  value:
+                    isError: true
+                    message: "Password must be at least 6 characters"
+                passwordMismatch:
+                  summary: Password and confirm password do not match
+                  value:
+                    isError: true
+                    message: "'ConfirmPassword' and 'Password' do not match."
+                missingConfirmPassword:
+                  summary: Missing confirm password
+                  value:
+                    isError: true
+                    message: "The ConfirmPassword field is required."
+                acceptTermsNotTrue:
+                  summary: AcceptTerms must be true
+                  value:
+                    isError: true
+                    message: "The field AcceptTerms must be between True and True."
+                usernameTooShort:
+                  summary: Username too short
+                  value:
+                    isError: true
+                    message: "Username must be at least 3 characters"
+                usernameTooLong:
+                  summary: Username too long
+                  value:
+                    isError: true
+                    message: "Username must be at most 50 characters"
+        '409':
+          description: Avatar already exists (username or email already in use)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicateUsername:
+                  summary: Username already exists
+                  value:
+                    isError: true
+                    message: "Username already exists"
+                duplicateEmail:
+                  summary: Email already exists
+                  value:
+                    isError: true
+                    message: "Email already exists"
+
+  /api/avatar/register/{providerType}/{setGlobally}:
+    post:
+      tags:
+        - Avatar
+        - Authentication
+      summary: Register new avatar with specific provider
+      description: |
+        Register a new avatar (user) in the OASIS system using a specific provider. This is a public endpoint that does not require authentication.
+        
+        **Prerequisites:** None (public endpoint)
+        
+        **Use Cases:**
+        - User onboarding with specific provider preference
+        - Third-party integrations requiring specific storage provider
+        - Required before: wallet creation, NFT minting, karma operations, and data storage operations
+      operationId: registerAvatarWithProvider
+      parameters:
+        - name: providerType
+          in: path
+          required: true
+          description: Provider type to use for registration
+          schema:
+            $ref: '#/components/schemas/ProviderType'
+        - name: setGlobally
+          in: path
+          required: true
+          description: Set provider as global default for future requests
+          schema:
+            type: boolean
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAvatarRequest'
+      responses:
+        '200':
+          description: Avatar registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OASISResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Avatar already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/avatar/authenticate:
+    post:
+      tags:
+        - Avatar
+        - Authentication
+      summary: Authenticate avatar
+      description: Authenticate an avatar using username and password
+      operationId: authenticateAvatar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticateRequest'
+            examples:
+              basic:
+                summary: Basic authentication
+                value:
+                  username: "johndoe"
+                  password: "SecurePassword123!"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticateResponse'
+        '200':
+          description: Authentication response (may contain error if authentication failed)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OASISResponse'
+                  - type: object
+                    properties:
+                      statusCode:
+                        type: integer
+                        description: HTTP status code (401 for authentication failures, 200 for success)
+                        example: 401
+                      result:
+                        type: object
+                        properties:
+                          isError:
+                            type: boolean
+                          message:
+                            type: string
+              examples:
+                success:
+                  summary: Authentication successful
+                  value:
+                    result:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      refreshToken: "refresh_token_here"
+                      expiresIn: 3600
+                      avatarId: "550e8400-e29b-41d4-a716-446655440000"
+                      username: "johndoe"
+                    isError: false
+                    message: "Authentication successful"
+                    statusCode: 200
+                failure:
+                  summary: Authentication failed (returns 200 with statusCode 401 in body)
+                  value:
+                    result:
+                      isError: true
+                      message: "Email or password is incorrect"
+                    statusCode: 401
+                    isError: true
+                    message: "Email or password is incorrect"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/avatar/get-avatar-detail-by-id/{id}:
+    get:
+      tags:
+        - Avatar
+      summary: Get avatar details by ID
+      description: Retrieve detailed information about an avatar by their ID
+      operationId: getAvatarDetailById
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Avatar ID
+          schema:
+            type: string
+            format: uuid
+        - name: providerType
+          in: query
+          description: Provider type to use
+          schema:
+            $ref: '#/components/schemas/ProviderType'
+        - name: setGlobally
+          in: query
+          description: Set provider globally
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Avatar details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvatarDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/data/load-holon/{id}:
+    get:
+      tags:
+        - Data
+      summary: Load holon by ID
+      description: Load a holon (data object) by its ID
+      operationId: loadHolonById
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Holon ID
+          schema:
+            type: string
+            format: uuid
+        - name: providerType
+          in: query
+          description: Provider type to use
+          schema:
+            $ref: '#/components/schemas/ProviderType'
+      responses:
+        '200':
+          description: Holon loaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HolonResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/data/save-holon:
+    post:
+      tags:
+        - Data
+      summary: Save holon
+      description: |
+        Save a holon (data object) to storage. Requires avatar authentication.
+        
+        **Prerequisites:** Avatar must be registered via `/api/avatar/register` and authenticated
+      operationId: saveHolon
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveHolonRequest'
+      responses:
+        '200':
+          description: Holon saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OASISResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/wallet/balance:
+    get:
+      tags:
+        - Wallet
+      summary: Get wallet balance
+      description: |
+        Get the balance of a wallet. Requires avatar registration first.
+        
+        **Prerequisites:** Avatar must be registered via `/api/avatar/register`
+      operationId: getWalletBalance
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      parameters:
+        - name: avatarId
+          in: query
+          description: Avatar ID (must be from registered avatar)
+          schema:
+            type: string
+            format: uuid
+        - name: walletId
+          in: query
+          description: Wallet ID
+          schema:
+            type: string
+        - name: providerType
+          in: query
+          description: Provider type to use
+          schema:
+            $ref: '#/components/schemas/ProviderType'
+      responses:
+        '200':
+          description: Wallet balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletBalanceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/wallet/create-wallet:
+    post:
+      tags:
+        - Wallet
+      summary: Create wallet
+      description: |
+        Create a new wallet for an avatar. Requires avatar registration first.
+        
+        **Prerequisites:** Avatar must be registered via `/api/avatar/register`
+      operationId: createWallet
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '200':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Avatar not found (avatar must be registered first)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/nft/mint-nft:
+    post:
+      tags:
+        - NFT
+      summary: Mint NFT
+      description: |
+        Mint a new NFT. Requires avatar registration first.
+        
+        **Prerequisites:** Avatar must be registered via `/api/avatar/register`
+      operationId: mintNFT
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MintNFTRequest'
+      responses:
+        '200':
+          description: NFT minted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NFTResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Avatar not found (avatar must be registered first)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/karma/add-karma-to-avatar:
+    post:
+      tags:
+        - Karma
+      summary: Add karma to avatar
+      description: |
+        Add karma points to an avatar. Requires avatar registration first.
+        
+        **Prerequisites:** Avatar must be registered via `/api/avatar/register`
+      operationId: addKarmaToAvatar
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddKarmaRequest'
+      responses:
+        '200':
+          description: Karma added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KarmaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Avatar not found (avatar must be registered first)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/onode/status:
+    get:
+      tags:
+        - ONODE
+      summary: Get ONODE status
+      description: Get the status of the ONODE service
+      operationId: getONODEStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ONODE status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ONODEStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/onet/status:
+    get:
+      tags:
+        - ONET
+      summary: Get ONET network status
+      description: Get the status of the ONET network
+      operationId: getONETStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ONET status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ONETStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/hyperdrive/status:
+    get:
+      tags:
+        - HyperDrive
+      summary: Get HyperDrive status
+      description: Get the status of the HyperDrive system
+      operationId: getHyperDriveStatus
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: HyperDrive status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HyperDriveStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/search:
+    get:
+      tags:
+        - Search
+      summary: Basic search
+      description: Perform a basic search across the OASIS platform
+      operationId: basicSearch
+      security:
+        - BearerAuth: []
+        - AvatarAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Type of content to search
+          schema:
+            type: string
+            enum: [avatars, holons, nfts, files, all]
+            default: all
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        API key authentication using Bearer token.
+        Include the token in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`
+    AvatarAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Avatar authentication using Bearer token.
+        Include the avatar ID in the Authorization header as: `Authorization: Avatar YOUR_AVATAR_ID`
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            isError: true
+            message: "Invalid request parameters"
+            exception: "Validation failed"
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            isError: true
+            message: "Authentication required"
+            exception: "Unauthorized"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            isError: true
+            message: "Resource not found"
+            exception: "NotFound"
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            isError: true
+            message: "An internal server error occurred"
+            exception: "InternalServerError"
+
+  schemas:
+    OASISResponse:
+      type: object
+      description: Standard OASIS API response format
+      properties:
+        result:
+          description: The result data (can be object or array)
+          oneOf:
+            - type: object
+            - type: array
+        isError:
+          type: boolean
+          description: Indicates if the operation resulted in an error
+          default: false
+        message:
+          type: string
+          description: Response message
+        exception:
+          type: string
+          nullable: true
+          description: Exception details if an error occurred
+        errorCode:
+          type: string
+          nullable: true
+          description: Error code if an error occurred
+
+    ErrorResponse:
+      type: object
+      description: Error response format
+      required:
+        - isError
+        - message
+      properties:
+        isError:
+          type: boolean
+          default: true
+        message:
+          type: string
+        exception:
+          type: string
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+        stackTrace:
+          type: string
+          nullable: true
+
+    ProviderType:
+      type: string
+      enum:
+        - MongoDB
+        - Neo4j
+        - SQLServer
+        - SQLLiteDB
+        - AzureCosmosDB
+        - Ethereum
+        - Solana
+        - Telos
+        - EOSIO
+        - Holochain
+        - IPFS
+        - LocalFile
+        - AWS
+        - Azure
+        - GoogleCloud
+        - Hashgraph
+        - ThreeFold
+        - BlockStack
+        - Scuttlebutt
+        - PLANO
+        - SEEDS
+        - TRON
+        - Actyx
+        - Pinata
+
+    RegisterAvatarRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - confirmPassword
+        - firstName
+        - lastName
+        - avatarType
+        - acceptTerms
+      properties:
+        username:
+          type: string
+          description: Username for the avatar (recommended minimum 3 characters, not enforced by API)
+          minLength: 3
+          maxLength: 50
+          x-api-validation: false
+          x-note: "Backend does not enforce minimum length - this is a recommendation only"
+        email:
+          type: string
+          format: email
+          description: Email address
+        password:
+          type: string
+          format: password
+          description: Password (minimum 6 characters)
+          minLength: 6
+        confirmPassword:
+          type: string
+          format: password
+          description: Password confirmation (must match password)
+        firstName:
+          type: string
+          description: First name
+        lastName:
+          type: string
+          description: Last name
+        avatarType:
+          type: string
+          enum: [User, Admin, Guest]
+          default: User
+          description: Type of avatar
+        acceptTerms:
+          type: boolean
+          description: Must be true to accept terms and conditions
+          enum: [true]
+          default: true
+        title:
+          type: string
+          description: Title (optional)
+          nullable: true
+
+    AuthenticateRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username or email
+        password:
+          type: string
+          format: password
+          description: Password
+
+    AuthenticateResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: JWT authentication token
+                refreshToken:
+                  type: string
+                  description: Refresh token
+                expiresIn:
+                  type: integer
+                  description: Token expiration time in seconds
+                avatarId:
+                  type: string
+                  format: uuid
+                  description: Avatar ID
+                username:
+                  type: string
+                  description: Username
+
+    AvatarDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                firstName:
+                  type: string
+                  nullable: true
+                lastName:
+                  type: string
+                  nullable: true
+                createdDate:
+                  type: string
+                  format: date-time
+                modifiedDate:
+                  type: string
+                  format: date-time
+
+    SaveHolonRequest:
+      type: object
+      required:
+        - holon
+      properties:
+        holon:
+          type: object
+          description: Holon data object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            metaData:
+              type: object
+              additionalProperties: true
+
+    HolonResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                metaData:
+                  type: object
+                  additionalProperties: true
+                createdDate:
+                  type: string
+                  format: date-time
+                modifiedDate:
+                  type: string
+                  format: date-time
+
+    CreateWalletRequest:
+      type: object
+      required:
+        - avatarId
+      properties:
+        avatarId:
+          type: string
+          format: uuid
+          description: Avatar ID
+        providerType:
+          $ref: '#/components/schemas/ProviderType'
+        walletType:
+          type: string
+          enum: [Ethereum, Solana, Telos, EOSIO]
+          description: Type of wallet to create
+
+    WalletResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                address:
+                  type: string
+                  description: Wallet address
+                walletType:
+                  type: string
+                providerType:
+                  $ref: '#/components/schemas/ProviderType'
+                createdDate:
+                  type: string
+                  format: date-time
+
+    WalletBalanceResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                balance:
+                  type: string
+                  description: Wallet balance
+                currency:
+                  type: string
+                  description: Currency code
+                walletId:
+                  type: string
+                  format: uuid
+                address:
+                  type: string
+
+    MintNFTRequest:
+      type: object
+      required:
+        - avatarId
+        - name
+      properties:
+        avatarId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: NFT name
+        description:
+          type: string
+          description: NFT description
+        image:
+          type: string
+          format: uri
+          description: NFT image URL
+        metadata:
+          type: object
+          additionalProperties: true
+          description: NFT metadata
+        providerType:
+          $ref: '#/components/schemas/ProviderType'
+
+    NFTResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                tokenId:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: uri
+                metadata:
+                  type: object
+                  additionalProperties: true
+                createdDate:
+                  type: string
+                  format: date-time
+
+    AddKarmaRequest:
+      type: object
+      required:
+        - avatarId
+        - karma
+      properties:
+        avatarId:
+          type: string
+          format: uuid
+          description: Avatar ID to add karma to
+        karma:
+          type: integer
+          description: Amount of karma to add
+        reason:
+          type: string
+          description: Reason for adding karma
+        karmaSourceType:
+          type: string
+          enum: [Avatar, Quest, Mission, Achievement, Other]
+          default: Other
+
+    KarmaResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                avatarId:
+                  type: string
+                  format: uuid
+                totalKarma:
+                  type: integer
+                  description: Total karma for the avatar
+                karmaAdded:
+                  type: integer
+                  description: Amount of karma added
+
+    ONODEStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [Online, Offline, Degraded]
+                version:
+                  type: string
+                providers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        $ref: '#/components/schemas/ProviderType'
+                      status:
+                        type: string
+                      isEnabled:
+                        type: boolean
+
+    ONETStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [Connected, Disconnected, Connecting]
+                nodeCount:
+                  type: integer
+                  description: Number of connected nodes
+                networkId:
+                  type: string
+
+    HyperDriveStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                isEnabled:
+                  type: boolean
+                autoFailoverEnabled:
+                  type: boolean
+                autoReplicationEnabled:
+                  type: boolean
+                autoLoadBalancingEnabled:
+                  type: boolean
+                totalProviders:
+                  type: integer
+                activeProviders:
+                  type: integer
+                lastHealthCheck:
+                  type: string
+                  format: date-time
+
+    SearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/OASISResponse'
+        - type: object
+          properties:
+            result:
+              type: object
+              properties:
+                query:
+                  type: string
+                totalResults:
+                  type: integer
+                results:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      title:
+                        type: string
+                      description:
+                        type: string
+                      relevance:
+                        type: number
+                        format: float
+

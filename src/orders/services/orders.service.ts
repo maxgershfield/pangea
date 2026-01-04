@@ -128,11 +128,31 @@ export class OrdersService {
 		} else if (dto.orderType === "buy") {
 			// Validate user has enough funds (USDC or native token)
 			const totalCost = dto.pricePerTokenUsd * dto.quantity;
-			// TODO: Check payment token balance when payment system is implemented
-			// For now, we'll allow the order to be created
-			this.logger.warn(
-				`Buy order validation: Payment token balance check not yet implemented. Total cost: ${totalCost} USD`
+
+			// Get payment token balance
+			const blockchain = dto.blockchain || "solana"; // Default to solana
+			const paymentBalance = await this.balanceService.getPaymentTokenBalance(
+				userId,
+				blockchain
 			);
+
+			// Convert totalCost to payment token units
+			// This is a simplification - assumes native token payment
+			// In production, we'd need to:
+			// 1. Determine if payment token is USDC or native token
+			// 2. Get current USD price of native token if using native
+			// 3. Convert totalCost appropriately
+			const decimals = blockchain === "solana" ? 9 : 18; // SOL or ETH decimals
+			const requiredAmount = BigInt(
+				Math.floor(totalCost * 10 ** decimals)
+			); // Simplified - assumes 1 USD = 1 native token unit
+
+			if (paymentBalance < requiredAmount) {
+				const availableUsd = Number(paymentBalance) / 10 ** decimals;
+				throw new BadRequestException(
+					`Insufficient payment balance. Required: ${totalCost} USD, Available: ${availableUsd} USD`
+				);
+			}
 		}
 
 		// Validate market order doesn't have price (should use best available)

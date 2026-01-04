@@ -46,6 +46,22 @@ export interface Transaction {
 	timestamp: string;
 }
 
+export interface TransactionResponse {
+	transactionHash: string;
+	status: "pending" | "confirmed" | "failed";
+	blockchain: string;
+	blockNumber?: number | null;
+	slot?: number | null;
+	confirmations: number;
+	fromAddress?: string;
+	toAddress?: string;
+	amount?: string;
+	fee?: string;
+	timestamp?: string;
+	success: boolean;
+	error?: string | null;
+}
+
 @Injectable()
 export class OasisWalletService {
 	private readonly logger = new Logger(OasisWalletService.name);
@@ -479,6 +495,49 @@ export class OasisWalletService {
 				: [];
 		} catch (error) {
 			this.logger.error(`Failed to get transactions: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	/**
+	 * Get transaction details by transaction hash
+	 * Calls OASIS API endpoint: GET /api/wallet/transaction/{transactionHash}
+	 */
+	async getTransactionByHash(
+		transactionHash: string,
+		blockchain: string
+	): Promise<TransactionResponse> {
+		try {
+			const response = await this.axiosInstance.get<{
+				result: TransactionResponse;
+				isLoaded: boolean;
+				message: string;
+				isError?: boolean;
+			}>(`/api/wallet/transaction/${transactionHash}?blockchain=${blockchain}`);
+
+			if (response.data.isError || !response.data.isLoaded) {
+				throw new Error(
+					response.data.message || "Failed to get transaction from OASIS API"
+				);
+			}
+
+			if (!response.data.result) {
+				throw new Error("Transaction not found");
+			}
+
+			return response.data.result;
+		} catch (error: any) {
+			this.logger.error(
+				`Failed to get transaction by hash: ${error.message}`,
+				error.stack
+			);
+
+			// Handle 404 (transaction not found)
+			if (error.response?.status === 404) {
+				throw new Error("Transaction not found");
+			}
+
+			// Re-throw the error
 			throw error;
 		}
 	}

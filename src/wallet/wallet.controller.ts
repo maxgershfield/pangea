@@ -195,16 +195,40 @@ export class WalletController {
 
 	@Post("generate")
 	@ApiOperation({
-		summary: "Generate new wallet",
-		description: "Generate a new wallet for the authenticated user's OASIS avatar",
+		summary: "Generate new blockchain wallet",
+		description:
+			"Generates a new blockchain wallet for the authenticated user's OASIS avatar. " +
+			"This endpoint creates a new keypair for the specified blockchain provider (Solana or Ethereum) " +
+			"and links it to the user's OASIS avatar. The wallet is stored securely in the OASIS system " +
+			"and can be used for blockchain transactions.\n\n" +
+			"**OASIS Integration:** This endpoint calls the OASIS API to:\n" +
+			"- Ensure an OASIS avatar exists for the user (creates one if needed via `ensureOasisAvatar()`)\n" +
+			"- Generate a new keypair via `OasisWalletService.generateWallet()`\n" +
+			"- Link the wallet keys to the OASIS avatar\n" +
+			"- Store the wallet information in OASIS storage providers\n\n" +
+			"**Supported Blockchains:** Solana (SolanaOASIS), Ethereum (EthereumOASIS)\n\n" +
+			"**Wallet Storage:** Wallets are stored using OASIS storage providers, with private keys " +
+			"requiring local storage (SQLite) and public keys stored in MongoDB.",
 	})
 	@ApiResponse({
 		status: 201,
-		description: "Wallet generated successfully",
+		description:
+			"Wallet generated successfully. Returns the wallet ID, address, provider type, and default status.",
 		type: GenerateWalletResponseDto,
 	})
-	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
-	@ApiResponse({ status: 500, description: "Failed to generate wallet" })
+	@ApiResponse({
+		status: 401,
+		description: "Unauthorized - Invalid or missing JWT token. User must be authenticated via Better Auth.",
+	})
+	@ApiResponse({
+		status: 500,
+		description:
+			"Failed to generate wallet. This may occur if:\n" +
+			"- The OASIS API is unavailable\n" +
+			"- Avatar creation fails\n" +
+			"- Keypair generation fails\n" +
+			"- Wallet linking fails",
+	})
 	async generateWallet(@Request() req: any, @Body() dto: GenerateWalletDto) {
 		const userId = req.user?.id;
 		const email = req.user?.email;

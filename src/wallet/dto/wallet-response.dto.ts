@@ -1,37 +1,62 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 /**
- * Wallet info DTO
+ * Wallet information DTO
+ * 
+ * Contains essential information about a blockchain wallet linked to an OASIS avatar.
+ * Used in wallet generation and retrieval responses.
  */
 export class WalletInfoDto {
 	@ApiProperty({
-		description: "Wallet UUID",
+		description: "Unique identifier for the wallet in the OASIS system. This ID is used for subsequent wallet operations such as checking balance or retrieving transactions.",
 		example: "550e8400-e29b-41d4-a716-446655440000",
+		format: "uuid",
 	})
 	walletId: string;
 
 	@ApiProperty({
-		description: "Wallet public address",
+		description:
+			"Public blockchain address for the wallet. This is the address where funds can be sent. " +
+			"Format depends on the blockchain: Solana addresses are base58-encoded strings, " +
+			"Ethereum addresses are hex strings starting with 0x.",
 		example: "5KtP...xyz",
+		examples: {
+			solana: {
+				value: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+				description: "Solana wallet address (base58 format)",
+			},
+			ethereum: {
+				value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+				description: "Ethereum wallet address (hex format with 0x prefix)",
+			},
+		},
 	})
 	walletAddress: string;
 
 	@ApiProperty({
-		description: "Wallet provider type",
+		description: "Blockchain provider type that this wallet belongs to. Determines which blockchain network the wallet operates on.",
 		enum: ["SolanaOASIS", "EthereumOASIS"],
 		example: "SolanaOASIS",
+		enumName: "WalletProviderType",
 	})
 	providerType: string;
 
 	@ApiProperty({
-		description: "Whether this is the default wallet for the blockchain",
+		description:
+			"Indicates whether this wallet is set as the default wallet for its blockchain provider. " +
+			"The default wallet is used when no specific wallet is specified for transactions.",
 		example: true,
+		type: Boolean,
 	})
 	isDefaultWallet: boolean;
 
 	@ApiPropertyOptional({
-		description: "Current balance",
+		description:
+			"Current balance of the wallet in the native blockchain token (e.g., SOL for Solana, ETH for Ethereum). " +
+			"This value may be 0 for newly generated wallets. Use GET /api/wallet/balance to refresh the balance.",
 		example: 100.5,
+		type: Number,
+		minimum: 0,
 	})
 	balance?: number;
 }
@@ -124,23 +149,37 @@ export class GetAssetBalanceResponseDto {
 }
 
 /**
- * Generate wallet response
+ * Response DTO for wallet generation
+ * 
+ * Returned when a new wallet is successfully generated via POST /api/wallet/generate.
+ * Contains the generated wallet information including ID, address, provider type, and default status.
  */
 export class GenerateWalletResponseDto {
 	@ApiProperty({
-		description: "Operation success status",
+		description: "Indicates whether the wallet generation operation was successful",
 		example: true,
+		type: Boolean,
 	})
 	success: boolean;
 
 	@ApiProperty({
-		description: "Success message",
+		description: "Human-readable success message describing the operation result",
 		example: "Wallet generated successfully for SolanaOASIS",
+		examples: {
+			solana: {
+				value: "Wallet generated successfully for SolanaOASIS",
+				description: "Success message for Solana wallet generation",
+			},
+			ethereum: {
+				value: "Wallet generated successfully for EthereumOASIS",
+				description: "Success message for Ethereum wallet generation",
+			},
+		},
 	})
 	message: string;
 
 	@ApiProperty({
-		description: "Generated wallet info",
+		description: "Detailed information about the generated wallet, including ID, address, provider type, default status, and initial balance",
 		type: WalletInfoDto,
 	})
 	wallet: WalletInfoDto;

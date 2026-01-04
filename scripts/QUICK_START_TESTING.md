@@ -79,3 +79,4 @@ You should see:
 - Check the error message for details
 - Verify OASIS API is accessible: `curl http://localhost:5003/api/Health`
 
+

@@ -41,12 +41,43 @@ async function bootstrap() {
 	// Swagger/OpenAPI documentation
 	const config = new DocumentBuilder()
 		.setTitle("Pangea Markets API")
-		.setDescription("RWA Trading Platform Backend API")
+		.setDescription(
+			"RWA Trading Platform Backend API - Real-world asset (RWA) trading platform for tokenized assets on Solana and Ethereum blockchains"
+		)
 		.setVersion("1.0")
-		.addBearerAuth()
+		.addBearerAuth(
+			{
+				type: "http",
+				scheme: "bearer",
+				bearerFormat: "JWT",
+				name: "JWT",
+				description: "Enter JWT token",
+				in: "header",
+			},
+			"JWT-auth" // This name here is important for matching up with @ApiBearerAuth() in your controller!
+		)
+		.addServer("http://localhost:3000/api", "Local development server")
+		.addServer("https://api.pangeamarkets.com/api", "Production server")
+		.addTag("Auth", "Authentication and user management endpoints")
+		.addTag("Orders", "Order creation, management, and order book operations")
+		.addTag("Trades", "Trade execution and trade history endpoints")
+		.addTag("Transactions", "Deposit and withdrawal transaction endpoints")
+		.addTag("Wallet", "Wallet management and balance queries via OASIS API")
+		.addTag("Assets", "Asset management and asset information endpoints")
+		.addTag("Smart Contracts", "Smart contract interaction endpoints")
+		.setContact("Pangea Markets", "https://pangeamarkets.com", "support@pangeamarkets.com")
+		.setLicense("MIT", "https://opensource.org/licenses/MIT")
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
-	SwaggerModule.setup("docs", app, document);
+	SwaggerModule.setup("docs", app, document, {
+		swaggerOptions: {
+			persistAuthorization: true,
+			tagsSorter: "alpha",
+			operationsSorter: "alpha",
+		},
+		customSiteTitle: "Pangea Markets API Documentation",
+		customCss: ".swagger-ui .topbar { display: none }",
+	});
 
 	app.enableShutdownHooks();
 

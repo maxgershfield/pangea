@@ -6,6 +6,7 @@ import { AssetsModule } from "../assets/assets.module.js";
 import { AuthModule } from "../auth/auth.module.js";
 import { BlockchainModule } from "../blockchain/blockchain.module.js";
 import { TradesModule } from "../trades/trades.module.js";
+import { User } from "../users/entities/user.entity.js";
 import { UserBalance } from "../users/entities/user-balance.entity.js";
 import { OrdersController } from "./controllers/orders.controller.js";
 import { Order } from "./entities/order.entity.js";
@@ -18,7 +19,7 @@ import { WebSocketService } from "./services/websocket.service.js";
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Order, OrderBookSnapshot, UserBalance]),
+		TypeOrmModule.forFeature([Order, OrderBookSnapshot, UserBalance, User]),
 		TradesModule,
 		BlockchainModule,
 		AssetsModule,
