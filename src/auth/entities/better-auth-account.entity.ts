@@ -38,10 +38,10 @@ export class BetterAuthAccount {
 	@Column({ type: "text", nullable: true, name: "refresh_token" })
 	refreshToken: string | null;
 
-	@Column({ type: "timestamp", nullable: true, name: "access_token_expires_at" })
+	@Column({ type: "datetime", nullable: true, name: "access_token_expires_at" })
 	accessTokenExpiresAt: Date | null;
 
-	@Column({ type: "timestamp", nullable: true, name: "refresh_token_expires_at" })
+	@Column({ type: "datetime", nullable: true, name: "refresh_token_expires_at" })
 	refreshTokenExpiresAt: Date | null;
 
 	@Column({ type: "text", nullable: true })

@@ -14,7 +14,7 @@ export class BetterAuthVerification {
 	@Column({ type: "varchar", length: 255 })
 	value: string;
 
-	@Column({ type: "timestamp", name: "expires_at" })
+	@Column({ type: "datetime", name: "expires_at" })
 	expiresAt: Date;
 
 	@CreateDateColumn({ name: "created_at" })

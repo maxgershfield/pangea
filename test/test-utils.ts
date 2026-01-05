@@ -7,35 +7,42 @@
  * - wtModule for token generation
  * - Mock Redis client
  */
-import "reflect-metadata";
 import type { DynamicModule, Provider, Type } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { Test, type TestingModuleBuilder } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import "reflect-metadata";
 import { vi } from "vitest";
 import { TokenizedAsset } from "../src/assets/entities/tokenized-asset.entity.js";
 import { BetterAuthAccount } from "../src/auth/entities/better-auth-account.entity.js";
 import { BetterAuthSession } from "../src/auth/entities/better-auth-session.entity.js";
 import { BetterAuthUser } from "../src/auth/entities/better-auth-user.entity.js";
 import { BetterAuthVerification } from "../src/auth/entities/better-auth-verification.entity.js";
-import { Order } from "../src/orders/entities/order.entity.js";
 import { OrderBookSnapshot } from "../src/orders/entities/order-book-snapshot.entity.js";
+import { Order } from "../src/orders/entities/order.entity.js";
 import { Trade } from "../src/trades/entities/trade.entity.js";
 import { Transaction } from "../src/transactions/entities/transaction.entity.js";
 // Entity imports
-import { User } from "../src/users/entities/user.entity.js";
 import { UserBalance } from "../src/users/entities/user-balance.entity.js";
 
-// All entities for TypeORM
+// All entities for TypeORM (PostgreSQL)
 export const ALL_ENTITIES = [
-	User,
 	UserBalance,
 	TokenizedAsset,
 	Order,
 	OrderBookSnapshot,
 	Trade,
 	Transaction,
+	BetterAuthUser,
+	BetterAuthSession,
+	BetterAuthAccount,
+	BetterAuthVerification,
+];
+
+// SQLite-compatible entities (no jsonb, timestamp types)
+// Used for fast in-memory tests
+export const SQLITE_COMPATIBLE_ENTITIES = [
 	BetterAuthUser,
 	BetterAuthSession,
 	BetterAuthAccount,
@@ -235,4 +242,110 @@ export function createTestTrade(overrides: Partial<Trade> = {}): Partial<Trade> 
 export function resetTestCounters(): void {
 	userCounter = 0;
 	assetCounter = 0;
+}
+
+// ============================================================================
+// Better Auth Test Fixtures
+// ============================================================================
+
+let betterAuthUserCounter = 0;
+let sessionCounter = 0;
+let accountCounter = 0;
+
+/**
+ * Creates a mock BetterAuthUser object for testing.
+ * Matches the Drizzle schema in pangea-frontend/packages/auth/src/db/schema.ts
+ */
+export function createTestBetterAuthUser(
+	overrides: Partial<BetterAuthUser> = {},
+): Partial<BetterAuthUser> {
+	betterAuthUserCounter++;
+	const now = new Date();
+	return {
+		id: `ba-user-${betterAuthUserCounter}-${Date.now()}`,
+		email: `testuser${betterAuthUserCounter}@example.com`,
+		emailVerified: false,
+		name: `Test User ${betterAuthUserCounter}`,
+		image: null,
+		username: `testuser${betterAuthUserCounter}`,
+		firstName: "Test",
+		lastName: `User${betterAuthUserCounter}`,
+		role: "user",
+		kycStatus: "none",
+		walletAddressSolana: null,
+		walletAddressEthereum: null,
+		avatarId: null,
+		lastLogin: null,
+		isActive: true,
+		createdAt: now,
+		updatedAt: now,
+		...overrides,
+	};
+}
+
+/**
+ * Creates a mock BetterAuthSession for testing
+ */
+export function createTestBetterAuthSession(
+	userId: string,
+	overrides: Partial<BetterAuthSession> = {},
+): Partial<BetterAuthSession> {
+	sessionCounter++;
+	const now = new Date();
+	const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+	return {
+		id: `ba-session-${sessionCounter}-${Date.now()}`,
+		userId,
+		token: `session-token-${sessionCounter}-${Date.now()}`,
+		expiresAt,
+		ipAddress: "127.0.0.1",
+		userAgent: "vitest/1.0",
+		createdAt: now,
+		updatedAt: now,
+		...overrides,
+	};
+}
+
+/**
+ * Creates a mock BetterAuthAccount for testing (credential provider)
+ */
+export function createTestBetterAuthAccount(
+	userId: string,
+	overrides: Partial<BetterAuthAccount> = {},
+): Partial<BetterAuthAccount> {
+	accountCounter++;
+	const now = new Date();
+	return {
+		id: `ba-account-${accountCounter}-${Date.now()}`,
+		userId,
+		accountId: userId,
+		providerId: "credential",
+		password: "$2b$10$hashedpassword", // bcrypt hash placeholder
+		accessToken: null,
+		refreshToken: null,
+		accessTokenExpiresAt: null,
+		refreshTokenExpiresAt: null,
+		scope: null,
+		idToken: null,
+		createdAt: now,
+		updatedAt: now,
+		...overrides,
+	};
+}
+
+/**
+ * Reset Better Auth counters between test files
+ */
+export function resetBetterAuthCounters(): void {
+	betterAuthUserCounter = 0;
+	sessionCounter = 0;
+	accountCounter = 0;
+}
+
+/**
+ * Combined reset for all counters
+ */
+export function resetAllTestCounters(): void {
+	resetTestCounters();
+	resetBetterAuthCounters();
 }
