@@ -21,7 +21,7 @@ export class BetterAuthSession {
 	@Column({ type: "text", name: "user_id" })
 	userId: string;
 
-	@Column({ type: "datetime", name: "expires_at" })
+	@Column({ type: "timestamp", name: "expires_at" })
 	expiresAt: Date;
 
 	@Column({ type: "text", unique: true })

@@ -58,7 +58,7 @@ export class BetterAuthUser {
 	@Column({ name: "avatar_id", type: "text", nullable: true })
 	avatarId: string | null;
 
-	@Column({ name: "last_login", type: "datetime", nullable: true })
+	@Column({ name: "last_login", type: "timestamp", nullable: true })
 	lastLogin: Date | null;
 
 	@Column({ name: "is_active", type: "boolean", default: true })
