@@ -22,7 +22,7 @@ export interface DeployResult {
  * Smart Contract Service
  * Integrates with SmartContractGenerator API to generate, compile, and deploy contracts
  *
- * See: /Volumes/Storage/OASIS_CLEAN/pangea/task-briefs/05-smart-contract-generator-integration.md
+ * See: docs/contracts-spec.md for contract specifications
  */
 @Injectable()
 export class SmartContractService {

@@ -88,9 +88,9 @@ User ← JWT token (use for all subsequent requests)
 - Pattern: "Shipex Pro" - OASIS for auth verification, custom tokens for Pangea
 
 **Files:**
-- `src/auth/services/auth.service.ts` - Main auth logic
-- `src/auth/services/oasis-auth.service.ts` - OASIS API integration
-- `src/auth/strategies/jwt.strategy.ts` - JWT validation
+- `src/auth/services/auth.service.ts` - OASIS avatar creation and linking
+- `src/auth/services/oasis-link.service.ts` - OASIS avatar linking service
+- `src/auth/guards/jwks-jwt.guard.ts` - Better Auth JWT validation via JWKS
 
 ---
 
@@ -118,8 +118,9 @@ User ← Wallet connected, can now deposit/withdraw
 
 **Files:**
 - `src/wallet/wallet.controller.ts` - Wallet endpoints
-- `src/services/wallet-connection.service.ts` - Signature verification
-- `src/services/oasis-wallet.service.ts` - OASIS wallet integration
+- `src/services/wallet-connection.service.ts` - Signature verification (Phantom/MetaMask)
+- `src/services/oasis-wallet.service.ts` - OASIS wallet API integration
+- `src/services/balance-sync.service.ts` - Balance synchronization
 
 ---
 
@@ -156,8 +157,10 @@ Background Job (every 5 seconds) → Check for new matches
 - **Real-time Events**: WebSocket emits trade and order updates
 
 **Files:**
+- `src/orders/controllers/orders.controller.ts` - Order endpoints
 - `src/orders/services/orders.service.ts` - Order creation/management
 - `src/orders/services/order-matching.service.ts` - Matching algorithm
+- `src/orders/services/websocket.service.ts` - WebSocket gateway for real-time updates
 - `src/orders/jobs/order-matching.job.ts` - Background matching job
 
 ---
@@ -243,7 +246,7 @@ Backend → Emits events:
 
 **Files:**
 - `src/orders/services/websocket.service.ts` - WebSocket gateway
-- Events emitted from: `order-matching.service.ts`, `transactions.service.ts`
+- Events emitted from: `order-matching.service.ts`, `transactions.service.ts`, `balance-sync.service.ts`
 
 ---
 
@@ -321,10 +324,10 @@ pangea-backend/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (see `package.json` engines)
 - PostgreSQL 14+
 - Redis 6+
-- OASIS API access (or local instance)
+- OASIS API access (defaults to `https://api.oasisweb4.com`)
 
 ### Installation
 
@@ -387,20 +390,28 @@ Server runs at `http://localhost:3000/api`
 ## 📡 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
+- `POST /api/auth/create-oasis-avatar` - Create OASIS avatar for Better Auth user
+- `GET /api/user/profile` - Get current user profile
+- `PUT /api/user/profile` - Update user profile
+
+> **Note**: User authentication (login, register) is handled by Better Auth in the frontend. The backend provides OASIS integration endpoints.
 
 ### Assets
-- `GET /api/assets` - List all assets
+- `GET /api/assets` - List all assets (with filters)
+- `GET /api/assets/search` - Search assets by query
 - `GET /api/assets/:id` - Get asset details
-- `GET /api/assets/:id/orders` - Get order book
+- `GET /api/assets/:id/orderbook` - Get order book for asset
 - `GET /api/assets/:id/price` - Get current price
+- `GET /api/assets/:id/trades` - Get recent trades for asset
 
 ### Orders
 - `POST /api/orders` - Create order (buy/sell)
-- `GET /api/orders` - Get user's orders
+- `GET /api/orders` - Get user's orders (with filters)
+- `GET /api/orders/open` - Get open orders
+- `GET /api/orders/history` - Get order history
+- `GET /api/orders/asset/:assetId` - Get orders for specific asset
 - `GET /api/orders/:id` - Get order details
+- `PUT /api/orders/:id` - Update order
 - `DELETE /api/orders/:id` - Cancel order
 
 ### Trades
@@ -409,9 +420,13 @@ Server runs at `http://localhost:3000/api`
 - `GET /api/trades/statistics` - Get trade statistics
 
 ### Wallet
-- `POST /api/wallet/connect` - Connect Phantom/MetaMask
-- `GET /api/wallet/balance` - Get all balances
-- `GET /api/wallet/balance/:assetId` - Get asset balance
+- `POST /api/wallet/connect` - Connect Phantom/MetaMask wallet
+- `POST /api/wallet/verify` - Verify wallet ownership
+- `POST /api/wallet/generate` - Generate new OASIS wallet
+- `GET /api/wallet/balance` - Get all wallet balances
+- `GET /api/wallet/balance/:assetId` - Get balance for specific asset
+- `POST /api/wallet/sync` - Manually sync balances
+- `GET /api/wallet/verification-message` - Get message for wallet signing
 
 ### Transactions
 - `POST /api/transactions/deposit` - Initiate deposit
@@ -422,7 +437,7 @@ Server runs at `http://localhost:3000/api`
 - Connect to: `ws://localhost:3000/trading`
 - Events: `trade:executed`, `orderbook:update`, `order:updated`, `balance:update`
 
-See [API_COVERAGE_ANALYSIS.md](./API_COVERAGE_ANALYSIS.md) for complete API documentation.
+See [API Reference](./docs/api-reference.md) and [API Endpoints](./docs/api-endpoints.md) for complete API documentation.
 
 ---
 
@@ -462,7 +477,7 @@ See [API_COVERAGE_ANALYSIS.md](./API_COVERAGE_ANALYSIS.md) for complete API docu
 - Testing suite
 - Deployment & DevOps
 
-See [PROGRESS_TRACKER.md](./PROGRESS_TRACKER.md) for detailed status.
+See [CHANGELOG.md](./docs/CHANGELOG.md) for recent changes and updates.
 
 ---
 
@@ -475,11 +490,13 @@ See the [`/docs`](./docs/README.md) directory for comprehensive documentation:
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design, security
 - **[Deployment Guide](./docs/deployment-railway.md)** - Railway deployment
 
+> **Note**: Context documentation, implementation notes, and temporary guides have been archived outside the repo to keep the codebase clean and searchable. See `../pangea-docs-archive/` for archived files.
+
 ---
 
 ## 🤝 Contributing
 
-This project follows a task-based development approach. See `task-briefs/` for implementation guidelines.
+This project follows a modular NestJS architecture. See the [Architecture Overview](./docs/architecture-overview.md) for design patterns and guidelines.
 
 ---
 

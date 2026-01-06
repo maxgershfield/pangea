@@ -2,35 +2,32 @@
 
 ## Recent Changes
 
-### Remote OASIS API Configuration
-- **Updated**: Default OASIS API URL to `https://api.oasisweb4.com` (HTTPS)
-- **Updated**: All services to use remote OASIS API by default
-- **Updated**: Test scripts to use remote API
-- **Added**: `REMOTE_OASIS_API_SETUP.md` - Remote API configuration guide
-- **Added**: `test-remote-oasis-api.sh` - Connection test script
+### OASIS API
+- Default URL: `https://api.oasisweb4.com`
+- Remote API integration complete
 
 ### OpenAPI Specification
-- **Added**: Complete OpenAPI 3.1.0 specification (`docs/openapi/pangea-backend-api.yaml`)
-- **Added**: OpenAPI documentation guide (`docs/openapi/README.md`)
-- **Documentation**: All endpoints documented with request/response schemas
+- Complete OpenAPI 3.1.0 spec: `docs/openapi/pangea-backend-api.yaml`
+- All endpoints documented
 
 ### Bug Fixes
-- **Fixed**: Missing `HttpException` import in `auth.controller.ts`
+- Fixed missing `HttpException` import in auth controller
 
 ---
 
-## Current Implementation
+## Current Status
 
-### Authentication
-- Backend JWT token generation (register/login endpoints)
-- OASIS avatar creation and linking
-- User sync to local database
+✅ **Completed:**
+- Authentication (OASIS integration)
+- Wallet operations (Phantom/MetaMask)
+- Assets, Orders, Trades APIs
+- Order matching engine
+- Deposits/withdrawals
+- WebSocket real-time updates
 
-### OASIS Integration
-- Remote API: `https://api.oasisweb4.com`
-- Wallet operations (generate, balance, connect, verify)
-- Avatar management
+🔄 **In Progress:**
+- Smart contract deployment (integration ready)
 
-### API Documentation
-- OpenAPI 3.1.0 specification
-- Complete endpoint documentation
+---
+
+**For detailed implementation status, see the code in `src/` directories.**

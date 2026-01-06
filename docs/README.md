@@ -1,62 +1,62 @@
 # Pangea Backend Documentation
 
-Welcome to the Pangea Markets backend documentation.
+**Quick links to code and essential docs.**
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-| Document | Description |
-|---------|-------------|
-| [Getting Started](./getting-started.md) | Installation, environment setup, running locally |
-| [API Reference](./api-reference.md) | Endpoint patterns, authentication, request/response formats |
-| [API Endpoints](./api-endpoints.md) | Complete endpoint list with implementation status |
-| [OpenAPI Specification](./openapi/README.md) | Complete OpenAPI 3.1.0 specification for the API |
+- **[Getting Started](./getting-started.md)** - Setup and run locally
+- **[API Reference](./api-reference.md)** - All endpoints with examples
+- **[Deployment](./deployment-railway.md)** - Deploy to Railway
 
 ---
 
-## Core Documentation
+## 📍 Where is the code?
 
-| Document | Description |
-|---------|-------------|
-| [Architecture Overview](./architecture-overview.md) | System design, security decisions, read/write patterns |
-| [Database Schema](./database-schema.md) | Tables, relationships, indexes, constraints |
-| [Frontend Integration](./frontend-integration.md) | Guide for frontend developers integrating with this backend |
+### Core Modules
 
----
+| Feature | Code Location |
+|---------|--------------|
+| **Authentication** | `src/auth/` - OASIS integration, JWT |
+| **Users** | `src/users/` - User entities |
+| **Assets** | `src/assets/` - Tokenized RWA assets |
+| **Orders** | `src/orders/` - Order creation & matching engine |
+| **Trades** | `src/trades/` - Trade history |
+| **Wallet** | `src/wallet/` - Phantom/MetaMask integration |
+| **Transactions** | `src/transactions/` - Deposits/withdrawals |
+| **WebSocket** | `src/orders/services/websocket.service.ts` |
 
-## Integrations
+### Key Services
 
-| Document | Description |
-|---------|-------------|
-| [Wallet (OASIS)](./wallet-oasis.md) | OASIS wallet API integration for multi-chain support |
-| [Remote OASIS API Setup](./REMOTE_OASIS_API_SETUP.md) | Configuration for using remote OASIS API |
-| [Smart Contracts](./contracts-spec.md) | Token, Vault, and Order Book contract specifications |
+- **Order Matching**: `src/orders/services/order-matching.service.ts`
+- **OASIS Wallet**: `src/services/oasis-wallet.service.ts`
+- **Vault Management**: `src/transactions/services/vault.service.ts`
 
----
+### Database
 
-## Deployment
-
-| Document | Description |
-|---------|-------------|
-| [Railway Deployment](./deployment-railway.md) | Complete deployment guide for Railway platform (Neon DB) |
-| [Neon Connection Check](./NEON_CONNECTION_CHECK.md) | Connection validation for the shared Neon database |
-| [Railway Postgres Decommission](./decommission-railway-postgres.md) | Runbook for removing the legacy Railway database |
+- **Schema**: See TypeORM entities in `src/*/entities/`
+- **Migrations**: `migrations/`
 
 ---
 
-## Module Documentation
+## 📚 Essential Docs
 
-These READMEs are colocated with their source code:
-
-- [`src/auth/README.md`](../src/auth/README.md) - Authentication module internals
-- [`src/wallet/README.md`](../src/wallet/README.md) - Wallet module internals
+| Document | Purpose |
+|----------|---------|
+| [Getting Started](./getting-started.md) | Setup, environment, run locally |
+| [API Reference](./api-reference.md) | Complete endpoint docs with examples |
+| [Frontend Integration](./frontend-integration.md) | Guide for frontend developers |
+| [Architecture](./architecture-overview.md) | System design & security patterns |
+| [Deployment](./deployment-railway.md) | Railway deployment guide |
 
 ---
 
-## Contributing
+## 🔗 External Resources
 
-When adding new documentation:
-1. Use descriptive file names
-2. Update this README with links to new docs
-3. Keep module-specific docs colocated in `src/*/README.md`
+- **OASIS API**: `https://api.oasisweb4.com` - Auth, wallets, blockchain
+- **OpenAPI Spec**: `docs/openapi/pangea-backend-api.yaml`
+
+---
+
+**Need more detail? Check the code - it's well-documented with comments.**

@@ -2,91 +2,9 @@
 
 Complete endpoint reference for the Pangea backend API.
 
----
+**Base URL:** `https://pangea-production-128d.up.railway.app/api` (production) or `http://localhost:3000/api` (dev)
 
-## Base URL
-
-```
-Production: https://pangea-production-128d.up.railway.app/api
-Development: http://localhost:3000/api
-```
-
-All routes are prefixed with `/api`.
-
----
-
-## Authentication
-
-### Headers
-
-```http
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
-```
-
-### Token Lifecycle
-
-1. **Obtain**: Login or register returns JWT token
-2. **Store**: Save in HttpOnly cookie or session storage
-3. **Use**: Include in Authorization header
-4. **Expiry**: Tokens expire after 7 days
-
----
-
-## Route Access Matrix
-
-| Endpoint                           | Auth | Role  | Access Pattern |
-| ---------------------------------- | ---- | ----- | -------------- |
-| **Authentication**                 |
-| `POST /auth/register`              | No   | -     | Direct         |
-| `POST /auth/login`                 | No   | -     | Direct         |
-| `POST /auth/forgot-password`       | No   | -     | Direct         |
-| `POST /auth/reset-password`        | No   | -     | Direct         |
-| `GET /auth/me`                     | Yes  | -     | Direct         |
-| `GET /auth/session`                | Yes  | -     | Direct         |
-| **User**                           |
-| `GET /user/profile`                | Yes  | -     | Direct         |
-| `PUT /user/profile`                | Yes  | -     | Via Next.js    |
-| **Assets**                         |
-| `GET /assets`                      | No   | -     | Direct         |
-| `GET /assets/:id`                  | No   | -     | Direct         |
-| `GET /assets/:id/orders`           | No   | -     | Direct         |
-| `GET /assets/:id/trades`           | No   | -     | Direct         |
-| `GET /assets/:id/price`            | No   | -     | Direct         |
-| `GET /assets/search`               | No   | -     | Direct         |
-| `POST /assets`                     | Yes  | Admin | Via Next.js    |
-| `PUT /assets/:id`                  | Yes  | Admin | Via Next.js    |
-| `DELETE /assets/:id`               | Yes  | Admin | Via Next.js    |
-| **Orders**                         |
-| `GET /orders`                      | Yes  | -     | Direct         |
-| `GET /orders/open`                 | Yes  | -     | Direct         |
-| `GET /orders/history`              | Yes  | -     | Direct         |
-| `GET /orders/:orderId`             | Yes  | -     | Direct         |
-| `POST /orders`                     | Yes  | -     | Via Next.js    |
-| `PUT /orders/:orderId`             | Yes  | -     | Via Next.js    |
-| `DELETE /orders/:orderId`          | Yes  | -     | Via Next.js    |
-| **Trades**                         |
-| `GET /trades`                      | Yes  | -     | Direct         |
-| `GET /trades/:tradeId`             | Yes  | -     | Direct         |
-| `GET /trades/history`              | Yes  | -     | Direct         |
-| `GET /trades/statistics`           | Yes  | -     | Direct         |
-| **Wallet**                         |
-| `GET /wallet/balance`              | Yes  | -     | Direct         |
-| `GET /wallet/balance/:assetId`     | Yes  | -     | Direct         |
-| `GET /wallet/verification-message` | Yes  | -     | Direct         |
-| `POST /wallet/connect`             | Yes  | -     | Via Next.js    |
-| `POST /wallet/verify`              | Yes  | -     | Via Next.js    |
-| `POST /wallet/sync`                | Yes  | -     | Via Next.js    |
-| **Transactions**                   |
-| `GET /transactions`                | Yes  | -     | Direct         |
-| `GET /transactions/:txId`          | Yes  | -     | Direct         |
-| `POST /transactions/deposit`       | Yes  | -     | Via Next.js    |
-| `POST /transactions/withdraw`      | Yes  | -     | Via Next.js    |
-| `POST /transactions/:txId/confirm` | Yes  | Admin | Via Next.js    |
-
-**Legend:**
-- **Direct**: Call from client with JWT token
-- **Via Next.js**: Proxy through Next.js API route
+**Authentication:** Include `Authorization: Bearer <jwt-token>` header for protected routes.
 
 ---
 
@@ -116,15 +34,19 @@ GET /api/health
 
 ### Authentication
 
-#### Register
+> **Important**: User authentication (login, register, password reset) is handled by **Better Auth** in the frontend. The backend only provides OASIS integration endpoints.
+
+#### Create OASIS Avatar
+
+Creates an OASIS avatar and links it to the authenticated Better Auth user. Should be called after first login/registration.
 
 ```http
-POST /api/auth/register
+POST /api/auth/create-oasis-avatar
+Authorization: Bearer <better-auth-jwt>
 Content-Type: application/json
 
 {
   "email": "user@example.com",
-  "password": "securepassword123",
   "username": "username",
   "firstName": "John",
   "lastName": "Doe"
@@ -134,48 +56,14 @@ Content-Type: application/json
 **Response:**
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "username": "username",
-    "avatarId": "oasis-avatar-id",
-    "role": "user"
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresAt": "2025-12-27T17:13:15.682Z"
+  "success": true,
+  "message": "OASIS avatar created and linked successfully",
+  "avatarId": "oasis-avatar-id",
+  "userId": "uuid"
 }
 ```
 
-#### Login
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
-```
-
-**Response:** Same format as register.
-
-#### Get Current User
-
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "username": "username",
-  "role": "user"
-}
-```
+**Note**: The `email`, `username`, `firstName`, and `lastName` are optional if they're already in the Better Auth JWT token.
 
 ---
 
@@ -408,54 +296,16 @@ Content-Type: application/json
 
 ---
 
-## Quick Start
+## Quick Example
 
 ```bash
-# 1. Register
-curl -X POST https://pangea-production-128d.up.railway.app/api/auth/register \
+# Create OASIS avatar (after Better Auth registration/login)
+curl -X POST http://localhost:3000/api/auth/create-oasis-avatar \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123456","username":"testuser"}'
+  -H "Authorization: Bearer YOUR_BETTER_AUTH_JWT" \
+  -d '{"email":"test@example.com","username":"testuser"}'
 
-# 2. Store the token
-export TOKEN="your-jwt-token-here"
-
-# 3. Get profile (authenticated)
-curl https://pangea-production-128d.up.railway.app/api/user/profile \
-  -H "Authorization: Bearer $TOKEN"
-
-# 4. Browse assets (public)
-curl https://pangea-production-128d.up.railway.app/api/assets
-```
-
----
-
-## TypeScript Client Example
-
-```typescript
-const API_URL = 'https://pangea-production-128d.up.railway.app/api';
-
-class PangeaClient {
-  private token: string | null = null;
-
-  async login(email: string, password: string) {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    this.token = data.token;
-    return data;
-  }
-
-  async getAssets() {
-    return fetch(`${API_URL}/assets`).then(r => r.json());
-  }
-
-  async getOrders() {
-    return fetch(`${API_URL}/orders`, {
-      headers: { 'Authorization': `Bearer ${this.token}` },
-    }).then(r => r.json());
-  }
-}
+# Use token for authenticated requests
+curl http://localhost:3000/api/assets \
+  -H "Authorization: Bearer YOUR_BETTER_AUTH_JWT"
 ```
