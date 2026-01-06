@@ -44,7 +44,7 @@ export class UserBalance {
 	lockedBalance: bigint; // Locked in orders
 
 	// Blockchain
-	@Column({ type: "text", length: 20 })
+	@Column({ type: "varchar", length: 20 })
 	blockchain: string;
 
 	@Column({ name: "on_chain_balance", type: "bigint", nullable: true })
