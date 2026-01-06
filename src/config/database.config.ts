@@ -50,6 +50,17 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
 			return {
 				type: "postgres",
 				url: databaseUrl,
+				// SSL configuration required for Neon Postgres
+				// TypeORM uses 'extra' for driver-specific options
+				extra: {
+					ssl: {
+						rejectUnauthorized: false,
+					},
+					// Connection pool settings for better reliability
+					max: 20, // Maximum number of connections in the pool
+					connectionTimeoutMillis: 30000, // 30 seconds - allows time for Neon compute to wake up
+					idleTimeoutMillis: 30000, // 30 seconds
+				},
 				entities: [...explicitEntities, ...entitiesPattern],
 				migrations: migrationsPath ? [migrationsPath] : [], // Empty array in development
 				migrationsRun: false, // Never auto-run migrations
