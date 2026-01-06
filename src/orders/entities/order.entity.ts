@@ -16,7 +16,7 @@ export class Order {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@Column({ unique: true, name: "order_id" })
+	@Column({ type: "text", unique: true, name: "order_id" })
 	orderId: string;
 
 	@ManyToOne(() => BetterAuthUser)
@@ -35,10 +35,10 @@ export class Order {
 	@Column({ name: "asset_id", type: "uuid" })
 	assetId: string;
 
-	@Column({ name: "order_type" })
+	@Column({ type: "text", name: "order_type" })
 	orderType: "buy" | "sell";
 
-	@Column({ name: "order_status", default: "pending" })
+	@Column({ type: "text", name: "order_status", default: "pending" })
 	@Index("idx_orders_status")
 	@Index("idx_orders_type_status")
 	orderStatus: string;
@@ -66,28 +66,28 @@ export class Order {
 	})
 	totalValueUsd: number;
 
-	@Column({ nullable: true, name: "expires_at" })
+	@Column({ type: "timestamp", nullable: true, name: "expires_at" })
 	expiresAt: Date;
 
-	@Column()
+	@Column({ type: "text" })
 	blockchain: string;
 
-	@Column({ nullable: true, name: "transaction_hash" })
+	@Column({ type: "text", nullable: true, name: "transaction_hash" })
 	transactionHash: string;
 
-	@Column({ default: false, name: "is_market_order" })
+	@Column({ type: "boolean", default: false, name: "is_market_order" })
 	isMarketOrder: boolean;
 
-	@Column({ default: true, name: "is_limit_order" })
+	@Column({ type: "boolean", default: true, name: "is_limit_order" })
 	isLimitOrder: boolean;
 
-	@CreateDateColumn({ name: "created_at" })
+	@CreateDateColumn({ name: "created_at", type: "timestamp" })
 	@Index("idx_orders_created_at")
 	createdAt: Date;
 
-	@UpdateDateColumn({ name: "updated_at" })
+	@UpdateDateColumn({ name: "updated_at", type: "timestamp" })
 	updatedAt: Date;
 
-	@Column({ nullable: true, name: "filled_at" })
+	@Column({ type: "timestamp", nullable: true, name: "filled_at" })
 	filledAt: Date;
 }
