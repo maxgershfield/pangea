@@ -2,7 +2,8 @@
   "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
   "extends": ["ultracite/biome/core"],
   "files": {
-    "includes": ["src/**", "test/**", "vitest.setup.ts"]
+    "includes": ["src/**", "test/**", "vitest.setup.ts", "scripts/**"],
+    "ignoreUnknown": true
   },
   "vcs": {
     "enabled": true,

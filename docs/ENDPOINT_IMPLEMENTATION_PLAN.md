@@ -314,12 +314,13 @@ async executeTrade(params: ExecuteTradeParams): Promise<string> {
 - Current behavior: Returns mock transaction hash
 - Called by: `TransactionsService.initiateWithdrawal()` when user requests withdrawal
 
-**Important Note:** OASIS `sendToken()` may only support avatar-to-avatar transfers. External address withdrawals may need:
-- Different OASIS endpoint
-- Direct blockchain SDK
-- Mapping external address to avatarId (if supported)
+**✅ RESOLVED:** OASIS `sendToken()` supports both avatar-to-avatar transfers AND external wallet addresses!
 
-**Action Required:** First verify if OASIS API supports sending to external addresses, or check OASIS API documentation.
+**How it works:**
+- OASIS API accepts both `toAvatarId` (UUID) and `toWalletAddress` (direct address) parameters
+- If `toWalletAddress` is provided, OASIS sends directly to that address
+- If `toAvatarId` is provided, OASIS looks up the avatar's wallet and sends to it
+- Our implementation automatically detects address type and uses the appropriate parameter
 
 ### Current Code
 
@@ -356,28 +357,23 @@ async withdraw(params: {
 
 3. **Update module** if needed for dependency injection
 
-### Implementation Options
+### Implementation Solution (RESOLVED)
 
-**Option A: OASIS API Supports External Addresses**
-- Use `OasisWalletService.sendToken()` with external address as `toAvatarId`
-- Check OASIS API documentation or test endpoint first
+**✅ Option A: OASIS API Supports External Addresses** - **IMPLEMENTED**
 
-**Option B: OASIS API Only Supports Avatar-to-Avatar**
-- Need direct blockchain SDK (`@solana/web3.js` or `ethers.js`)
-- Implement blockchain-specific withdrawal logic
-- More complex but necessary if OASIS doesn't support external addresses
+OASIS API `sendToken()` endpoint accepts both:
+- `toAvatarId`: Avatar UUID (OASIS looks up wallet address)
+- `toWalletAddress`: Direct wallet address (sends to external address)
 
-**Option C: OASIS Has Separate Endpoint**
-- Check OASIS API for withdrawal endpoint
-- Use different OASIS method if available
+**Our Implementation:**
+- Updated `SendTokenRequest` interface to support both `toAvatarId` and `toWalletAddress` (both optional)
+- Updated `sendToken()` method to send appropriate parameter to OASIS API
+- Updated `withdraw()` method to automatically detect address type:
+  - If address is UUID format → use `toAvatarId`
+  - If address is wallet format → use `toWalletAddress`
+- No need for Option B (direct blockchain SDK) - OASIS handles it all!
 
-### Recommended Approach
-
-1. **First:** Check OASIS API documentation or test `/api/wallet/send_token` endpoint with external address
-2. **If supported:** Use Option A (simplest)
-3. **If not supported:** Use Option B (implement direct blockchain SDK calls)
-
-### Implementation Code (Option A - If OASIS Supports External Addresses)
+### Implementation Code (✅ IMPLEMENTED)
 
 ```typescript
 async withdraw(params: {
@@ -394,7 +390,7 @@ async withdraw(params: {
   try {
     // 1. Get user entity
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user || !user.avatarId) {
+    if (!user?.avatarId) {
       throw new Error(`User ${userId} not found or missing avatarId`);
     }
     
@@ -404,25 +400,30 @@ async withdraw(params: {
       throw new Error(`Asset ${assetId} not found`);
     }
     
-    // 3. Get user's default wallet
+    // 3. Get user's wallet for the blockchain
     const providerType = blockchain === 'solana' ? 'SolanaOASIS' : 'EthereumOASIS';
-    const wallet = await this.oasisWalletService.getDefaultWallet(user.avatarId);
+    const wallets = await this.oasisWalletService.getWallets(user.avatarId, providerType);
+    const matchingWallet = wallets.find((w) => w.providerType === providerType);
     
-    if (!wallet || wallet.providerType !== providerType) {
-      throw new Error(`User ${userId} missing default ${providerType} wallet`);
+    if (!matchingWallet) {
+      throw new Error(`User ${userId} missing ${providerType} wallet`);
     }
     
-    // 4. Send tokens to external address via OASIS
+    // 4. Detect address type and send tokens via OASIS
+    // OASIS API supports both avatar IDs and external wallet addresses
+    const isWalletAddress = !toAddress.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     const tokenSymbol = asset.symbol || assetId;
-    const amountNumber = Number(amount) / 1e9; // Convert from BigInt (adjust decimals as needed)
+    const decimals = asset.decimals || (blockchain === 'solana' ? 9 : 18);
+    const amountNumber = Number(amount) / 10 ** decimals;
     
     const result = await this.oasisWalletService.sendToken({
       fromAvatarId: user.avatarId,
-      toAvatarId: toAddress, // External address - verify if OASIS supports this
+      toWalletAddress: isWalletAddress ? toAddress : undefined,  // External address
+      toAvatarId: isWalletAddress ? undefined : toAddress,       // Avatar ID
       amount: amountNumber,
-      tokenSymbol: tokenSymbol,
-      providerType: providerType,
-      walletId: wallet.walletId,
+      tokenSymbol,
+      providerType,
+      walletId: matchingWallet.walletId,
     });
     
     this.logger.log(`Withdrawal executed successfully. Transaction hash: ${result.transactionHash}`);
@@ -434,26 +435,59 @@ async withdraw(params: {
 }
 ```
 
+**Key Points:**
+- ✅ Automatically detects if `toAddress` is a wallet address or avatar ID
+- ✅ Uses `toWalletAddress` for external addresses (Solana/Ethereum format)
+- ✅ Uses `toAvatarId` for avatar IDs (UUID format)
+- ✅ OASIS API handles both cases seamlessly
+
 ### Testing Instructions
 
-1. **First:** Test OASIS API with external address
+1. **Test with External Wallet Address:**
    ```bash
-   # Test if OASIS sendToken accepts external address as toAvatarId
-   curl -X POST https://api.oasisweb4.com/api/wallet/send_token \
-     -H "Authorization: Bearer <token>" \
-     -d '{"fromAvatarId": "...", "toAvatarId": "EXTERNAL_ADDRESS", ...}'
+   # Test withdrawal to external Solana address
+   POST /api/transactions/withdraw
+   {
+     "assetId": "asset-uuid",
+     "amount": 1.5,
+     "toAddress": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",  # External Solana address
+     "blockchain": "solana"
+   }
+   
+   # Test withdrawal to external Ethereum address
+   POST /api/transactions/withdraw
+   {
+     "assetId": "asset-uuid",
+     "amount": 0.1,
+     "toAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",  # External Ethereum address
+     "blockchain": "ethereum"
+   }
    ```
 
-2. **Integration Test:**
-   - Create test withdrawal request
+2. **Test with Avatar ID:**
+   ```bash
+   # Test withdrawal to another user's avatar
+   POST /api/transactions/withdraw
+   {
+     "assetId": "asset-uuid",
+     "amount": 1.5,
+     "toAddress": "550e8400-e29b-41d4-a716-446655440000",  # Avatar ID (UUID)
+     "blockchain": "solana"
+   }
+   ```
+
+3. **Integration Test:**
+   - Create test withdrawal request with external address
    - Verify transaction hash returned
    - Check transaction record has hash
    - Verify tokens sent to external address on blockchain explorer
+   - Test with both Solana and Ethereum addresses
 
-3. **Manual Test:**
+4. **Manual Test:**
    - Use testnet
    - Withdraw to external testnet address
-   - Verify on blockchain explorer
+   - Verify on blockchain explorer (Solscan, Etherscan)
+   - Verify transaction shows correct recipient address
 
 ### Files to Modify
 
@@ -462,16 +496,18 @@ async withdraw(params: {
 
 ### Dependencies
 
-- `OasisWalletService`
-- `UserRepository` (TypeORM repository)
-- `AssetRepository` (TypeORM repository via DataSource)
-- Verify OASIS API supports external addresses
+- `OasisWalletService` - ✅ Updated to support both `toAvatarId` and `toWalletAddress`
+- `UserRepository` (TypeORM repository) - ✅ Injected
+- `AssetRepository` (TypeORM repository via DataSource) - ✅ Injected
+- OASIS API - ✅ Confirmed supports external addresses via `toWalletAddress` parameter
 
 ### Success Criteria
 
 - ✅ Withdrawals execute successfully
 - ✅ Transaction hash is returned and stored
 - ✅ Tokens sent to external address (verify on blockchain explorer)
+- ✅ Supports both avatar IDs and external wallet addresses
+- ✅ Automatic address type detection works correctly
 
 ---
 

@@ -52,11 +52,18 @@ export class WalletController {
 	@Get("balance")
 	@ApiOperation({
 		summary: "Get all wallet balances",
-		description: "Retrieve all wallet balances for the authenticated user",
+		description:
+			"Retrieve all wallet balances for the authenticated user across all blockchains. " +
+			"This endpoint automatically creates/links an OASIS avatar if one doesn't exist, " +
+			"then fetches all wallets associated with the avatar and their current balances from OASIS API. " +
+			"Returns balances for both Solana and Ethereum wallets if they exist.",
 	})
 	@ApiResponse({
 		status: 200,
-		description: "Wallet balances retrieved successfully",
+		description:
+			"Wallet balances retrieved successfully. Returns array of balances for each wallet, " +
+			"including wallet ID, address, provider type, balance, and token symbol. " +
+			"If no wallets exist, returns empty array with message to generate wallets first.",
 		type: GetBalancesResponseDto,
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
@@ -137,7 +144,9 @@ export class WalletController {
 	@Get("balance/:assetId")
 	@ApiOperation({
 		summary: "Get asset balance",
-		description: "Retrieve balance for a specific asset",
+		description:
+			"Retrieve balance for a specific asset. This endpoint automatically creates/links an OASIS avatar if needed, " +
+			"then syncs the asset balance from the blockchain via OASIS API and returns the current balance information.",
 	})
 	@ApiParam({
 		name: "assetId",
@@ -146,7 +155,7 @@ export class WalletController {
 	})
 	@ApiResponse({
 		status: 200,
-		description: "Asset balance retrieved successfully",
+		description: "Asset balance retrieved successfully. Returns balance, available balance, and locked balance.",
 		type: GetAssetBalanceResponseDto,
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
@@ -198,15 +207,22 @@ export class WalletController {
 		summary: "Generate new blockchain wallet",
 		description:
 			"Generates a new blockchain wallet for the authenticated user's OASIS avatar. " +
-			"This endpoint creates a new keypair for the specified blockchain provider (Solana or Ethereum) " +
+			"This endpoint automatically creates/links an OASIS avatar if one doesn't exist, " +
+			"then generates a new keypair for the specified blockchain provider (Solana or Ethereum) " +
 			"and links it to the user's OASIS avatar. The wallet is stored securely in the OASIS system " +
 			"and can be used for blockchain transactions.\n\n" +
+			"**Automatic Avatar Linking:** If you don't have an OASIS avatar yet, this endpoint will:\n" +
+			"- Create an OASIS avatar using your email and name\n" +
+			"- Link it to your Better Auth user ID\n" +
+			"- Then proceed with wallet generation\n\n" +
 			"**OASIS Integration:** This endpoint calls the OASIS API to:\n" +
-			"- Ensure an OASIS avatar exists for the user (creates one if needed via `ensureOasisAvatar()`)\n" +
-			"- Generate a new keypair via `OasisWalletService.generateWallet()`\n" +
-			"- Link the wallet keys to the OASIS avatar\n" +
+			"- Ensure an OASIS avatar exists (creates one if needed)\n" +
+			"- Generate a new keypair via OASIS Keys API\n" +
+			"- Link private and public keys to the OASIS avatar\n" +
 			"- Store the wallet information in OASIS storage providers\n\n" +
-			"**Supported Blockchains:** Solana (SolanaOASIS), Ethereum (EthereumOASIS)\n\n" +
+			"**Supported Blockchains:**\n" +
+			"- Solana (SolanaOASIS) - For SOL and SPL tokens\n" +
+			"- Ethereum (EthereumOASIS) - For ETH and ERC-20 tokens\n\n" +
 			"**Wallet Storage:** Wallets are stored using OASIS storage providers, with private keys " +
 			"requiring local storage (SQLite) and public keys stored in MongoDB.",
 	})
@@ -377,11 +393,15 @@ export class WalletController {
 	@Post("sync")
 	@ApiOperation({
 		summary: "Sync wallet balances",
-		description: "Manually trigger balance synchronization for all user wallets",
+		description:
+			"Manually trigger balance synchronization for all user wallets. " +
+			"This endpoint automatically creates/links an OASIS avatar if needed, " +
+			"then fetches current balances from the blockchain via OASIS API and updates the local database. " +
+			"Use this to refresh balances after transactions or to ensure data is up-to-date.",
 	})
 	@ApiResponse({
 		status: 200,
-		description: "Balances synced successfully",
+		description: "Balances synced successfully. Returns updated balances for all wallets.",
 		type: SyncBalancesResponseDto,
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })

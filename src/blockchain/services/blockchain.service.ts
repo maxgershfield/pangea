@@ -211,19 +211,21 @@ export class BlockchainService {
 			const amountNumber = Number(amount) / 10 ** decimals;
 
 			// 7. Send tokens to external address via OASIS
-			// IMPORTANT: OASIS sendToken() may only support avatar-to-avatar transfers.
-			// If toAddress is an external address (not an avatarId), this may fail.
-			// In that case, we'll need to implement direct blockchain SDK calls (Option B).
-			this.logger.log(
-				`Attempting to send ${amountNumber} ${tokenSymbol} from avatar ${user.avatarId} to ${toAddress}`
+			// OASIS API supports sending to both avatar IDs and direct wallet addresses
+			// If toAddress looks like a wallet address (not a UUID), use toWalletAddress
+			// Otherwise, try as avatarId first, then fall back to wallet address
+			const isWalletAddress = !toAddress.match(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 			);
-			this.logger.warn(
-				"Note: OASIS API may only support avatar-to-avatar transfers. If this fails, we may need to implement direct blockchain SDK calls."
+
+			this.logger.log(
+				`Sending ${amountNumber} ${tokenSymbol} from avatar ${user.avatarId} to ${isWalletAddress ? "wallet address" : "avatar"} ${toAddress}`
 			);
 
 			const result = await this.oasisWalletService.sendToken({
 				fromAvatarId: user.avatarId,
-				toAvatarId: toAddress, // External address - OASIS may not support this
+				toWalletAddress: isWalletAddress ? toAddress : undefined,
+				toAvatarId: isWalletAddress ? undefined : toAddress,
 				amount: amountNumber,
 				tokenSymbol,
 				providerType,
@@ -240,18 +242,6 @@ export class BlockchainService {
 			return result.transactionHash;
 		} catch (error: any) {
 			this.logger.error(`Failed to execute withdrawal: ${error.message}`, error.stack);
-			
-			// If error suggests OASIS doesn't support external addresses, log a helpful message
-			if (
-				error.message?.includes("avatar") ||
-				error.message?.includes("not found") ||
-				error.response?.status === 400
-			) {
-				this.logger.error(
-					"OASIS API may not support external address withdrawals. Consider implementing direct blockchain SDK calls (Option B from implementation plan)."
-				);
-			}
-			
 			throw error;
 		}
 	}

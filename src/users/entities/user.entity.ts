@@ -7,44 +7,44 @@ import {
 	UpdateDateColumn,
 } from "typeorm";
 
-@Entity("users")
+@Entity("user")
 export class User {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@Column({ unique: true })
+	@Column({ type: "text", unique: true })
 	@Index("idx_users_email")
 	email: string;
 
-	@Column({ name: "password_hash", nullable: true })
+	@Column({ type: "text", name: "password_hash", nullable: true })
 	passwordHash: string; // Nullable if using OASIS auth only
 
-	@Column({ nullable: true })
+	@Column({ type: "text", nullable: true })
 	username: string;
 
-	@Column({ nullable: true })
+	@Column({ type: "text", nullable: true })
 	firstName: string;
 
-	@Column({ nullable: true })
+	@Column({ type: "text", nullable: true })
 	lastName: string;
 
 	// Link to OASIS Avatar
-	@Column({ name: "avatar_id", unique: true, nullable: true })
+	@Column({ type: "text", name: "avatar_id", unique: true, nullable: true })
 	avatarId: string;
 
 	// Wallet addresses (from OASIS Wallet API)
-	@Column({ name: "wallet_address_solana", nullable: true })
+	@Column({ type: "text", name: "wallet_address_solana", nullable: true })
 	walletAddressSolana: string;
 
-	@Column({ name: "wallet_address_ethereum", nullable: true })
+	@Column({ type: "text", name: "wallet_address_ethereum", nullable: true })
 	walletAddressEthereum: string;
 
 	// User role
-	@Column({ default: "user" })
+	@Column({ type: "text", default: "user" })
 	role: string;
 
 	// KYC status
-	@Column({ name: "kyc_status", default: "pending" })
+	@Column({ type: "text", name: "kyc_status", default: "pending" })
 	kycStatus: string;
 
 	// Timestamps
@@ -54,9 +54,9 @@ export class User {
 	@UpdateDateColumn({ name: "updated_at" })
 	updatedAt: Date;
 
-	@Column({ name: "last_login", nullable: true })
+	@Column({ type: "timestamp", name: "last_login", nullable: true })
 	lastLogin: Date;
 
-	@Column({ name: "is_active", default: true })
+	@Column({ type: "boolean", name: "is_active", default: true })
 	isActive: boolean;
 }

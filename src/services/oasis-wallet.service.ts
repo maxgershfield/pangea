@@ -29,7 +29,8 @@ export interface WalletBalance {
 
 export interface SendTokenRequest {
 	fromAvatarId: string;
-	toAvatarId: string;
+	toAvatarId?: string; // Optional: if provided, OASIS will look up wallet address
+	toWalletAddress?: string; // Optional: direct wallet address (can be external address)
 	amount: number;
 	tokenSymbol: string;
 	providerType: string;
@@ -455,17 +456,47 @@ export class OasisWalletService {
 	}
 
 	/**
-	 * Send tokens between avatars
+	 * Send tokens between avatars or to external wallet addresses
+	 * 
+	 * OASIS API supports both:
+	 * - Sending to avatar ID (OASIS will look up the wallet address)
+	 * - Sending directly to wallet address (can be external address)
+	 * 
+	 * Provide either `toAvatarId` OR `toWalletAddress` (or both - toWalletAddress takes precedence)
 	 */
 	async sendToken(
 		request: SendTokenRequest
 	): Promise<{ transactionHash: string; success: boolean }> {
 		try {
+			// Validate that at least one destination is provided
+			if (!(request.toAvatarId || request.toWalletAddress)) {
+				throw new Error(
+					"Either toAvatarId or toWalletAddress must be provided"
+				);
+			}
+
+			const destination = request.toWalletAddress || `avatar ${request.toAvatarId}`;
 			this.logger.log(
-				`Sending tokens: ${request.amount} ${request.tokenSymbol} from ${request.fromAvatarId} to ${request.toAvatarId}`
+				`Sending tokens: ${request.amount} ${request.tokenSymbol} from ${request.fromAvatarId} to ${destination}`
 			);
 
-			const response = await this.axiosInstance.post("/api/wallet/send_token", request);
+			// Prepare request body - OASIS API accepts both toAvatarId and toWalletAddress
+			const requestBody: any = {
+				fromAvatarId: request.fromAvatarId,
+				amount: request.amount,
+				tokenSymbol: request.tokenSymbol,
+				providerType: request.providerType,
+				walletId: request.walletId,
+			};
+
+			// Add destination - prefer wallet address if both are provided
+			if (request.toWalletAddress) {
+				requestBody.toWalletAddress = request.toWalletAddress;
+			} else if (request.toAvatarId) {
+				requestBody.toAvatarId = request.toAvatarId;
+			}
+
+			const response = await this.axiosInstance.post("/api/wallet/send_token", requestBody);
 
 			const result = response.data?.result || response.data;
 

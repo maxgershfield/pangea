@@ -91,7 +91,21 @@ export class OrdersController {
 
 	@ApiOperation({
 		summary: "Create order",
-		description: "Creates a new buy or sell order for the authenticated user",
+		description:
+			"Creates a new buy or sell order for the authenticated user. " +
+			"When a buy order matches a sell order (or vice versa), the system automatically executes the trade " +
+			"on the blockchain via OASIS API. The trade execution transfers tokens from seller to buyer " +
+			"and returns a transaction hash that is stored in the trade record.\n\n" +
+			"**Order Matching:** Orders are matched automatically by the OrderMatchingService when:\n" +
+			"- Buy order price >= Sell order price\n" +
+			"- Both orders are for the same asset\n" +
+			"- Both orders are on the same blockchain\n" +
+			"- Both users have OASIS avatars and wallets\n\n" +
+			"**Trade Execution:** When orders match:\n" +
+			"- `BlockchainService.executeTrade()` is called automatically\n" +
+			"- Tokens are sent from seller to buyer via OASIS API\n" +
+			"- Transaction hash is returned and stored\n" +
+			"- Trade record is created with transaction details",
 	})
 	@ApiResponse({
 		status: 201,
@@ -101,7 +115,10 @@ export class OrdersController {
 	@ApiResponse({ status: 400, description: "Invalid order data" })
 	@ApiResponse({ status: 401, description: "Unauthorized" })
 	@ApiResponse({ status: 404, description: "Asset not found" })
-	@ApiResponse({ status: 422, description: "Insufficient balance" })
+	@ApiResponse({
+		status: 422,
+		description: "Insufficient balance - User doesn't have enough payment tokens (for buy orders) or asset tokens (for sell orders)",
+	})
 	@Post()
 	async create(@Body() createOrderDto: CreateOrderDto, @CurrentUser() user: { id: string }) {
 		return this.ordersService.create(createOrderDto, user.id);

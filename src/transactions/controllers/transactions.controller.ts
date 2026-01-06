@@ -24,11 +24,14 @@ export class TransactionsController {
 	@Get()
 	@ApiOperation({
 		summary: "Get all transactions",
-		description: "Retrieve transaction history for the authenticated user with optional filters",
+		description:
+			"Retrieve transaction history for the authenticated user with optional filters. " +
+			"Supports filtering by asset ID, transaction type (deposit/withdrawal), status, and date range. " +
+			"Returns paginated results with transaction details including transaction hashes, amounts, and blockchain information.",
 	})
 	@ApiResponse({
 		status: 200,
-		description: "List of transactions retrieved successfully",
+		description: "List of transactions retrieved successfully. Returns paginated results with total count.",
 		type: TransactionListResponseDto,
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
@@ -44,11 +47,14 @@ export class TransactionsController {
 	@Get("pending")
 	@ApiOperation({
 		summary: "Get pending transactions",
-		description: "Retrieve all pending transactions for the authenticated user",
+		description:
+			"Retrieve all pending transactions for the authenticated user. " +
+			"Pending transactions are those that have been initiated but not yet confirmed on the blockchain. " +
+			"Use this endpoint to track transactions that are still processing.",
 	})
 	@ApiResponse({
 		status: 200,
-		description: "List of pending transactions retrieved successfully",
+		description: "List of pending transactions retrieved successfully. Returns array of transaction records.",
 		type: [TransactionResponseDto],
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
@@ -59,7 +65,10 @@ export class TransactionsController {
 	@Get(":txId")
 	@ApiOperation({
 		summary: "Get transaction by ID",
-		description: "Retrieve details of a specific transaction",
+		description:
+			"Retrieve details of a specific transaction including status, transaction hash, and blockchain details. " +
+			"The transaction status is fetched from the blockchain via OASIS API using `BlockchainService.getTransaction()`. " +
+			"Returns transaction information including status (pending/confirmed/failed), block number, addresses, amount, and confirmations.",
 	})
 	@ApiParam({
 		name: "txId",
@@ -68,7 +77,7 @@ export class TransactionsController {
 	})
 	@ApiResponse({
 		status: 200,
-		description: "Transaction details retrieved successfully",
+		description: "Transaction details retrieved successfully. Includes transaction hash, status, blockchain details, and addresses.",
 		type: TransactionResponseDto,
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
@@ -80,11 +89,16 @@ export class TransactionsController {
 	@Post("deposit")
 	@ApiOperation({
 		summary: "Initiate deposit",
-		description: "Initiate a new deposit transaction for the authenticated user",
+		description:
+			"Initiate a new deposit transaction for the authenticated user. " +
+			"This endpoint generates a vault address where the user should send their tokens. " +
+			"The deposit will be monitored and confirmed once tokens are received at the vault address. " +
+			"Returns the vault address and transaction record. The user must send tokens to the vault address manually.",
 	})
 	@ApiResponse({
 		status: 201,
-		description: "Deposit initiated successfully",
+		description:
+			"Deposit initiated successfully. Returns transaction record with vault address where tokens should be sent.",
 		type: DepositResponseDto,
 	})
 	@ApiResponse({ status: 400, description: "Invalid deposit parameters" })
@@ -96,18 +110,29 @@ export class TransactionsController {
 	@Post("withdraw")
 	@ApiOperation({
 		summary: "Initiate withdrawal",
-		description: "Initiate a new withdrawal transaction for the authenticated user",
+		description:
+			"Initiate a new withdrawal transaction for the authenticated user. " +
+			"Withdraws tokens to an external wallet address or another user's avatar. " +
+			"The system automatically detects if the `toAddress` is a wallet address or avatar ID. " +
+			"Supports both Solana and Ethereum blockchains. " +
+			"The withdrawal will lock your balance until the transaction completes or fails.",
 	})
 	@ApiResponse({
 		status: 201,
-		description: "Withdrawal initiated successfully",
+		description: "Withdrawal initiated successfully. Returns transaction record with transaction hash.",
 		type: WithdrawalResponseDto,
 	})
 	@ApiResponse({
 		status: 400,
-		description: "Invalid withdrawal parameters or insufficient balance",
+		description:
+			"Invalid withdrawal parameters or insufficient balance. " +
+			"Common errors: invalid address format, insufficient balance, invalid asset ID.",
 	})
 	@ApiResponse({ status: 401, description: "Unauthorized - Invalid or missing JWT token" })
+	@ApiResponse({
+		status: 404,
+		description: "Asset not found or user missing wallet for the specified blockchain",
+	})
 	async withdraw(@Request() req, @Body() dto: WithdrawalDto) {
 		return this.transactionsService.initiateWithdrawal(dto, req.user.id);
 	}

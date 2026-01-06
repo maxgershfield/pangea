@@ -46,52 +46,69 @@ export class AssetsService {
 	 * Find all assets with pagination and filters
 	 */
 	async findAll(query: FindAssetsDto) {
-		const { page = 1, limit = 20, ...filters } = query;
-		const skip = (page - 1) * limit;
+		try {
+			const { page = 1, limit = 20, ...filters } = query;
+			const skip = (page - 1) * limit;
 
-		const queryBuilder = this.assetRepository.createQueryBuilder("asset");
+			const queryBuilder = this.assetRepository.createQueryBuilder("asset");
 
-		if (filters.status) {
-			queryBuilder.where("asset.status = :status", { status: filters.status });
+			if (filters.status) {
+				queryBuilder.where("asset.status = :status", { status: filters.status });
+			}
+
+			if (filters.assetClass) {
+				queryBuilder.andWhere("asset.assetClass = :assetClass", {
+					assetClass: filters.assetClass,
+				});
+			}
+
+			if (filters.blockchain) {
+				queryBuilder.andWhere("asset.blockchain = :blockchain", {
+					blockchain: filters.blockchain,
+				});
+			}
+
+			queryBuilder
+				.leftJoinAndSelect("asset.issuer", "issuer")
+				.orderBy("asset.createdAt", "DESC")
+				.skip(skip)
+				.take(limit);
+
+			const [items, total] = await queryBuilder.getManyAndCount();
+
+			return {
+				items,
+				total,
+				page,
+				limit,
+				totalPages: Math.ceil(total / limit),
+			};
+		} catch (error) {
+			this.logger.error(
+				`Error fetching assets: ${error.message}`,
+				error.stack
+			);
+			throw error;
 		}
-
-		if (filters.assetClass) {
-			queryBuilder.andWhere("asset.assetClass = :assetClass", {
-				assetClass: filters.assetClass,
-			});
-		}
-
-		if (filters.blockchain) {
-			queryBuilder.andWhere("asset.blockchain = :blockchain", {
-				blockchain: filters.blockchain,
-			});
-		}
-
-		queryBuilder
-			.leftJoinAndSelect("asset.issuer", "issuer")
-			.orderBy("asset.createdAt", "DESC")
-			.skip(skip)
-			.take(limit);
-
-		const [items, total] = await queryBuilder.getManyAndCount();
-
-		return {
-			items,
-			total,
-			page,
-			limit,
-			totalPages: Math.ceil(total / limit),
-		};
 	}
 
 	/**
-	 * Find one asset by assetId
+	 * Find one asset by assetId or UUID
 	 */
 	async findOne(assetId: string): Promise<TokenizedAsset> {
-		const asset = await this.assetRepository.findOne({
+		// Try to find by assetId first (e.g., "RWA-COIN-001")
+		let asset = await this.assetRepository.findOne({
 			where: { assetId },
 			relations: ["issuer"],
 		});
+
+		// If not found by assetId, try to find by UUID (if it looks like a UUID)
+		if (!asset && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assetId)) {
+			asset = await this.assetRepository.findOne({
+				where: { id: assetId },
+				relations: ["issuer"],
+			});
+		}
 
 		if (!asset) {
 			throw new NotFoundException(`Asset with ID ${assetId} not found`);
@@ -314,16 +331,32 @@ export class AssetsService {
 	 * Get trade history for an asset
 	 */
 	async getTradeHistory(assetId: string, limit = 50): Promise<Trade[]> {
-		// Verify asset exists
-		await this.findOne(assetId);
+		try {
+			// Verify asset exists - this will throw NotFoundException if not found
+			const asset = await this.findOne(assetId);
 
-		return this.tradeRepository.find({
-			where: { assetId },
-			order: {
-				executedAt: "DESC",
-			},
-			take: limit,
-			relations: ["buyer", "seller"],
-		});
+			// Use the asset's assetId for the trade query (in case we found by UUID)
+			const tradeAssetId = asset.assetId;
+
+			return this.tradeRepository.find({
+				where: { assetId: tradeAssetId },
+				order: {
+					executedAt: "DESC",
+				},
+				take: limit,
+				relations: ["buyer", "seller"],
+			});
+		} catch (error) {
+			// Re-throw NotFoundException as-is (will return 404)
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			// Log unexpected errors and re-throw as 500
+			this.logger.error(
+				`Error fetching trade history for asset ${assetId}: ${error.message}`,
+				error.stack
+			);
+			throw error;
+		}
 	}
 }
