@@ -40,12 +40,21 @@ interface SeedAssetData {
 	metadata: Record<string, any>;
 }
 
-// Helper function to generate Brandfetch logo URL
-// Set BRANDFETCH_CLIENT_ID environment variable to use Brandfetch API
-// Format: https://cdn.brandfetch.io/{domain}?c={client-id}
+// Helper function to get local logo path (matching frontend /brands/ directory)
+// Using local paths instead of Brandfetch due to API 400 errors
+const logoPaths: Record<string, string> = {
+	"coinbase.com": "/brands/coinbase.png",
+	"spacex.com": "/brands/spacex.jpeg",
+	"databricks.com": "/brands/databricks.jpg",
+	"x.com": "/brands/X.png",
+	"stripe.com": "/brands/stripe.jpeg",
+	"plaid.com": "/brands/plaid.jpg",
+	"kraken.com": "/brands/kraken.jpeg",
+	"anthropic.com": "/brands/anthropic.avif",
+};
+
 function getLogoUrl(domain: string): string {
-	const clientId = process.env.BRANDFETCH_CLIENT_ID || "1ida8ggQZDf64bgCqxt";
-	return `https://cdn.brandfetch.io/${domain}?c=${clientId}`;
+	return logoPaths[domain] || `/brands/${domain.split(".")[0]}.png`;
 }
 
 const seedAssetsData: SeedAssetData[] = [
