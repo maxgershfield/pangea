@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { config } from "dotenv";
 import { AppDataSource } from "../src/config/data-source.js";
 import { TokenizedAsset } from "../src/assets/entities/tokenized-asset.entity.js";
-import { User } from "../src/users/entities/user.entity.js";
+import { BetterAuthUser } from "../src/auth/entities/better-auth-user.entity.js";
 
 // Load environment variables
 config();
@@ -298,7 +298,7 @@ async function seedAssets() {
 		}
 
 		// Get a default issuer (first user in the database, or create a system user)
-		const userRepository = AppDataSource.getRepository(User);
+		const userRepository = AppDataSource.getRepository(BetterAuthUser);
 		let issuer = await userRepository.findOne({
 			where: {},
 			order: { createdAt: "ASC" },
@@ -307,16 +307,9 @@ async function seedAssets() {
 		if (issuer) {
 			console.log(`✅ Using existing issuer: ${issuer.email} (${issuer.id})`);
 		} else {
-			console.log("⚠️  No users found in database. Creating a system issuer...");
-			// Create a system issuer user (you may need to adjust this based on your better-auth setup)
-			issuer = userRepository.create({
-				email: "system@pangeamarkets.com",
-				username: "system",
-				role: "admin",
-				kycStatus: "approved",
-			});
-			issuer = await userRepository.save(issuer);
-			console.log(`✅ Created system issuer: ${issuer.id}`);
+			console.log("⚠️  No users found in database. Please create a user first via Better Auth.");
+			console.log("   The seed script requires at least one user to exist as an issuer.");
+			throw new Error("No users found in database. Please register a user first.");
 		}
 
 		// Get asset repository
