@@ -15,24 +15,24 @@ export class TokenizedAsset {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@Column({ unique: true, name: "asset_id", length: 100 })
+	@Column({ type: "text", unique: true, name: "asset_id", length: 100 })
 	@Index("idx_assets_asset_id")
 	assetId: string;
 
-	@Column({ length: 255 })
+	@Column({ type: "text", length: 255 })
 	name: string;
 
-	@Column({ length: 20 })
+	@Column({ type: "text", length: 20 })
 	symbol: string;
 
 	@Column("text", { nullable: true })
 	description: string;
 
 	// Asset Classification
-	@Column({ name: "asset_class", length: 50 })
+	@Column({ type: "text", name: "asset_class", length: 50 })
 	assetClass: string; // 'real_estate', 'art', 'commodities', etc.
 
-	@Column({ name: "asset_type", length: 50, nullable: true })
+	@Column({ type: "text", name: "asset_type", length: 50, nullable: true })
 	assetType: string; // 'residential', 'commercial', etc.
 
 	// Tokenization Details
@@ -42,22 +42,22 @@ export class TokenizedAsset {
 	@Column({ type: "int", default: 0 })
 	decimals: number;
 
-	@Column({ name: "token_standard", length: 20, nullable: true })
+	@Column({ type: "text", name: "token_standard", length: 20, nullable: true })
 	tokenStandard: string; // 'SPL', 'ERC-721', 'ERC-1155', 'UAT'
 
 	// Blockchain Details
-	@Column({ length: 20 })
+	@Column({ type: "text", length: 20 })
 	@Index("idx_assets_blockchain")
 	blockchain: string; // 'solana', 'ethereum', 'radix'
 
-	@Column({ length: 20, default: "devnet" })
+	@Column({ type: "text", length: 20, default: "devnet" })
 	network: string; // 'devnet', 'testnet', 'mainnet'
 
-	@Column({ name: "contract_address", length: 255, nullable: true })
+	@Column({ type: "text", name: "contract_address", length: 255, nullable: true })
 	@Index("idx_assets_contract_address")
 	contractAddress: string;
 
-	@Column({ name: "mint_address", length: 255, nullable: true })
+	@Column({ type: "text", name: "mint_address", length: 255, nullable: true })
 	mintAddress: string; // Solana mint address
 
 	// Valuation
@@ -88,7 +88,7 @@ export class TokenizedAsset {
 	legalDocumentsUri: string;
 
 	// Status
-	@Column({ length: 20, default: "draft" })
+	@Column({ type: "text", length: 20, default: "draft" })
 	@Index("idx_assets_status")
 	status: string; // 'draft', 'listed', 'trading', 'closed'
 
@@ -101,13 +101,13 @@ export class TokenizedAsset {
 	issuerId: string;
 
 	// Timestamps
-	@CreateDateColumn({ name: "created_at" })
+	@CreateDateColumn({ name: "created_at", type: "timestamp" })
 	createdAt: Date;
 
-	@UpdateDateColumn({ name: "updated_at" })
+	@UpdateDateColumn({ name: "updated_at", type: "timestamp" })
 	updatedAt: Date;
 
-	@Column({ name: "listed_at", nullable: true })
+	@Column({ name: "listed_at", type: "timestamp", nullable: true })
 	listedAt: Date;
 
 	// Additional JSON metadata
