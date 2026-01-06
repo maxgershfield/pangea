@@ -44,16 +44,16 @@ export class UserBalance {
 	lockedBalance: bigint; // Locked in orders
 
 	// Blockchain
-	@Column({ length: 20 })
+	@Column({ type: "text", length: 20 })
 	blockchain: string;
 
 	@Column({ name: "on_chain_balance", type: "bigint", nullable: true })
 	onChainBalance: bigint; // Verified on-chain balance
 
 	// Timestamps
-	@Column({ name: "last_synced_at", nullable: true })
+	@Column({ type: "timestamp", name: "last_synced_at", nullable: true })
 	lastSyncedAt: Date;
 
-	@UpdateDateColumn({ name: "updated_at" })
+	@UpdateDateColumn({ name: "updated_at", type: "timestamp" })
 	updatedAt: Date;
 }

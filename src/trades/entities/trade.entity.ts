@@ -16,7 +16,7 @@ export class Trade {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@Column({ unique: true, name: "trade_id" })
+	@Column({ type: "text", unique: true, name: "trade_id" })
 	tradeId: string;
 
 	@ManyToOne(() => BetterAuthUser)
@@ -82,26 +82,26 @@ export class Trade {
 	})
 	platformFeePercentage: number;
 
-	@Column()
+	@Column({ type: "text" })
 	blockchain: string;
 
-	@Column({ name: "transaction_hash" })
+	@Column({ type: "text", name: "transaction_hash" })
 	@Index("idx_trades_transaction_hash")
 	transactionHash: string;
 
 	@Column("bigint", { nullable: true, name: "block_number" })
 	blockNumber: bigint;
 
-	@CreateDateColumn({ name: "executed_at" })
+	@CreateDateColumn({ name: "executed_at", type: "timestamp" })
 	@Index("idx_trades_executed_at")
 	executedAt: Date;
 
-	@Column({ nullable: true, name: "confirmed_at" })
+	@Column({ type: "timestamp", nullable: true, name: "confirmed_at" })
 	confirmedAt: Date;
 
-	@Column({ default: "pending" })
+	@Column({ type: "text", default: "pending" })
 	status: string;
 
-	@Column({ default: "pending", name: "settlement_status" })
+	@Column({ type: "text", default: "pending", name: "settlement_status" })
 	settlementStatus: string;
 }

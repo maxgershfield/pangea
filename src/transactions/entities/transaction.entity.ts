@@ -15,7 +15,7 @@ export class Transaction {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@Column({ unique: true, name: "transaction_id", length: 100 })
+	@Column({ type: "text", unique: true, name: "transaction_id", length: 100 })
 	transactionId: string;
 
 	@ManyToOne(() => BetterAuthUser)
@@ -34,11 +34,11 @@ export class Transaction {
 	assetId: string;
 
 	// Transaction Details
-	@Column({ name: "transaction_type", length: 20 })
+	@Column({ type: "text", name: "transaction_type", length: 20 })
 	@Index("idx_transactions_type")
 	transactionType: string; // 'deposit', 'withdrawal'
 
-	@Column({ length: 20, default: "pending" })
+	@Column({ type: "text", length: 20, default: "pending" })
 	@Index("idx_transactions_status")
 	status: string; // 'pending', 'processing', 'completed', 'failed'
 
@@ -55,27 +55,27 @@ export class Transaction {
 	amountUsd: number;
 
 	// Blockchain
-	@Column({ length: 20 })
+	@Column({ type: "text", length: 20 })
 	blockchain: string;
 
-	@Column({ name: "transaction_hash", length: 255, nullable: true })
+	@Column({ type: "text", name: "transaction_hash", length: 255, nullable: true })
 	@Index("idx_transactions_transaction_hash")
 	transactionHash: string;
 
-	@Column({ name: "from_address", length: 255, nullable: true })
+	@Column({ type: "text", name: "from_address", length: 255, nullable: true })
 	fromAddress: string;
 
-	@Column({ name: "to_address", length: 255, nullable: true })
+	@Column({ type: "text", name: "to_address", length: 255, nullable: true })
 	toAddress: string;
 
 	@Column({ name: "block_number", type: "bigint", nullable: true })
 	blockNumber: bigint;
 
 	// Timestamps
-	@CreateDateColumn({ name: "created_at" })
+	@CreateDateColumn({ name: "created_at", type: "timestamp" })
 	createdAt: Date;
 
-	@Column({ name: "confirmed_at", nullable: true })
+	@Column({ type: "timestamp", name: "confirmed_at", nullable: true })
 	confirmedAt: Date;
 
 	// Metadata
