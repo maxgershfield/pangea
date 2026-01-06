@@ -1,22 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { OasisWalletService } from "../../services/oasis-wallet.service.js";
-import { TokenizedAsset as TokenizedAssetEntity } from "../../assets/entities/tokenized-asset.entity.js";
-import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
+import { User } from "../../users/entities/user.entity.js";
 
-// Placeholder interface for TokenizedAsset (kept for backward compatibility)
+// Placeholder interface for TokenizedAsset
 export interface TokenizedAsset {
 	id: string;
-	symbol?: string;
 	contractAddress?: string;
 	mintAddress?: string;
 	blockchain: string;
 }
 
 export interface ExecuteTradeParams {
-	buyer: BetterAuthUser;
-	seller: BetterAuthUser;
+	buyer: User;
+	seller: User;
 	asset: TokenizedAsset;
 	quantity: number;
 	price: number;
@@ -26,14 +21,6 @@ export interface ExecuteTradeParams {
 export class BlockchainService {
 	private readonly logger = new Logger(BlockchainService.name);
 
-	constructor(
-		private readonly oasisWalletService: OasisWalletService,
-		@InjectRepository(BetterAuthUser)
-		private readonly userRepository: Repository<BetterAuthUser>,
-		@InjectRepository(TokenizedAssetEntity)
-		private readonly assetRepository: Repository<TokenizedAssetEntity>
-	) {}
-
 	/**
 	 * Execute a trade on the blockchain
 	 * This will call the smart contract to transfer tokens and payment
@@ -42,79 +29,34 @@ export class BlockchainService {
 		const { buyer, seller, asset, quantity, price } = params;
 
 		this.logger.log(
-			`Executing trade: ${asset.id}, quantity ${quantity}, price ${price}`
+			`Executing trade on blockchain: ${asset.blockchain}, asset ${asset.id}, quantity ${quantity}, price ${price}`
 		);
+		this.logger.log(`Buyer: ${buyer.id}, Seller: ${seller.id}`);
 
-		try {
-			// 1. Get OASIS avatar IDs for buyer and seller
-			const buyerAvatarId = buyer.avatarId;
-			const sellerAvatarId = seller.avatarId;
+		// TODO: Implement actual blockchain execution
+		// This should:
+		// 1. Connect to the appropriate blockchain (Solana/Ethereum)
+		// 2. Call the smart contract to execute the trade
+		// 3. Wait for transaction confirmation
+		// 4. Return the transaction hash
 
-			if (!(buyerAvatarId && sellerAvatarId)) {
-				throw new Error(
-					`Buyer or seller missing avatarId. Buyer: ${buyerAvatarId}, Seller: ${sellerAvatarId}`
-				);
-			}
+		// Placeholder implementation
+		const transactionHash = `0x${Math.random().toString(16).substring(2, 66)}`;
+		this.logger.log(`Trade executed with transaction hash: ${transactionHash}`);
 
-			// 2. Determine provider type from asset blockchain
-			const providerType =
-				asset.blockchain === "solana" ? "SolanaOASIS" : "EthereumOASIS";
+		// Simulate waiting for confirmation
+		await this.waitForConfirmation(transactionHash, asset.blockchain);
 
-			// 3. Get default wallets for buyer and seller
-			const buyerWallet = await this.oasisWalletService.getDefaultWallet(
-				buyerAvatarId
-			);
-			const sellerWallet = await this.oasisWalletService.getDefaultWallet(
-				sellerAvatarId
-			);
+		return transactionHash;
 
-			if (!(buyerWallet && sellerWallet)) {
-				throw new Error(
-					`Buyer or seller missing wallet. Buyer: ${buyerWallet?.walletId}, Seller: ${sellerWallet?.walletId}`
-				);
-			}
-
-			// Verify wallets are for the correct provider type
-			if (buyerWallet.providerType !== providerType) {
-				throw new Error(
-					`Buyer wallet provider type ${buyerWallet.providerType} does not match required ${providerType}`
-				);
-			}
-
-			if (sellerWallet.providerType !== providerType) {
-				throw new Error(
-					`Seller wallet provider type ${sellerWallet.providerType} does not match required ${providerType}`
-				);
-			}
-
-			// 4. Determine token symbol (from asset)
-			const tokenSymbol = asset.symbol || asset.id; // Use asset symbol or ID as token identifier
-
-			// 5. Send tokens from seller to buyer via OASIS
-			const result = await this.oasisWalletService.sendToken({
-				fromAvatarId: sellerAvatarId,
-				toAvatarId: buyerAvatarId,
-				amount: quantity,
-				tokenSymbol,
-				providerType,
-				walletId: sellerWallet.walletId,
-			});
-
-			this.logger.log(
-				`Trade executed successfully. Transaction hash: ${result.transactionHash}`
-			);
-
-			// Wait for confirmation (keep existing behavior for now)
-			await this.waitForConfirmation(result.transactionHash, asset.blockchain);
-
-			return result.transactionHash;
-		} catch (error: any) {
-			this.logger.error(
-				`Failed to execute trade: ${error.message}`,
-				error.stack
-			);
-			throw error;
-		}
+		// Actual implementation would look like:
+		// if (asset.blockchain === 'solana') {
+		//   return await this.executeSolanaTrade(params);
+		// } else if (asset.blockchain === 'ethereum') {
+		//   return await this.executeEthereumTrade(params);
+		// } else {
+		//   throw new Error(`Unsupported blockchain: ${asset.blockchain}`);
+		// }
 	}
 
 	/**
@@ -151,10 +93,6 @@ export class BlockchainService {
 
 	/**
 	 * Execute withdrawal on blockchain
-	 * 
-	 * Note: This implementation uses OASIS API which may only support avatar-to-avatar transfers.
-	 * If OASIS API doesn't support external addresses, this will fail and we'll need to implement
-	 * direct blockchain SDK calls (Option B from the implementation plan).
 	 */
 	async withdraw(params: {
 		user: string;
@@ -163,91 +101,31 @@ export class BlockchainService {
 		toAddress: string;
 		blockchain: string;
 	}): Promise<string> {
-		const { user: userId, asset: assetId, amount, toAddress, blockchain } = params;
+		const { asset, amount, toAddress, blockchain } = params;
 
 		this.logger.log(
-			`Initiating withdrawal: user ${userId}, asset ${assetId}, amount ${amount}, to ${toAddress}`
+			`Executing withdrawal on ${blockchain}: asset ${asset}, amount ${amount}, to ${toAddress}`
 		);
 
-		try {
-			// 1. Get user entity
-			const user = await this.userRepository.findOne({ where: { id: userId } });
-			if (!user?.avatarId) {
-				throw new Error(`User ${userId} not found or missing avatarId`);
-			}
+		// TODO: Implement actual blockchain withdrawal
+		// This should:
+		// 1. Connect to the appropriate blockchain (Solana/Ethereum)
+		// 2. Call the vault contract to withdraw tokens
+		// 3. Wait for transaction confirmation
+		// 4. Return the transaction hash
 
-			// 2. Get asset to determine token symbol
-			const asset = await this.assetRepository.findOne({ where: { id: assetId } });
-			if (!asset) {
-				throw new Error(`Asset ${assetId} not found`);
-			}
+		// Placeholder implementation
+		const transactionHash = `0x${Math.random().toString(16).substring(2, 66)}`;
+		this.logger.log(`Withdrawal executed with transaction hash: ${transactionHash}`);
 
-			// 3. Get provider type from blockchain
-			const providerType = blockchain === "solana" ? "SolanaOASIS" : "EthereumOASIS";
+		// Simulate waiting for confirmation
+		await this.waitForConfirmation(transactionHash, blockchain);
 
-			// 4. Get user's default wallet for the blockchain
-			const wallet = await this.oasisWalletService.getDefaultWallet(user.avatarId);
-			if (!wallet) {
-				throw new Error(`User ${userId} missing default wallet for ${providerType}`);
-			}
-
-			// Check if wallet matches the required provider type
-			// Note: getDefaultWallet may return any provider type, so we need to check
-			const wallets = await this.oasisWalletService.getWallets(user.avatarId, providerType);
-			const matchingWallet = wallets.find((w) => w.providerType === providerType);
-			
-			if (!matchingWallet) {
-				throw new Error(`User ${userId} missing ${providerType} wallet`);
-			}
-
-			// 5. Determine token symbol from asset
-			const tokenSymbol = asset.symbol || assetId;
-
-			// 6. Convert amount from BigInt to number (handle decimals)
-			// For Solana: typically 9 decimals (lamports)
-			// For Ethereum: typically 18 decimals (wei)
-			// For tokenized assets, use asset.decimals if available
-			const decimals = asset.decimals || (blockchain === "solana" ? 9 : 18);
-			const amountNumber = Number(amount) / 10 ** decimals;
-
-			// 7. Send tokens to external address via OASIS
-			// OASIS API supports sending to both avatar IDs and direct wallet addresses
-			// If toAddress looks like a wallet address (not a UUID), use toWalletAddress
-			// Otherwise, try as avatarId first, then fall back to wallet address
-			const isWalletAddress = !toAddress.match(
-				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-			);
-
-			this.logger.log(
-				`Sending ${amountNumber} ${tokenSymbol} from avatar ${user.avatarId} to ${isWalletAddress ? "wallet address" : "avatar"} ${toAddress}`
-			);
-
-			const result = await this.oasisWalletService.sendToken({
-				fromAvatarId: user.avatarId,
-				toWalletAddress: isWalletAddress ? toAddress : undefined,
-				toAvatarId: isWalletAddress ? undefined : toAddress,
-				amount: amountNumber,
-				tokenSymbol,
-				providerType,
-				walletId: matchingWallet.walletId,
-			});
-
-			this.logger.log(
-				`Withdrawal executed successfully. Transaction hash: ${result.transactionHash}`
-			);
-
-			// Wait for confirmation (simulated for now)
-			await this.waitForConfirmation(result.transactionHash, blockchain);
-
-			return result.transactionHash;
-		} catch (error: any) {
-			this.logger.error(`Failed to execute withdrawal: ${error.message}`, error.stack);
-			throw error;
-		}
+		return transactionHash;
 	}
 
 	/**
-	 * Get transaction details from blockchain via OASIS API
+	 * Get transaction details from blockchain
 	 */
 	async getTransaction(
 		transactionHash: string,
@@ -260,38 +138,18 @@ export class BlockchainService {
 		amount?: bigint;
 		confirmations?: number;
 	}> {
-		this.logger.log(
-			`Getting transaction ${transactionHash} from ${blockchain} via OASIS API`
-		);
+		this.logger.log(`Getting transaction ${transactionHash} from ${blockchain}`);
 
-		try {
-			// Call OASIS API to get transaction details
-			const tx = await this.oasisWalletService.getTransactionByHash(
-				transactionHash,
-				blockchain
-			);
+		// TODO: Implement actual blockchain transaction lookup
+		// For Solana: use connection.getTransaction()
+		// For Ethereum: use provider.getTransactionReceipt()
 
-			// Map OASIS API response to BlockchainService return type
-			return {
-				status: tx.status,
-				blockNumber: tx.blockNumber ? BigInt(tx.blockNumber) : undefined,
-				fromAddress: tx.fromAddress,
-				toAddress: tx.toAddress,
-				amount: tx.amount ? BigInt(tx.amount) : undefined,
-				confirmations: tx.confirmations,
-			};
-		} catch (error: any) {
-			this.logger.error(
-				`Failed to get transaction ${transactionHash} on ${blockchain}: ${error.message}`,
-				error.stack
-			);
-
-			// Return pending status on error (transaction might still be processing)
-			// This allows the caller to retry if needed
-			return {
-				status: "pending",
-			};
-		}
+		// Placeholder implementation
+		return {
+			status: "confirmed",
+			blockNumber: BigInt(Math.floor(Math.random() * 1_000_000)),
+			confirmations: 1,
+		};
 	}
 
 	/**
