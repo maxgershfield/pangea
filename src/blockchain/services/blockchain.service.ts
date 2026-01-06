@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { OasisWalletService } from "../../services/oasis-wallet.service.js";
 import { TokenizedAsset as TokenizedAssetEntity } from "../../assets/entities/tokenized-asset.entity.js";
-import { User } from "../../users/entities/user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 
 // Placeholder interface for TokenizedAsset (kept for backward compatibility)
 export interface TokenizedAsset {
@@ -15,8 +15,8 @@ export interface TokenizedAsset {
 }
 
 export interface ExecuteTradeParams {
-	buyer: User;
-	seller: User;
+	buyer: BetterAuthUser;
+	seller: BetterAuthUser;
 	asset: TokenizedAsset;
 	quantity: number;
 	price: number;
@@ -28,8 +28,8 @@ export class BlockchainService {
 
 	constructor(
 		private readonly oasisWalletService: OasisWalletService,
-		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		@InjectRepository(BetterAuthUser)
+		private readonly userRepository: Repository<BetterAuthUser>,
 		@InjectRepository(TokenizedAssetEntity)
 		private readonly assetRepository: Repository<TokenizedAssetEntity>
 	) {}
