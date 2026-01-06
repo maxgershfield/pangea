@@ -1,5 +1,7 @@
 # User Registration and OASIS Avatar Linking Flow
 
+> Note: This diagram documents the legacy OASIS-first flow. Better Auth now owns user registration; the backend only links OASIS avatars to existing Better Auth users in the `user` table via `oasis-link.service.ts`.
+
 ## Complete Flow Diagram
 
 ```
@@ -154,16 +156,16 @@
 │  │  ┌──────────────────────────────────────────────────────────────┐   │  │
 │  │  │ Step 2: Sync to local database                                │   │  │
 │  │  │   const user = await                                          │   │  │
-│  │  │     this.userSyncService.syncOasisUserToLocal(oasisAvatar)    │   │  │
+│  │  │     this.userSyncService.createAndLinkAvatar(oasisAvatar)    │   │  │
 │  │  └──────────────────────────────────────────────────────────────┘   │  │
 │  └───────────────┬──────────────────────────────────────────────────────┘  │
 │                  │                                                          │
-│                  │ 10. syncOasisUserToLocal(OASISAvatar)                   │
+│                  │ 10. createAndLinkAvatar(OASISAvatar)                   │
 │                  │                                                          │
 │                  ▼                                                          │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │ user-sync.service.ts                                                  │  │
-│  │ UserSyncService.syncOasisUserToLocal()                               │  │
+│  │ oasis-link.service.ts                                                 │  │
+│  │ OasisLinkService.createAndLinkAvatar()                               │  │
 │  │                                                                        │  │
 │  │  • Checks if user exists by avatarId or email                         │  │
 │  │  • Creates or updates User entity:                                   │  │
@@ -185,7 +187,7 @@
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │ Pangea Database (PostgreSQL)                                          │  │
 │  │                                                                        │  │
-│  │  users table:                                                         │  │
+│  │  user table:                                                          │  │
 │  │  ┌──────────────────────────────────────────────────────────────┐   │  │
 │  │  │ id (UUID)          │ email              │ avatar_id (UUID)   │   │  │
 │  │  ├──────────────────────────────────────────────────────────────┤   │  │
@@ -257,12 +259,12 @@
 │                         KEY LINKING POINT                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-    Pangea User ID (UUID)          ←→          OASIS Avatar ID (UUID)
+    Pangea User ID (text)          ←→          OASIS Avatar ID (UUID)
     ────────────────────                      ────────────────────
     
     Stored in:                                  Stored in:
-    • users.id                                  • Avatar.Id
-    • users.avatar_id (foreign key)             • Avatar.AvatarId
+    • user.id                                   • Avatar.Id
+    • user.avatar_id (foreign key)              • Avatar.AvatarId
     
     Used in:                                     Used in:
     • Pangea JWT token (sub field)              • OASIS API calls
@@ -281,11 +283,10 @@ Pangea Backend:
 │   └── services/
 │       ├── auth.service.ts             ← Main orchestration
 │       ├── oasis-auth.service.ts        ← OASIS API client
-│       └── user-sync.service.ts        ← ⭐ LINKING HAPPENS HERE
+│       └── oasis-link.service.ts       ← ⭐ LINKING HAPPENS HERE
 │
-└── src/users/
-    └── entities/
-        └── user.entity.ts              ← User model with avatarId field
+└── src/auth/entities/
+    └── better-auth-user.entity.ts      ← User model with avatarId field
 
 OASIS API:
 ├── ONODE/.../Controllers/
@@ -304,12 +305,12 @@ OASIS API:
 │                    WHERE THE LINK IS CREATED                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-File: pangea-repo/src/auth/services/user-sync.service.ts
-Method: syncOasisUserToLocal()
+File: pangea-repo/src/auth/services/oasis-link.service.ts
+Method: createAndLinkAvatar()
 Lines: 24-97
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  async syncOasisUserToLocal(oasisAvatar: OASISAvatar): Promise<User> {     │
+│  async createAndLinkAvatar(oasisAvatar: OASISAvatar): Promise<User> {     │
 │                                                                              │
 │    // Try to find existing user by avatarId                                 │
 │    let user = await this.userRepository.findOne({                           │
@@ -353,17 +354,16 @@ Lines: 24-97
 
 Pangea Database (PostgreSQL):
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ users table                                                               │
+│ user table                                                                │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ Column           │ Type    │ Constraints                                │
 ├──────────────────┼─────────┼────────────────────────────────────────────┤
-│ id               │ UUID    │ PRIMARY KEY (Pangea User ID)               │
+│ id               │ TEXT    │ PRIMARY KEY (Pangea User ID)               │
 │ email            │ VARCHAR │ UNIQUE, NOT NULL                           │
 │ username         │ VARCHAR │ NULLABLE                                   │
 │ first_name       │ VARCHAR │ NULLABLE                                   │
 │ last_name        │ VARCHAR │ NULLABLE                                   │
-│ avatar_id        │ VARCHAR │ UNIQUE, NULLABLE  ← OASIS Avatar ID        │
-│ password_hash    │ VARCHAR │ NULLABLE                                   │
+│ avatar_id        │ VARCHAR │ NULLABLE  ← OASIS Avatar ID                │
 │ role             │ VARCHAR │ DEFAULT 'user'                             │
 │ created_at       │ TIMESTAMP│ DEFAULT now()                             │
 │ updated_at       │ TIMESTAMP│ DEFAULT now()                              │
@@ -400,21 +400,15 @@ OASIS Database (MongoDB/Neo4j/etc):
    ↓
 4. Pangea backend receives OASIS avatar data
    ↓
-5. UserSyncService creates/updates Pangea user record
+5. OasisLinkService creates/updates Pangea user record
    ↓
-6. ⭐ LINK CREATED: users.avatar_id = OASIS avatarId
+6. ⭐ LINK CREATED: user.avatar_id = OASIS avatarId
    ↓
 7. Pangea generates JWT token (includes avatarId)
    ↓
 8. User receives token and can use OASIS features
 
 The link is stored in:
-  • Pangea Database: users.avatar_id column
+  • Pangea Database: user.avatar_id column
   • Pangea JWT Token: avatarId field in payload
   • Used for: Wallet creation, NFT operations, OASIS API calls
-
-
-
-
-
-

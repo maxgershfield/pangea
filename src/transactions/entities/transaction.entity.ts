@@ -1,14 +1,14 @@
 import {
-	Column,
-	CreateDateColumn,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
 } from "typeorm";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
-import { User } from "../../users/entities/user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 
 @Entity("transactions")
 export class Transaction {
@@ -18,12 +18,12 @@ export class Transaction {
 	@Column({ unique: true, name: "transaction_id", length: 100 })
 	transactionId: string;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => BetterAuthUser)
 	@JoinColumn({ name: "user_id" })
 	@Index("idx_transactions_user_id")
-	user: User;
+	user: BetterAuthUser;
 
-	@Column({ name: "user_id", type: "uuid" })
+	@Column({ name: "user_id", type: "text" })
 	userId: string;
 
 	@ManyToOne(() => TokenizedAsset)

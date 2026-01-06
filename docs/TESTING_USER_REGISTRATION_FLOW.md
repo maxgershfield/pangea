@@ -95,7 +95,7 @@ Summary:
   ✅ User registration successful
   ✅ OASIS avatar created
   ✅ Pangea User ID ↔ OASIS Avatar ID link established
-  ✅ Link stored in database (users.avatar_id)
+  ✅ Link stored in database (user.avatar_id)
   ✅ Link included in JWT token
   ✅ Link persists across login
   ✅ Link can be used for OASIS operations
@@ -226,14 +226,14 @@ npm run start:dev
 **Error:** `❌ Link not found in registration response!`
 
 **Possible Causes:**
-- `user-sync.service.ts` not saving avatarId
+- `oasis-link.service.ts` not saving avatarId
 - Database save failed
 - Response parsing issue
 
 **Solution:**
 - Check backend logs
 - Verify database connection
-- Check `user-sync.service.ts` implementation
+- Check `oasis-link.service.ts` implementation
 
 ### JWT Token Missing avatarId
 

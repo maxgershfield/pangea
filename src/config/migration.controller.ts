@@ -6,7 +6,7 @@ import { JwksJwtGuard } from "../auth/guards/jwks-jwt.guard.js";
 
 /**
  * Admin controller to manually trigger migrations
- * This is useful when Railway Shell is not available
+ * Useful when shell access is not available in the deployment environment
  */
 @Controller("admin/migrations")
 @UseGuards(JwksJwtGuard, AdminGuard)
@@ -22,7 +22,7 @@ export class MigrationController {
 			const queryRunner = this.dataSource.createQueryRunner();
 			await queryRunner.connect();
 
-			const betterAuthTables = ["user", "session", "account", "verification", "user_oasis_mapping"];
+			const betterAuthTables = ["user", "session", "account", "verification", "jwks"];
 			const tableChecks = await Promise.all(
 				betterAuthTables.map(async (tableName) => {
 					try {
@@ -69,7 +69,7 @@ export class MigrationController {
 
 			// Check recent account records
 			const accounts = await queryRunner.query(`
-        SELECT id, user_id, account_id, provider, password IS NOT NULL as has_password, created_at
+        SELECT id, user_id, account_id, provider_id, password IS NOT NULL as has_password, created_at
         FROM account
         ORDER BY created_at DESC
         LIMIT 10
@@ -88,13 +88,13 @@ export class MigrationController {
         SELECT
           a.id as account_id,
           a.user_id,
-          a.provider,
+          a.provider_id,
           a.password IS NOT NULL as has_password,
           u.id as user_id_from_user,
           u.email
         FROM account a
         LEFT JOIN "user" u ON a.user_id = u.id
-        WHERE a.provider = 'credential'
+        WHERE a.provider_id = 'credential'
         ORDER BY a.created_at DESC
         LIMIT 5
       `);
@@ -165,8 +165,8 @@ export class MigrationController {
 			// Fix provider values: change 'email' to 'credential' for accounts with password
 			const _result = await queryRunner.query(`
         UPDATE "account"
-        SET "provider" = 'credential'
-        WHERE "provider" = 'email'
+        SET "provider_id" = 'credential'
+        WHERE "provider_id" = 'email'
         AND "password" IS NOT NULL
       `);
 
@@ -174,7 +174,7 @@ export class MigrationController {
 			const updated = await queryRunner.query(`
         SELECT COUNT(*) as count
         FROM "account"
-        WHERE "provider" = 'credential'
+        WHERE "provider_id" = 'credential'
         AND "password" IS NOT NULL
       `);
 

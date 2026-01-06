@@ -57,8 +57,9 @@ This document provides a quick reference to all documentation files organized by
 
 | Document | Purpose |
 |---------|---------|
-| [deployment-railway.md](./deployment-railway.md) | Railway deployment guide |
-| [RAILWAY_CONNECTION_CHECK.md](./RAILWAY_CONNECTION_CHECK.md) | Railway connection configuration |
+| [deployment-railway.md](./deployment-railway.md) | Railway deployment guide (Neon DB) |
+| [NEON_CONNECTION_CHECK.md](./NEON_CONNECTION_CHECK.md) | Neon database connection configuration |
+| [decommission-railway-postgres.md](./decommission-railway-postgres.md) | Railway Postgres decommission runbook |
 
 ## 📝 Other
 
@@ -84,13 +85,10 @@ This document provides a quick reference to all documentation files organized by
 ### DevOps Engineer
 1. [Remote OASIS API Setup](./REMOTE_OASIS_API_SETUP.md)
 2. [Railway Deployment](./deployment-railway.md)
+3. [Neon Connection Check](./NEON_CONNECTION_CHECK.md)
+4. [Railway Postgres Decommission](./decommission-railway-postgres.md)
 
 ### QA/Tester
 1. [Testing User Registration Flow](./TESTING_USER_REGISTRATION_FLOW.md)
 2. [Testing Status](./TESTING_STATUS.md)
-
-
-
-
-
 

@@ -7,15 +7,15 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import { DataSource, type Repository } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { Order } from "../../orders/entities/order.entity.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
 import { Transaction } from "../../transactions/entities/transaction.entity.js";
-import { User } from "../../users/entities/user.entity.js";
 import { AdminService } from "./admin.service.js";
 
 describe("AdminService", () => {
 	let service: AdminService;
-	let _userRepository: Repository<User>;
+	let _userRepository: Repository<BetterAuthUser>;
 	let _assetRepository: Repository<TokenizedAsset>;
 	let _orderRepository: Repository<Order>;
 	let _tradeRepository: Repository<Trade>;
@@ -78,7 +78,7 @@ describe("AdminService", () => {
 			providers: [
 				AdminService,
 				{
-					provide: getRepositoryToken(User),
+					provide: getRepositoryToken(BetterAuthUser),
 					useValue: mockUserRepository,
 				},
 				{
@@ -105,7 +105,9 @@ describe("AdminService", () => {
 		}).compile();
 
 		service = module.get<AdminService>(AdminService);
-		_userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+		_userRepository = module.get<Repository<BetterAuthUser>>(
+			getRepositoryToken(BetterAuthUser)
+		);
 		_assetRepository = module.get<Repository<TokenizedAsset>>(getRepositoryToken(TokenizedAsset));
 		_orderRepository = module.get<Repository<Order>>(getRepositoryToken(Order));
 		_tradeRepository = module.get<Repository<Trade>>(getRepositoryToken(Trade));
@@ -196,15 +198,15 @@ describe("AdminService", () => {
 		it("should update user KYC status", async () => {
 			const userId = "123";
 			const mockUser = { id: userId, kycStatus: "pending" };
-			const dto = { status: "approved" as any };
-			const updatedUser = { ...mockUser, kycStatus: "approved" };
+			const dto = { status: "verified" as any };
+			const updatedUser = { ...mockUser, kycStatus: "verified" };
 
 			mockUserRepository.findOne.mockResolvedValue(mockUser);
 			mockUserRepository.save.mockResolvedValue(updatedUser);
 
 			const result = await service.updateUserKycStatus(userId, dto);
 
-			expect(result.kycStatus).toBe("approved");
+			expect(result.kycStatus).toBe("verified");
 			expect(mockUserRepository.save).toHaveBeenCalled();
 		});
 	});

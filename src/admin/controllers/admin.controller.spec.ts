@@ -5,12 +5,12 @@ import { getRepositoryToken } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 import { AdminGuard } from "../../auth/guards/admin.guard.js";
 import { JwksJwtGuard } from "../../auth/guards/jwks-jwt.guard.js";
 import { Order } from "../../orders/entities/order.entity.js";
 import { Trade } from "../../trades/entities/trade.entity.js";
 import { Transaction } from "../../transactions/entities/transaction.entity.js";
-import { User } from "../../users/entities/user.entity.js";
 import { AdminService } from "../services/admin.service.js";
 import { AdminController } from "./admin.controller.js";
 
@@ -57,7 +57,7 @@ describe("AdminController", () => {
 					useValue: mockAdminService,
 				},
 				{
-					provide: getRepositoryToken(User),
+					provide: getRepositoryToken(BetterAuthUser),
 					useValue: mockUserRepository,
 				},
 				{
@@ -147,8 +147,8 @@ describe("AdminController", () => {
 	describe("updateKycStatus", () => {
 		it("should update KYC status", async () => {
 			const userId = "123";
-			const dto = { status: "approved" as any };
-			const updatedUser = { id: userId, kycStatus: "approved" };
+			const dto = { status: "verified" as any };
+			const updatedUser = { id: userId, kycStatus: "verified" };
 			mockAdminService.updateUserKycStatus.mockResolvedValue(updatedUser);
 
 			const result = await controller.updateKycStatus(userId, dto);

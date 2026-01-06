@@ -1,140 +1,84 @@
-# OASIS Authentication Integration
+# Authentication Integration (Better Auth + OASIS)
 
-This module implements OASIS Avatar API authentication integration for Pangea Markets, following the Shipex Pro pattern (Option A).
+This module links Better Auth users to OASIS avatars and exposes profile endpoints. Registration, login, and session management are handled by Better Auth in the frontend.
 
 ## Architecture
 
-### Pattern: Hybrid Approach
-- **OASIS API**: Used for authentication verification (login/register)
-- **Local Database**: Stores user data linked by `avatarId`
-- **Pangea JWT**: Generates our own JWT tokens (not OASIS tokens)
-
-### Flow
-
-1. **Registration/Login**:
-   - User registers/logs in via OASIS Avatar API
-   - OASIS returns avatar data with `avatarId`
-   - Avatar data is synced to local `users` table
-   - Pangea generates its own JWT token
-
-2. **Authentication**:
-   - Client sends Pangea JWT token in `Authorization: Bearer <token>` header
-   - JWT Guard validates token and extracts user ID
-   - User data is loaded from local database
+- Better Auth (frontend): registration, login, sessions, JWT issuance.
+- Backend: verifies Better Auth JWTs via JWKS, reads/writes the Better Auth `user` table, and links OASIS avatars.
 
 ## Services
 
 ### `OasisAuthService`
-- Wraps OASIS Avatar API calls
-- Handles nested response structures
-- Methods: `register()`, `login()`, `getUserProfile()`, `updateUserProfile()`, etc.
+- OASIS API client (avatar creation and related calls).
 
-### `UserSyncService`
-- Maps OASIS Avatar to local User entity
-- Creates or updates user records
-- Links by `avatarId`
+### `OasisLinkService`
+- Creates OASIS avatars and updates `user.avatar_id`.
 
 ### `AuthService`
-- Main authentication service
-- Generates Pangea JWT tokens
-- Orchestrates OASIS + local database operations
+- Orchestrates avatar linking and user profile access.
 
 ## Endpoints
 
-### Public Endpoints
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
-
-### Protected Endpoints (Require JWT)
+### Protected Endpoints (Require Better Auth JWT)
+- `POST /api/auth/create-oasis-avatar` - Create and link an OASIS avatar
 - `GET /api/user/profile` - Get current user profile
-- `PUT /api/user/profile` - Update user profile
+- `PUT /api/user/profile` - Update profile fields
 
 ## Usage
 
-### Register
+### Create OASIS Avatar
 ```typescript
-POST /api/auth/register
+POST /api/auth/create-oasis-avatar
+Headers: {
+  "Authorization": "Bearer <better_auth_jwt>"
+}
+Body (optional):
 {
   "email": "user@example.com",
-  "password": "password123",
   "username": "username",
   "firstName": "John",
-  "lastName": "Doe"
-}
-```
-
-### Login
-```typescript
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-### Protected Route
-```typescript
-GET /api/user/profile
-Headers: {
-  "Authorization": "Bearer <jwt_token>"
+  "lastName": "Doe",
+  "name": "John Doe"
 }
 ```
 
 ## Guards
 
-### `JwtAuthGuard`
-- Validates JWT tokens
-- Extracts user from token
-- Attaches user to `request.user`
+### `JwksJwtGuard`
+- Validates Better Auth JWTs via JWKS (`/api/auth/jwks`)
+- Attaches user claims to `request.user`
 
 ### Usage in Controllers
 ```typescript
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwksJwtGuard)
 @Get('protected')
 async protectedRoute(@CurrentUser() user: any) {
   // user is available here
 }
 ```
 
-## Decorators
-
-### `@Public()`
-Marks route as public (no authentication required)
-
-### `@CurrentUser()`
-Extracts current user from request
-
 ## Environment Variables
 
 ```env
 OASIS_API_URL=https://api.oasisplatform.world
-JWT_SECRET=YourSuperSecretKeyForJWTTokenGenerationThatShouldBeAtLeast32Characters
-JWT_EXPIRES_IN=7d
+FRONTEND_URL=http://localhost:3001
+DATABASE_URL=postgresql://...
 ```
 
 ## Database
 
-### User Entity
-- `id` (UUID) - Primary key
-- `email` - Unique email
-- `username` - Username
-- `avatarId` - OASIS Avatar ID (unique, links to OASIS)
-- `walletAddressSolana` - Solana wallet address
-- `walletAddressEthereum` - Ethereum wallet address
-- `role` - User role (default: 'user')
-- `kycStatus` - KYC status (default: 'pending')
-- `isActive` - Active status
-- Timestamps: `createdAt`, `updatedAt`, `lastLogin`
+### Better Auth User (`user` table)
+- `id` (TEXT) - Canonical user ID
+- `email`, `emailVerified`, `name`, `image`
+- `username`, `first_name`, `last_name`
+- `avatar_id` - OASIS Avatar ID (set by backend)
+- `wallet_address_solana`, `wallet_address_ethereum`
+- `role` (default: 'user')
+- `kyc_status` (default: 'none')
+- `last_login`, `is_active`
+- Timestamps: `created_at`, `updated_at`
 
-## Testing
-
-See `auth.service.spec.ts` for unit tests.
-
-## Notes
-
-- OASIS JWT tokens are stored but not used for authentication
-- Pangea generates its own JWT tokens for better control
-- User data is cached locally to reduce OASIS API calls
-- Handles nested OASIS response structures automatically
+### Notes
+- Password hashes live in `account.password` for `provider_id='credential'`.
+- Authentication flows (register/login/reset) are handled by Better Auth in the frontend.

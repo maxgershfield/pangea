@@ -1,10 +1,10 @@
 import { IsDateString, IsNumber, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class CreateTradeDto {
-	@IsUUID()
+	@IsString()
 	buyerId: string;
 
-	@IsUUID()
+	@IsString()
 	sellerId: string;
 
 	@IsUUID()

@@ -91,9 +91,9 @@
 │  │  • OasisAuthService (oasis-auth.service.ts)                            │  │
 │  │    - Makes HTTP requests to OASIS API                                 │  │
 │  │                                                                        │  │
-│  │  • UserSyncService (user-sync.service.ts)                             │  │
+│  │  • OasisLinkService (oasis-link.service.ts)                             │  │
 │  │    - Syncs OASIS avatars to Pangea database                            │  │
-│  │    - Creates/updates users.avatar_id link                             │  │
+│  │    - Creates/updates user.avatar_id link                             │  │
 │  │                                                                        │  │
 │  │  • OasisWalletService (oasis-wallet.service.ts)                        │  │
 │  │    - Uses OASIS admin token for internal calls                        │  │
@@ -248,9 +248,9 @@ Registration Flow:
 │  1. Calls OasisAuthService.register()                                       │
 │     → Creates OASIS avatar                                                   │
 │                                                                              │
-│  2. Calls UserSyncService.syncOasisUserToLocal()                            │
+│  2. Calls OasisLinkService.createAndLinkAvatar()                            │
 │     → Creates Pangea user                                                   │
-│     → Links: users.avatar_id = OASIS avatarId                               │
+│     → Links: user.avatar_id = OASIS avatarId                               │
 │                                                                              │
 │  3. Generates JWT token (Pangea backend token)                               │
 │     Payload: { sub: userId, email, username, avatarId, role }                │
@@ -403,7 +403,7 @@ Backend (NestJS):
 │   │   └── services/
 │   │       ├── auth.service.ts              ← Generates Pangea JWT tokens
 │   │       ├── oasis-auth.service.ts        ← Calls OASIS API
-│   │       └── user-sync.service.ts         ← Links users.avatar_id
+│   │       └── oasis-link.service.ts         ← Links user.avatar_id
 │   │
 │   └── wallet/
 │       └── wallet.controller.ts             ← Wallet endpoints

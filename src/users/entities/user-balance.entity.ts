@@ -1,15 +1,15 @@
 import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	PrimaryGeneratedColumn,
-	Unique,
-	UpdateDateColumn,
+    Column,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    Unique,
+    UpdateDateColumn,
 } from "typeorm";
 import { TokenizedAsset } from "../../assets/entities/tokenized-asset.entity.js";
-import { User } from "./user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 
 @Entity("user_balances")
 @Unique(["userId", "assetId"])
@@ -17,12 +17,12 @@ export class UserBalance {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => BetterAuthUser)
 	@JoinColumn({ name: "user_id" })
 	@Index("idx_balances_user_id")
-	user: User;
+	user: BetterAuthUser;
 
-	@Column({ name: "user_id", type: "uuid" })
+	@Column({ name: "user_id", type: "text" })
 	userId: string;
 
 	@ManyToOne(() => TokenizedAsset)
