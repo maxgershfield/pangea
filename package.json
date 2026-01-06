@@ -29,6 +29,7 @@
     "migration:run:neon": "TYPEORM_DISABLE_ENTITIES=true TYPEORM_MIGRATIONS_PATH=./migrations/1767554990000-AlignBetterAuthSchema.ts npm run migration:run",
     "migration:revert": "npm run typeorm migration:revert -- -d src/config/data-source.ts",
     "migration:show:neon": "TYPEORM_DISABLE_ENTITIES=true TYPEORM_MIGRATIONS_PATH=./migrations/1767554990000-AlignBetterAuthSchema.ts npm run typeorm migration:show -- -d src/config/data-source.ts",
+    "seed:assets": "tsx scripts/seed-tokenized-assets.ts",
     "knip": "knip",
     "knip:fix": "knip --fix"
   },
