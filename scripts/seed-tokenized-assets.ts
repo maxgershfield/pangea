@@ -44,12 +44,8 @@ interface SeedAssetData {
 // Set BRANDFETCH_CLIENT_ID environment variable to use Brandfetch API
 // Format: https://cdn.brandfetch.io/{domain}?c={client-id}
 function getLogoUrl(domain: string): string {
-	const clientId = process.env.BRANDFETCH_CLIENT_ID;
-	if (clientId) {
-		return `https://cdn.brandfetch.io/${domain}?c=${clientId}`;
-	}
-	// Fallback to placeholder if no client ID is set
-	return `https://cdn.brandfetch.io/${domain}`;
+	const clientId = process.env.BRANDFETCH_CLIENT_ID || "1ida8ggQZDf64bgCqxt";
+	return `https://cdn.brandfetch.io/${domain}?c=${clientId}`;
 }
 
 const seedAssetsData: SeedAssetData[] = [
