@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
 import { makeNativeHttpRequest } from "./oasis-auth-helper.js";
+import { OasisTokenManagerService } from "../../services/oasis-token-manager.service.js";
 
 /**
  * OASIS Avatar API response structure
@@ -76,7 +77,10 @@ export class OasisAuthService {
 	private readonly axiosInstance: AxiosInstance;
 	private readonly baseUrl: string;
 
-	constructor(private readonly configService: ConfigService) {
+	constructor(
+		private readonly configService: ConfigService,
+		private readonly tokenManager: OasisTokenManagerService
+	) {
 		this.baseUrl = this.configService.get<string>("OASIS_API_URL") || "https://api.oasisweb4.com";
 
 		this.axiosInstance = axios.create({
@@ -89,6 +93,32 @@ export class OasisAuthService {
 				Accept: "application/json",
 			},
 		});
+
+		// Add request interceptor to inject token for authenticated requests
+		this.axiosInstance.interceptors.request.use(
+			async (config: InternalAxiosRequestConfig) => {
+				// Only inject token for authenticated endpoints (not register/authenticate)
+				const authEndpoints = ["/api/avatar/get-by-email", "/api/avatar/", "/api/wallet", "/api/keys"];
+				const needsAuth = authEndpoints.some(endpoint => config.url?.includes(endpoint));
+				
+				if (needsAuth && !config.url?.includes("/api/avatar/authenticate") && !config.url?.includes("/api/avatar/register")) {
+					try {
+						const token = await this.tokenManager.getToken();
+						if (token && config.headers) {
+							config.headers.Authorization = `Bearer ${token}`;
+							this.logger.debug(
+								`Token injected into request: ${config.method?.toUpperCase()} ${config.url}`
+							);
+						}
+					} catch (error: any) {
+						this.logger.warn(
+							`Failed to inject token for ${config.url}: ${error.message}`
+						);
+					}
+				}
+				return config;
+			}
+		);
 	}
 
 	/**
@@ -143,10 +173,22 @@ export class OasisAuthService {
 
 			// Check if response indicates an error
 			// OASIS API returns: { Result: { IsError: true/false, Message: "...", Result: {...} } }
+			// OR: { result: { isError: true/false, message: "..." } }
 			const result = responseData?.Result || responseData?.result;
-			if (result?.IsError === true || result?.isError === true) {
+			const isError = result?.IsError === true || result?.isError === true;
+			
+			if (isError) {
 				const errorMessage = result.Message || result.message || "Registration failed";
 				this.logger.warn(`OASIS registration returned error: ${errorMessage}`);
+				
+				// If email is already in use, throw a specific error that can be caught upstream
+				const lowerMessage = errorMessage.toLowerCase();
+				if (lowerMessage.includes("already in use") || 
+				    (lowerMessage.includes("email") && lowerMessage.includes("already")) ||
+				    lowerMessage.includes("sorry, the email")) {
+					throw new Error(`Email ${data.email} is already in use in OASIS`);
+				}
+				
 				// If it's just a verification warning but avatar was created, try to extract avatar anyway
 				if (errorMessage.includes("verification") || errorMessage.includes("email")) {
 					this.logger.warn("Email verification warning - attempting to extract avatar anyway");
@@ -161,14 +203,31 @@ export class OasisAuthService {
 
 			return this.extractAvatarFromResponse(responseData);
 		} catch (error: any) {
+			// If we already threw a specific error (like "email already in use"), preserve it
+			if (error.message?.includes("already in use") || error.message?.includes("Email") && error.message?.includes("already")) {
+				throw error; // Re-throw as-is
+			}
+			
 			this.logger.error(`OASIS registration failed: ${error.message}`);
 			this.logger.error(`Error stack: ${error.stack}`);
 			if (error.response?.data) {
 				this.logger.error(
 					`OASIS API error response: ${JSON.stringify(error.response.data, null, 2)}`
 				);
+				
+				// Check if response has "already in use" message
+				const responseData = error.response.data;
+				const result = responseData?.Result || responseData?.result;
+				const errorMessage = result?.Message || result?.message || responseData?.message || "";
+				
+				if (errorMessage.toLowerCase().includes("already in use") || 
+				    (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already"))) {
+					throw new Error(`Email ${data.email} is already in use in OASIS`);
+				}
+				
 				throw new Error(
-					error.response.data.message ||
+					errorMessage ||
+						error.response.data.message ||
 						error.response.data.Message ||
 						JSON.stringify(error.response.data) ||
 						"Registration failed"
@@ -259,6 +318,52 @@ export class OasisAuthService {
 		} catch (error: any) {
 			this.logger.error(`Failed to fetch avatar profile: ${error.message}`);
 			throw new Error("Failed to fetch user profile from OASIS");
+		}
+	}
+
+	/**
+	 * Get avatar by email from OASIS Avatar API
+	 * Requires authentication (uses admin token via token manager)
+	 * Returns null if avatar not found
+	 */
+	async getAvatarByEmail(email: string): Promise<OASISAvatar | null> {
+		try {
+			this.logger.log(`Looking up avatar by email: ${email}`);
+
+			// Get admin token (injected via interceptor)
+			const response = await this.axiosInstance.get(`/api/avatar/get-by-email/${encodeURIComponent(email)}`, {
+				responseType: "text",
+				maxContentLength: Number.POSITIVE_INFINITY,
+				maxBodyLength: Number.POSITIVE_INFINITY,
+			});
+
+			const responseData =
+				typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+
+			// Check if there's an error (avatar not found)
+			const result = responseData?.Result || responseData?.result;
+			if (result?.IsError === true || result?.isError === true) {
+				const message = result.Message || result.message || "";
+				if (message.toLowerCase().includes("not found") || message.toLowerCase().includes("does not exist")) {
+					this.logger.log(`Avatar not found for email: ${email}`);
+					return null;
+				}
+				// Other errors should be thrown
+				throw new Error(message || "Failed to get avatar by email");
+			}
+
+			// Extract avatar from response
+			const avatar = this.extractAvatarFromResponse(responseData);
+			this.logger.log(`Found existing avatar: ${avatar.avatarId} for email: ${email}`);
+			return avatar;
+		} catch (error: any) {
+			// If 404 or "not found" error, return null
+			if (error.response?.status === 404 || error.message?.toLowerCase().includes("not found")) {
+				this.logger.log(`Avatar not found for email: ${email}`);
+				return null;
+			}
+			this.logger.error(`Failed to get avatar by email: ${error.message}`);
+			throw new Error(`Failed to get avatar by email: ${error.message}`);
 		}
 	}
 

@@ -84,7 +84,7 @@ export class AuthController {
 		}
 
 		// Create OASIS avatar and link to user
-		const avatarId = await this.authService.createOasisAvatarForUser({
+		const oasisAvatar = await this.authService.createOasisAvatarForUser({
 			userId,
 			email,
 			username: body?.username || email.split("@")[0],
@@ -95,8 +95,13 @@ export class AuthController {
 		return {
 			success: true,
 			message: "OASIS avatar created and linked successfully",
-			avatarId,
+			avatarId: oasisAvatar.avatarId,
 			userId,
+			// Return all fields frontend needs to create/update user record
+			username: oasisAvatar.username,
+			email: oasisAvatar.email,
+			firstName: oasisAvatar.firstName,
+			lastName: oasisAvatar.lastName,
 		};
 	}
 }

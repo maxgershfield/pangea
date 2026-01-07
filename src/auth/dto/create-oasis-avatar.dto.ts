@@ -49,6 +49,7 @@ export class CreateOasisAvatarDto {
 
 /**
  * Response for OASIS avatar creation
+ * Returns all fields frontend needs to create/update user record
  */
 export class CreateOasisAvatarResponseDto {
 	@ApiProperty({
@@ -65,7 +66,7 @@ export class CreateOasisAvatarResponseDto {
 
 	@ApiProperty({
 		description: "Created avatar ID",
-		example: "avatar_123456",
+		example: "550e8400-e29b-41d4-a716-446655440000",
 	})
 	avatarId: string;
 
@@ -74,4 +75,28 @@ export class CreateOasisAvatarResponseDto {
 		example: "550e8400-e29b-41d4-a716-446655440000",
 	})
 	userId: string;
+
+	@ApiProperty({
+		description: "OASIS username",
+		example: "johndoe",
+	})
+	username: string;
+
+	@ApiProperty({
+		description: "User email",
+		example: "user@example.com",
+	})
+	email: string;
+
+	@ApiPropertyOptional({
+		description: "User first name",
+		example: "John",
+	})
+	firstName?: string;
+
+	@ApiPropertyOptional({
+		description: "User last name",
+		example: "Doe",
+	})
+	lastName?: string;
 }

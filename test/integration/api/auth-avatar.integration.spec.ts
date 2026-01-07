@@ -33,6 +33,7 @@ describe("Auth Avatar API Integration", () => {
 	let jwtContext: TestJwtContext;
 	let mockOasisAuthService: {
 		register: ReturnType<typeof vi.fn>;
+		getUserProfile?: ReturnType<typeof vi.fn>;
 	};
 
 	beforeAll(async () => {
@@ -42,7 +43,19 @@ describe("Auth Avatar API Integration", () => {
 		mockOasisAuthService = {
 			register: vi.fn().mockResolvedValue({
 				avatarId: "mock-oasis-avatar-id",
-				success: true,
+				id: "mock-oasis-avatar-id",
+				username: "testuser",
+				email: "test@example.com",
+				firstName: "Test",
+				lastName: "User",
+			}),
+			getUserProfile: vi.fn().mockResolvedValue({
+				avatarId: "mock-oasis-avatar-id",
+				id: "mock-oasis-avatar-id",
+				username: "testuser",
+				email: "test@example.com",
+				firstName: "Test",
+				lastName: "User",
 			}),
 		};
 
@@ -70,9 +83,16 @@ describe("Auth Avatar API Integration", () => {
 	beforeEach(() => {
 		// Reset mock before each test
 		mockOasisAuthService.register.mockClear();
+		if (mockOasisAuthService.getUserProfile) {
+			mockOasisAuthService.getUserProfile.mockClear();
+		}
 		mockOasisAuthService.register.mockResolvedValue({
 			avatarId: `mock-avatar-${Date.now()}`,
-			success: true,
+			id: `mock-avatar-${Date.now()}`,
+			username: "testuser",
+			email: "test@example.com",
+			firstName: "Test",
+			lastName: "User",
 		});
 	});
 
@@ -86,7 +106,7 @@ describe("Auth Avatar API Integration", () => {
 	});
 
 	describe("POST /auth/create-oasis-avatar", () => {
-		it("should create OASIS avatar and return avatarId", async () => {
+		it("should create OASIS avatar and return all fields", async () => {
 			// Arrange
 			const { user } = await fixture.createCompleteUser({ avatarId: null });
 			expect(user.avatarId).toBeNull();
@@ -95,6 +115,16 @@ describe("Auth Avatar API Integration", () => {
 				id: user.id,
 				email: user.email,
 				name: "Test User",
+			});
+
+			// Mock OASIS response with full avatar data
+			mockOasisAuthService.register.mockResolvedValueOnce({
+				avatarId: "mock-avatar-id",
+				id: "mock-avatar-id",
+				username: "testuser",
+				email: user.email,
+				firstName: "Test",
+				lastName: "User",
 			});
 
 			// Act
@@ -109,6 +139,11 @@ describe("Auth Avatar API Integration", () => {
 			expect(response.body.avatarId).toBeDefined();
 			expect(response.body.userId).toBe(user.id);
 			expect(response.body.message).toContain("successfully");
+			// Verify new response fields
+			expect(response.body.username).toBeDefined();
+			expect(response.body.email).toBeDefined();
+			expect(response.body.firstName).toBeDefined();
+			expect(response.body.lastName).toBeDefined();
 		});
 
 		it("should update user.avatarId in database", async () => {
@@ -349,11 +384,21 @@ describe("Auth Avatar API Integration", () => {
 	});
 
 	describe("Response Format", () => {
-		it("should return proper response structure", async () => {
+		it("should return proper response structure with all fields", async () => {
 			const { user } = await fixture.createCompleteUser({ avatarId: null });
 			const token = await jwtContext.generateToken({
 				id: user.id,
 				email: user.email,
+			});
+
+			// Mock OASIS response with full avatar data
+			mockOasisAuthService.register.mockResolvedValueOnce({
+				avatarId: "mock-avatar-id",
+				id: "mock-avatar-id",
+				username: "testuser",
+				email: user.email,
+				firstName: "Test",
+				lastName: "User",
 			});
 
 			const response = await request(app.getHttpServer())
@@ -367,11 +412,19 @@ describe("Auth Avatar API Integration", () => {
 			expect(response.body).toHaveProperty("message");
 			expect(response.body).toHaveProperty("avatarId");
 			expect(response.body).toHaveProperty("userId");
+			expect(response.body).toHaveProperty("username");
+			expect(response.body).toHaveProperty("email");
+			expect(response.body).toHaveProperty("firstName");
+			expect(response.body).toHaveProperty("lastName");
 
 			expect(typeof response.body.success).toBe("boolean");
 			expect(typeof response.body.message).toBe("string");
 			expect(typeof response.body.avatarId).toBe("string");
 			expect(typeof response.body.userId).toBe("string");
+			expect(typeof response.body.username).toBe("string");
+			expect(typeof response.body.email).toBe("string");
+			expect(typeof response.body.firstName).toBe("string");
+			expect(typeof response.body.lastName).toBe("string");
 		});
 	});
 });

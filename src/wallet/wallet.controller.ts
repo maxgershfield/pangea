@@ -77,11 +77,19 @@ export class WalletController {
 		}
 
 		try {
-			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-				userId,
-				email,
-				name || undefined
-			);
+			// Check if avatar exists - don't auto-create
+			const avatarId = await this.oasisLinkService.getAvatarId(userId);
+			
+			if (!avatarId) {
+				throw new HttpException(
+					{
+						statusCode: HttpStatus.BAD_REQUEST,
+						message: "OASIS avatar not found. Please call POST /api/auth/create-oasis-avatar first to create your OASIS avatar.",
+						error: "Avatar required",
+					},
+					HttpStatus.BAD_REQUEST
+				);
+			}
 
 			const wallets = await this.oasisWalletService.getWallets(avatarId);
 
@@ -169,11 +177,19 @@ export class WalletController {
 			throw new HttpException("User not authenticated", HttpStatus.UNAUTHORIZED);
 		}
 
-		const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-			userId,
-			email,
-			name || undefined
-		);
+		// Check if avatar exists - don't auto-create
+		const avatarId = await this.oasisLinkService.getAvatarId(userId);
+		
+		if (!avatarId) {
+			throw new HttpException(
+				{
+					statusCode: HttpStatus.BAD_REQUEST,
+					message: "OASIS avatar not found. Please call POST /api/auth/create-oasis-avatar first to create your OASIS avatar.",
+					error: "Avatar required",
+				},
+				HttpStatus.BAD_REQUEST
+			);
+		}
 
 		try {
 			const providerType =
@@ -255,11 +271,19 @@ export class WalletController {
 		}
 
 		try {
-			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-				userId,
-				email,
-				name || undefined
-			);
+			// Check if avatar exists - don't auto-create
+			const avatarId = await this.oasisLinkService.getAvatarId(userId);
+			
+			if (!avatarId) {
+				throw new HttpException(
+					{
+						statusCode: HttpStatus.BAD_REQUEST,
+						message: "OASIS avatar not found. Please call POST /api/auth/create-oasis-avatar first to create your OASIS avatar.",
+						error: "Avatar required",
+					},
+					HttpStatus.BAD_REQUEST
+				);
+			}
 
 			const wallet = await this.oasisWalletService.generateWallet(
 				avatarId,
@@ -415,11 +439,19 @@ export class WalletController {
 		}
 
 		try {
-			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-				userId,
-				email,
-				name || undefined
-			);
+			// Check if avatar exists - don't auto-create
+			const avatarId = await this.oasisLinkService.getAvatarId(userId);
+			
+			if (!avatarId) {
+				throw new HttpException(
+					{
+						statusCode: HttpStatus.BAD_REQUEST,
+						message: "OASIS avatar not found. Please call POST /api/auth/create-oasis-avatar first to create your OASIS avatar.",
+						error: "Avatar required",
+					},
+					HttpStatus.BAD_REQUEST
+				);
+			}
 
 			const balances = await this.balanceSyncService.syncUserBalances(userId, avatarId);
 
@@ -496,11 +528,19 @@ export class WalletController {
 		}
 
 		try {
-			const avatarId = await this.oasisLinkService.ensureOasisAvatar(
-				userId,
-				email,
-				name || undefined
-			);
+			// Check if avatar exists - don't auto-create
+			const avatarId = await this.oasisLinkService.getAvatarId(userId);
+			
+			if (!avatarId) {
+				throw new HttpException(
+					{
+						statusCode: HttpStatus.BAD_REQUEST,
+						message: "OASIS avatar not found. Please call POST /api/auth/create-oasis-avatar first to create your OASIS avatar.",
+						error: "Avatar required",
+					},
+					HttpStatus.BAD_REQUEST
+				);
+			}
 
 			const wallets = await this.oasisWalletService.getWallets(avatarId);
 			const wallet = wallets.find((w) => w.walletId === walletId);

@@ -90,23 +90,13 @@ export class AuthService {
 		username?: string;
 		firstName?: string;
 		lastName?: string;
-	}): Promise<string> {
+	}): Promise<import("./oasis-auth.service.js").OASISAvatar> {
 		try {
 			this.logger.log(
 				`Creating OASIS avatar for Better Auth user: ${data.userId}, email: ${data.email}`
 			);
 
-			// Check if user already has an OASIS avatar
-			const existingUser = await this.betterAuthUserRepository.findOne({
-				where: { id: data.userId },
-			});
-
-			if (existingUser?.avatarId) {
-				this.logger.log(`User ${data.userId} already has OASIS avatar: ${existingUser.avatarId}`);
-				return existingUser.avatarId;
-			}
-
-			const avatarId = await this.oasisLinkService.createAndLinkAvatar({
+			const oasisAvatar = await this.oasisLinkService.createAndLinkAvatar({
 				userId: data.userId,
 				email: data.email,
 				username: data.username,
@@ -116,7 +106,7 @@ export class AuthService {
 
 			this.logger.log(`OASIS avatar linked to Better Auth user: ${data.userId}`);
 
-			return avatarId;
+			return oasisAvatar;
 		} catch (error: any) {
 			this.logger.error(`Failed to create OASIS avatar: ${error.message}`);
 			this.logger.error(`Error stack: ${error.stack}`);
