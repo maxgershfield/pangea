@@ -17,7 +17,7 @@ export class User {
 	email: string;
 
 	@Column({ type: "text", name: "password_hash", nullable: true })
-	passwordHash: string; // Nullable if using OASIS auth only
+	passwordHash?: string | null; // Nullable if using OASIS auth only
 
 	@Column({ type: "text", nullable: true })
 	username: string;

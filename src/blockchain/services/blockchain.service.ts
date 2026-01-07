@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { User } from "../../users/entities/user.entity.js";
+import { BetterAuthUser } from "../../auth/entities/better-auth-user.entity.js";
 
 // Placeholder interface for TokenizedAsset
 export interface TokenizedAsset {
@@ -10,8 +10,8 @@ export interface TokenizedAsset {
 }
 
 export interface ExecuteTradeParams {
-	buyer: User;
-	seller: User;
+	buyer: BetterAuthUser;
+	seller: BetterAuthUser;
 	asset: TokenizedAsset;
 	quantity: number;
 	price: number;
